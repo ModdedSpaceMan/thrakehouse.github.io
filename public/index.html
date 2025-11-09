@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Имоти под наем в Гърция</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>Имоти под наем в Гърция</h1>
+      <nav class="top-nav">
+        <a href="#properties">Имоти</a>
+        <button id="loginBtn" class="top-btn">Вход</button>
+        <a href="signup.html" class="top-btn">Регистрация</a>
+        <button id="wishlistBtn" class="top-btn" style="display:none;">Списък ♥</button>
+        <button id="logoutBtn" class="top-btn" style="display:none;">Изход</button>
+        <button id="sidebarToggle" class="top-btn" style="display:none;">☰</button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <h2>Намерете своя дом в Гърция</h2>
+      <p class="hero-sub">Апартаменти, къщи и вили за наем — лесно и бързо</p>
+    </div>
+  </section>
+
+  <main>
+    <div id="propertyFilters" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
+        <input type="text" id="filterLocation" placeholder="Локация" />
+        <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
+        <input type="number" id="filterMaxPrice" placeholder="Макс. цена" />
+        <select id="filterType">
+          <option value="">Всички типове</option>
+          <option value="apartment">Апартамент</option>
+          <option value="house">Къща</option>
+        </select>
+        <label><input type="checkbox" id="filterFree" /> Свободни</label>
+        <label><input type="checkbox" id="filterTaken" /> Заети</label>
+        <button id="applyFilters">Приложи</button>
+      </div>
+    <section id="properties" class="properties"></section>
+  </main>
+  
+  
+  <!-- Admin Sidebar -->
+  <aside id="adminSidebar" class="sidebar" aria-hidden="true">
+    <div class="sidebar-inner">
+      <h3>Админ панел</h3>
+
+      <div class="sidebar-section">
+        <input id="adminSearchInput" placeholder="Търсене по ID..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef6;margin-bottom:8px;">
+        <button id="adminSearchBtn" class="sidebar-btn">Търси ID</button>
+        <div id="adminFound" style="margin-top:10px;color:#e6eef6;"></div>
+      </div>
+
+      <button id="viewSupportBtn" class="sidebar-btn">Потребителски съобщения</button>
+      <button id="addPropertySidebarBtn" class="sidebar-btn">Добави имот</button>
+
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:12px 0;">
+      <div id="supportMessages" class="support-messages"></div>
+    </div>
+  </aside>
+
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="close" id="closeLogin" aria-label="close">&times;</button>
+      <h2>Вход</h2>
+      <form id="loginForm" class="modal-form">
+        <input type="text" id="username" placeholder="Потребителско име" required />
+        <input type="password" id="password" placeholder="Парола" required />
+        <button type="submit" class="modal-submit">Вход</button>
+      </form>
+      <p class="modal-note"><a href="#" id="forgotPasswordLink">Забравена парола?</a></p>
+    </div>
+  </div>
+
+  <!-- Reset Password Modal (creates ticket) -->
+  <div id="resetModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="close" id="closeReset" aria-label="close">&times;</button>
+      <h2>Заявка за нулиране на парола</h2>
+      <form id="resetForm" class="modal-form">
+        <input type="text" id="resetInput" placeholder="Въведете Имейл" required />
+        <button type="submit" class="modal-submit">Създай заявка</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Property Modal -->
+<div id="addPropertyModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="close" id="closeAdd" aria-label="close">&times;</button>
+      <h2>Добави нов имот</h2>
+      <form id="propertyForm" class="modal-form">
+        
+        <!-- Property Name -->
+        <input type="text" id="propertyName" placeholder="Име на имота" required />
+  
+        <!-- Location -->
+        <input type="text" id="propertyLocation" placeholder="Местоположение" required />
+  
+        <!-- Price -->
+        <input type="text" id="propertyPrice" placeholder="Цена на месец (лв)" required />
+  
+        <!-- Type -->
+        <select id="propertyType">
+          <option value="apartment">Апартамент</option>
+          <option value="house">Къща</option>
+          <option value="villa">Вила</option>
+        </select>
+  
+        <!-- Status -->
+        <select id="propertyStatus">
+          <option value="free">Свободен</option>
+          <option value="taken">Зает</option>
+        </select>
+  
+        <!-- Image -->
+        <input type="file" id="propertyImage" accept="image/*" required />
+  
+        <!-- Submit -->
+        <button type="submit" class="modal-submit">Добави имот</button>
+      </form>
+    </div>
+  </div>
+  
+
+  <!-- Wishlist Modal -->
+  <div id="wishlistModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="close" id="closeWishlist" aria-label="close">&times;</button>
+      <h2>Вашият списък</h2>
+      <div id="wishlistContent"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="support-card">
+        <h4>Изпратете съобщение до нас</h4>
+        <form id="supportForm" class="support-form">
+          <input type="text" id="supportName" placeholder="Вашето име" required />
+          <input type="email" id="supportEmail" placeholder="Вашият имейл" required />
+          <textarea id="supportMessage" placeholder="Съобщение" required></textarea>
+          <button type="submit" class="support-submit">Изпрати</button>
+        </form>
+      </div>
+      <p class="copyright">&copy; 2025 Имоти под наем в Гърция. Всички права запазени.</p>
+    </div>
+  </footer>
+
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+[
+  {
+    "username": "TanyaPetrova",
+    "password": "@3!,}23Ga,23!4ILdSaxVHuJms,24%([}.!",
+    "email" : "nomail@gmail.com",
+    "role": "admin"
+  },
+  {
+    "username": "user",
+    "password": "1234",
+    "role": "user"
+  }
+]
