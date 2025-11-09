@@ -1,0 +1,9 @@
+for first time push do 
+git branch -M main
+git push -u origin main
+
+and anything else do
+
+git add .
+git commit -m "Describe your changes"
+git push
