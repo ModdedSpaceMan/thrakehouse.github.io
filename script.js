@@ -71,9 +71,16 @@ function uiInit() {
   wishlistBtn.style.display = role ? 'inline-block' : 'none';
   logoutBtn.style.display = role ? 'inline-block' : 'none';
   sidebarToggle.style.display = role === 'admin' ? 'inline-block' : 'none';
-  adminSidebar.classList.toggle('show', role === 'admin');
   openAddBtn.style.display = role === 'admin' ? 'block' : 'none';
+
+  // Hide sidebar for non-admins
+  if (role !== 'admin') adminSidebar.classList.remove('show');
 }
+
+/* ---------- Admin Sidebar Toggle ---------- */
+sidebarToggle.addEventListener('click', () => {
+  adminSidebar.classList.toggle('show');
+});
 
 //////////////////////////
 // WISHLIST FUNCTIONS
@@ -243,7 +250,7 @@ function renderPage(page = 1) {
 applyFiltersBtn.addEventListener('click', () => renderPage(1));
 
 //////////////////////////
-// EDIT PROPERTY
+// EDIT / ADD PROPERTY
 //////////////////////////
 function editProperty(id) {
   const prop = allProperties.find(p => p.id === id);
@@ -259,67 +266,6 @@ function editProperty(id) {
   addPropertyModal.querySelector('h2').textContent = 'Редактирай имота';
   openModal(addPropertyModal);
 }
-
-async function deleteProperty(id) {
-  if (!confirm('Сигурни ли сте, че искате да изтриете имота?')) return;
-  if (!role || role !== 'admin') {
-    showToast('Нямате права да изтривате');
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/properties/${id}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role }) // move role into body to avoid CORS
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      showToast('Имотът е изтрит!');
-      await loadProperties(currentPage);
-    } else {
-      showToast(data.message || 'Грешка при изтриване');
-    }
-  } catch (err) {
-    console.error(err);
-    showToast('Грешка при изтриване');
-  }
-}
-
-
-async function toggleStatus(id) {
-  const prop = allProperties.find(p => p.id === id);
-  if (!prop) return;
-  if (!role || role !== 'admin') {
-    showToast('Нямате права да променяте статуса');
-    return;
-  }
-
-  const newStatus = prop.status === 'free' ? 'taken' : 'free';
-
-  try {
-    const res = await fetch(`${API_URL}/properties/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus, role }) // role moved to body
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      showToast('Статусът е променен');
-      await loadProperties(currentPage);
-    } else {
-      showToast(data.message || 'Грешка при промяна на статус');
-    }
-  } catch (err) {
-    console.error(err);
-    showToast('Грешка при промяна на статус');
-  }
-}
-
 
 propertyForm.addEventListener('submit', async e => {
   e.preventDefault();
@@ -357,7 +303,6 @@ propertyForm.addEventListener('submit', async e => {
       : `${API_URL}/properties`;
     const method = editingPropertyId ? 'PUT' : 'POST';
 
-    // Send role inside the body, not headers
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
@@ -365,7 +310,6 @@ propertyForm.addEventListener('submit', async e => {
     });
 
     const data = await res.json();
-
     if (data.success) {
       showToast(editingPropertyId ? 'Имотът е обновен!' : 'Имотът е добавен успешно!');
       closeModal(addPropertyModal);
@@ -373,17 +317,67 @@ propertyForm.addEventListener('submit', async e => {
       editingPropertyId = null;
       addPropertyModal.querySelector('h2').textContent = 'Добави нов имот';
       await loadProperties(currentPage);
-    } else {
-      showToast(data.message || 'Грешка');
-    }
+    } else showToast(data.message || 'Грешка');
   } catch (err) {
     console.error(err);
     showToast('Грешка при изпращане на имота');
   }
 });
 
+//////////////////////////
+// DELETE / TOGGLE STATUS
+//////////////////////////
+async function deleteProperty(id) {
+  if (!confirm('Сигурни ли сте, че искате да изтриете имота?')) return;
+  if (!role || role !== 'admin') {
+    showToast('Нямате права да изтривате');
+    return;
+  }
+  try {
+    const res = await fetch(`${API_URL}/properties/${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Имотът е изтрит!');
+      await loadProperties(currentPage);
+    } else showToast(data.message || 'Грешка при изтриване');
+  } catch (err) {
+    console.error(err);
+    showToast('Грешка при изтриване');
+  }
+}
 
-/* ---------- Login / Logout ---------- */
+async function toggleStatus(id) {
+  const prop = allProperties.find(p => p.id === id);
+  if (!prop) return;
+  if (!role || role !== 'admin') {
+    showToast('Нямате права да променяте статуса');
+    return;
+  }
+  const newStatus = prop.status === 'free' ? 'taken' : 'free';
+  try {
+    const res = await fetch(`${API_URL}/properties/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus, role })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Статусът е променен');
+      await loadProperties(currentPage);
+    } else showToast(data.message || 'Грешка при промяна на статус');
+  } catch (err) {
+    console.error(err);
+    showToast('Грешка при промяна на статус');
+  }
+}
+
+//////////////////////////
+// LOGIN / LOGOUT
+//////////////////////////
 loginBtn.addEventListener('click', () => openModal(loginModal));
 closeLogin.addEventListener('click', () => closeModal(loginModal));
 
