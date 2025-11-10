@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "WebSite folders",
   "main": "index.js",
-"scripts": {
-  "deploy": "gh-pages -d public"
-},
+  "scripts": {
+    "deploy": "gh-pages -d ."
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
