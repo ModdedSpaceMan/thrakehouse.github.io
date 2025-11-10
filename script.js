@@ -303,6 +303,54 @@ viewSupportBtn.addEventListener('click', async ()=>{
 /* ---------- Sidebar Toggle ---------- */
 sidebarToggle.addEventListener('click',()=>adminSidebar.classList.toggle('show'));
 
+// ---------- Add Property (Admin) ----------
+openAddBtn.addEventListener('click', () => openModal(addPropertyModal));
+closeAdd.addEventListener('click', () => closeModal(addPropertyModal));
+
+propertyForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const name = document.getElementById('propertyName').value.trim();
+  const location = document.getElementById('propertyLocation').value.trim();
+  const price = parseFloat(document.getElementById('propertyPrice').value) || 0;
+  const type = document.getElementById('propertyType').value;
+  const status = document.getElementById('propertyStatus').value;
+  const imageInput = document.getElementById('propertyImage');
+  let image = '';
+
+  // optional: handle image as base64
+  if (imageInput.files.length > 0) {
+    const file = imageInput.files[0];
+    const reader = new FileReader();
+    await new Promise((resolve) => {
+      reader.onload = () => { image = reader.result; resolve(); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const property = { name, location, price, type, status, image };
+
+  try {
+    const res = await fetch(`${API_URL}/properties`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role, property })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Имотът е добавен успешно!');
+      closeModal(addPropertyModal);
+      propertyForm.reset();
+      loadProperties();
+    } else {
+      showToast(data.message || 'Грешка при добавяне на имота');
+    }
+  } catch {
+    showToast('Грешка при добавяне на имота');
+  }
+});
+
+
 /* ---------- Escape HTML ---------- */
 function escapeHtml(text){
   const div=document.createElement('div');
