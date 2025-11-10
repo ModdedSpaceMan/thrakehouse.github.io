@@ -75,7 +75,9 @@ function uiInit() {
   openAddBtn.style.display = role === 'admin' ? 'block' : 'none';
 }
 
-/* ---------- Wishlist ---------- */
+//////////////////////////
+// WISHLIST FUNCTIONS
+//////////////////////////
 async function loadWishlist(render = true) {
   if (!username) {
     if (render) wishlistContent.innerHTML = '<p>Влезте, за да видите списъка</p>';
@@ -146,14 +148,19 @@ async function addToWishlist(propertyId) {
 async function removeFromWishlist(propertyId) {
   if (!username) { showToast('Влезте, за да премахвате'); return; }
   try {
-    await fetch(`${API_URL}/wishlists/remove`, {
+    const res = await fetch(`${API_URL}/wishlists/remove`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, propertyId })
     });
-    showToast('Премахнато от списъка');
-    loadWishlist();
-    renderPage(currentPage);
+    const json = await res.json();
+    if (json.success) {
+      showToast('Премахнато от списъка');
+      loadWishlist();
+      renderPage(currentPage);
+    } else {
+      showToast(json.message || 'Грешка при премахване');
+    }
   } catch {
     showToast('Грешка при премахване');
   }
@@ -162,7 +169,9 @@ async function removeFromWishlist(propertyId) {
 wishlistBtn.addEventListener('click', () => { openModal(wishlistModal); loadWishlist(); });
 closeWishlist.addEventListener('click', () => closeModal(wishlistModal));
 
-/* ---------- Load Properties ---------- */
+//////////////////////////
+// LOAD & RENDER PROPERTIES
+//////////////////////////
 async function loadProperties(page = 1) {
   try {
     const res = await fetch(`${API_URL}/properties`);
@@ -175,7 +184,6 @@ async function loadProperties(page = 1) {
   }
 }
 
-/* ---------- Render Properties ---------- */
 function renderPage(page = 1) {
   let filtered = [...allProperties];
 
@@ -218,12 +226,13 @@ function renderPage(page = 1) {
         <p>${p.type || ''} • ${p.status || ''}</p>
       </div>
       <button class="wishlist-btn" onclick="addToWishlist('${p.id}')">Запази</button>
+      ${role === 'admin' ? `
       <div class="admin-buttons-right">
         <button class="edit-btn" onclick="editProperty('${p.id}')">Редактирай</button>
         <button class="delete-btn" onclick="deleteProperty('${p.id}')">Изтрий</button>
-        <button class="toggle-btn" onclick="toggleStatus('${p.id}')">Свободен/Зает</button>
+        <button class="toggle-btn" onclick="toggleStatus('${p.id}')">${p.status === 'free' ? 'Зает' : 'Свободен'}</button>
         <div class="admin-id">ID: ${p.id}</div>
-      </div>
+      </div>` : ''}
     `;
     propertiesContainer.appendChild(div);
   });
@@ -231,10 +240,11 @@ function renderPage(page = 1) {
   currentPage = page;
 }
 
-/* ---------- Apply Filters ---------- */
 applyFiltersBtn.addEventListener('click', () => renderPage(1));
 
-/* ---------- Edit Property ---------- */
+//////////////////////////
+// EDIT PROPERTY
+//////////////////////////
 function editProperty(id) {
   const prop = allProperties.find(p => p.id === id);
   if (!prop) return;
@@ -250,42 +260,70 @@ function editProperty(id) {
   openModal(addPropertyModal);
 }
 
-/* ---------- Delete Property ---------- */
+//////////////////////////
+// DELETE PROPERTY
+//////////////////////////
 async function deleteProperty(id) {
   if (!confirm('Сигурни ли сте, че искате да изтриете имота?')) return;
+  if (!role || role !== 'admin') {
+    showToast('Нямате права да изтривате');
+    return;
+  }
   try {
-    await fetch(`${API_URL}/properties/${id}`, {
+    const res = await fetch(`${API_URL}/properties/${id}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json', 'role': role }
+      headers: { 'Content-Type': 'application/json', 'role': role },
     });
-    showToast('Имотът е изтрит!');
-    loadProperties();
+    const data = await res.json();
+    if (data.success) {
+      showToast('Имотът е изтрит!');
+      await loadProperties(currentPage);
+    } else {
+      showToast(data.message || 'Грешка при изтриване');
+    }
   } catch {
     showToast('Грешка при изтриване');
   }
 }
 
-/* ---------- Toggle Status ---------- */
+//////////////////////////
+// TOGGLE STATUS (Taken/Free)
+//////////////////////////
 async function toggleStatus(id) {
   const prop = allProperties.find(p => p.id === id);
   if (!prop) return;
+  if (!role || role !== 'admin') {
+    showToast('Нямате права да променяте статуса');
+    return;
+  }
   const newStatus = prop.status === 'free' ? 'taken' : 'free';
   try {
-    await fetch(`${API_URL}/properties/${id}`, {
+    const res = await fetch(`${API_URL}/properties/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'role': role },
-      body: JSON.stringify({ status: newStatus })
+      body: JSON.stringify({ status: newStatus }),
     });
-    showToast('Статусът е променен');
-    loadProperties();
+    const data = await res.json();
+    if (data.success) {
+      showToast('Статусът е променен');
+      await loadProperties(currentPage);
+    } else {
+      showToast(data.message || 'Грешка при промяна на статус');
+    }
   } catch {
     showToast('Грешка при промяна на статус');
   }
 }
 
-/* ---------- Add / Update Property Form ---------- */
+//////////////////////////
+// ADD / UPDATE PROPERTY FORM
+//////////////////////////
 propertyForm.addEventListener('submit', async e => {
   e.preventDefault();
+  if (!role || role !== 'admin') {
+    showToast('Нямате права да добавяте или редактирате имоти');
+    return;
+  }
   const name = document.getElementById('propertyName').value.trim();
   const location = document.getElementById('propertyLocation').value.trim();
   const price = parseFloat(document.getElementById('propertyPrice').value) || 0;
@@ -311,11 +349,12 @@ propertyForm.addEventListener('submit', async e => {
 
   try {
     const url = editingPropertyId ? `${API_URL}/properties/${editingPropertyId}` : `${API_URL}/properties`;
+    // Use PATCH for updates (usually better for partial updates), but if backend expects PUT keep as is.
     const method = editingPropertyId ? 'PUT' : 'POST';
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json', 'role': role },
-      body: JSON.stringify({ property })
+      body: JSON.stringify({ property }),
     });
     const data = await res.json();
     if (data.success) {
@@ -324,8 +363,10 @@ propertyForm.addEventListener('submit', async e => {
       propertyForm.reset();
       editingPropertyId = null;
       addPropertyModal.querySelector('h2').textContent = 'Добави нов имот';
-      loadProperties();
-    } else showToast(data.message || 'Грешка');
+      await loadProperties(currentPage);
+    } else {
+      showToast(data.message || 'Грешка');
+    }
   } catch {
     showToast('Грешка при изпращане на имота');
   }
@@ -352,7 +393,7 @@ loginForm.addEventListener('submit', async e => {
       showToast('Успешен вход!');
       closeModal(loginModal);
       uiInit();
-      loadProperties();
+      await loadProperties();
     } else showToast('Грешно потребителско име или парола');
   } catch { showToast('Грешка при опит за вход'); }
 });
@@ -366,3 +407,6 @@ logoutBtn.addEventListener('click', () => {
 /* ---------- Init ---------- */
 uiInit();
 loadProperties();
+
+
+document.head.appendChild(style);
