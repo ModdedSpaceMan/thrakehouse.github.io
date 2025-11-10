@@ -5,7 +5,8 @@ export let currentPage = 1;
 export const itemsPerPage = 10;
 export let editingPropertyId = null;
 
-import { showToast, role } from './auth.js'; // Assuming auth.js exports these
+import { showToast } from './ui.js';  // UI helper
+import { role, username } from './auth.js'; // auth info only
 
 const propertiesContainer = document.getElementById('properties');
 

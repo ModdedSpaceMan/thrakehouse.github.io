@@ -1,7 +1,4 @@
 // auth.js
-import { showToast, uiInit } from './ui.js';
-import { loadProperties } from './properties.js';
-
 export let role = localStorage.getItem('role') || '';
 export let username = localStorage.getItem('username') || '';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
