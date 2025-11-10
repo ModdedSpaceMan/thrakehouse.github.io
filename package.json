@@ -2,17 +2,10 @@
   "name": "thrakehouse.github.io",
   "version": "1.0.0",
   "description": "WebSite folders",
-  "main": "index.js",
   "scripts": {
     "deploy": "gh-pages -d ."
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "body-parser": "^2.2.0",
-    "express": "^5.1.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "gh-pages": "^6.3.0"
   }

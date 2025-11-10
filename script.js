@@ -1,5 +1,5 @@
 /* ---------- Base API URL ---------- */
-const API_URL = 'https://my-backend.martinmiskata.workers.dev/';
+const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
 /* ---------- State ---------- */
 let role = localStorage.getItem('role') || '';

@@ -1,5 +1,5 @@
 const signupForm = document.getElementById('signupForm');
-const API_URL = 'https://my-backend.martinmiskata.workers.dev/'; // <-- Worker URL
+const API_URL = 'https://my-backend.martinmiskata.workers.dev'; // <-- Worker URL
 
 function showToastLocal(msg, duration = 3000) {
   const t = document.createElement('div');
