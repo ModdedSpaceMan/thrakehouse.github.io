@@ -206,22 +206,104 @@ function renderPage(page = 1) {
 
   paginated.forEach(p => {
     const div = document.createElement('div');
-    div.className = 'property-card';
+    div.className = 'property';
+    if (p.status === 'taken') div.classList.add('taken');
+
     div.innerHTML = `
       <img src="${p.image || ''}" alt="${p.name || ''}" />
-      <h3>${p.name || ''}</h3>
-      <p>${p.location || ''}</p>
-      <p>${p.price || ''} лв/мес</p>
-      <p>${p.type || ''} • ${p.status || ''}</p>
-      <button onclick="addToWishlist('${p.id || ''}')">♥</button>
+      <div class="status-badge">${p.status === 'free' ? 'Свободен' : 'Зает'}</div>
+      <div class="property-id">${p.id || ''}</div>
+
+      <div class="property-content">
+        <h3>${p.name || ''}</h3>
+        <p>${p.location || ''}</p>
+        <p>${p.price || ''} лв/мес</p>
+        <p>${p.type || ''}</p>
+      </div>
+
+      <button class="wishlist-btn" onclick="addToWishlist('${p.id}')">♥</button>
+
+      ${role === 'admin' ? `
+      <div class="admin-buttons-right">
+        <button class="admin-btn delete-btn" onclick="deleteProperty('${p.id}')">Delete</button>
+        <button class="admin-btn edit-btn" onclick="editProperty('${p.id}')">Edit</button>
+        <button class="admin-btn toggle-btn" onclick="toggleProperty('${p.id}')">${p.status === 'free' ? 'Taken' : 'Free'}</button>
+        <div class="admin-id">${p.id}</div>
+      </div>` : ''}
     `;
+
     propertiesContainer.appendChild(div);
   });
 
   currentPage = page;
 }
 
-applyFiltersBtn.addEventListener('click', () => renderPage(1));
+async function deleteProperty(id) {
+  if (!confirm('Сигурни ли сте, че искате да изтриете този имот?')) return;
+  try {
+    const res = await fetch(`${API_URL}/properties/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Role': role } });
+    if (res.ok) { showToast('Имотът е изтрит'); loadProperties(currentPage); }
+    else showToast('Грешка при изтриване');
+  } catch { showToast('Грешка при изтриване'); }
+}
+
+function editProperty(id) {
+  // Option: open addPropertyModal with prefilled data
+  const prop = allProperties.find(p => p.id === id);
+  if (!prop) { showToast('Имотът не е намерен'); return; }
+
+  document.getElementById('propertyName').value = prop.name;
+  document.getElementById('propertyLocation').value = prop.location;
+  document.getElementById('propertyPrice').value = prop.price;
+  document.getElementById('propertyType').value = prop.type;
+  document.getElementById('propertyStatus').value = prop.status;
+
+  openModal(addPropertyModal);
+
+  // Change form submit temporarily to update
+  propertyForm.onsubmit = async e => {
+    e.preventDefault();
+    const name = document.getElementById('propertyName').value.trim();
+    const location = document.getElementById('propertyLocation').value.trim();
+    const price = parseFloat(document.getElementById('propertyPrice').value) || 0;
+    const type = document.getElementById('propertyType').value;
+    const status = document.getElementById('propertyStatus').value;
+
+    const property = { name, location, price, type, status, image: prop.image };
+
+    try {
+      const res = await fetch(`${API_URL}/properties/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Role': role },
+        body: JSON.stringify({ property })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Имотът е обновен');
+        closeModal(addPropertyModal);
+        propertyForm.reset();
+        loadProperties(currentPage);
+        propertyForm.onsubmit = originalSubmit; // restore original
+      } else showToast(data.message || 'Грешка при обновяване');
+    } catch { showToast('Грешка при обновяване'); }
+  };
+}
+
+async function toggleProperty(id) {
+  const prop = allProperties.find(p => p.id === id);
+  if (!prop) return;
+  const newStatus = prop.status === 'free' ? 'taken' : 'free';
+  try {
+    const res = await fetch(`${API_URL}/properties/${id}/toggle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Role': role },
+      body: JSON.stringify({ status: newStatus })
+    });
+    if (res.ok) { showToast(`Статусът е променен на ${newStatus}`); loadProperties(currentPage); }
+    else showToast('Грешка при промяна на статуса');
+  } catch { showToast('Грешка при промяна на статуса'); }
+}
+
 
 /* ---------- Login / Logout ---------- */
 loginBtn.addEventListener('click', () => openModal(loginModal));
