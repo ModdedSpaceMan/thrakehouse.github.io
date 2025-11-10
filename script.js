@@ -73,8 +73,8 @@ function uiInit() {
   sidebarToggle.style.display = role === 'admin' ? 'inline-block' : 'none';
   openAddBtn.style.display = role === 'admin' ? 'block' : 'none';
 
-  // Hide sidebar for non-admins
-  if (role !== 'admin') adminSidebar.classList.remove('show');
+  if (role === 'admin') adminSidebar.classList.add('show');
+  else adminSidebar.classList.remove('show');
 }
 
 /* ---------- Admin Sidebar Toggle ---------- */
@@ -165,9 +165,7 @@ async function removeFromWishlist(propertyId) {
       showToast('Премахнато от списъка');
       loadWishlist();
       renderPage(currentPage);
-    } else {
-      showToast(json.message || 'Грешка при премахване');
-    }
+    } else showToast(json.message || 'Грешка при премахване');
   } catch {
     showToast('Грешка при премахване');
   }
@@ -269,10 +267,7 @@ function editProperty(id) {
 
 propertyForm.addEventListener('submit', async e => {
   e.preventDefault();
-  if (!role || role !== 'admin') {
-    showToast('Нямате права да добавяте или редактирате имоти');
-    return;
-  }
+  if (!role || role !== 'admin') { showToast('Нямате права да добавяте или редактирате имоти'); return; }
 
   const name = document.getElementById('propertyName').value.trim();
   const location = document.getElementById('propertyLocation').value.trim();
@@ -298,15 +293,13 @@ propertyForm.addEventListener('submit', async e => {
   if (image) property.image = image;
 
   try {
-    const url = editingPropertyId
-      ? `${API_URL}/properties/${editingPropertyId}`
-      : `${API_URL}/properties`;
+    const url = editingPropertyId ? `${API_URL}/properties/${editingPropertyId}` : `${API_URL}/properties`;
     const method = editingPropertyId ? 'PUT' : 'POST';
 
     const res = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...property, role })
+      headers: { 'Content-Type': 'application/json', 'role': role },
+      body: JSON.stringify(property)
     });
 
     const data = await res.json();
@@ -318,10 +311,7 @@ propertyForm.addEventListener('submit', async e => {
       addPropertyModal.querySelector('h2').textContent = 'Добави нов имот';
       await loadProperties(currentPage);
     } else showToast(data.message || 'Грешка');
-  } catch (err) {
-    console.error(err);
-    showToast('Грешка при изпращане на имота');
-  }
+  } catch (err) { console.error(err); showToast('Грешка при изпращане на имота'); }
 });
 
 //////////////////////////
@@ -329,50 +319,39 @@ propertyForm.addEventListener('submit', async e => {
 //////////////////////////
 async function deleteProperty(id) {
   if (!confirm('Сигурни ли сте, че искате да изтриете имота?')) return;
-  if (!role || role !== 'admin') {
-    showToast('Нямате права да изтривате');
-    return;
-  }
+  if (!role || role !== 'admin') { showToast('Нямате права да изтривате'); return; }
+
   try {
     const res = await fetch(`${API_URL}/properties/${id}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role })
+      headers: { 'Content-Type': 'application/json', 'role': role }
     });
     const data = await res.json();
     if (data.success) {
       showToast('Имотът е изтрит!');
       await loadProperties(currentPage);
     } else showToast(data.message || 'Грешка при изтриване');
-  } catch (err) {
-    console.error(err);
-    showToast('Грешка при изтриване');
-  }
+  } catch (err) { console.error(err); showToast('Грешка при изтриване'); }
 }
 
 async function toggleStatus(id) {
   const prop = allProperties.find(p => p.id === id);
   if (!prop) return;
-  if (!role || role !== 'admin') {
-    showToast('Нямате права да променяте статуса');
-    return;
-  }
+  if (!role || role !== 'admin') { showToast('Нямате права да променяте статуса'); return; }
+
   const newStatus = prop.status === 'free' ? 'taken' : 'free';
   try {
     const res = await fetch(`${API_URL}/properties/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus, role })
+      headers: { 'Content-Type': 'application/json', 'role': role },
+      body: JSON.stringify({ status: newStatus })
     });
     const data = await res.json();
     if (data.success) {
       showToast('Статусът е променен');
       await loadProperties(currentPage);
     } else showToast(data.message || 'Грешка при промяна на статус');
-  } catch (err) {
-    console.error(err);
-    showToast('Грешка при промяна на статус');
-  }
+  } catch (err) { console.error(err); showToast('Грешка при промяна на статус'); }
 }
 
 //////////////////////////
