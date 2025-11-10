@@ -8,15 +8,26 @@ let allProperties = [];
 let wishlistIds = [];
 let currentPage = 1;
 const itemsPerPage = 10;
-let editingPropertyId = null; // tracks currently edited property
+let editingPropertyId = null;
 
-/* ---------- Helpers: Toast ---------- */
+/* ---------- Toast ---------- */
 function showToast(message, duration = 3000) {
   const toast = document.getElementById('toast');
   toast.textContent = message;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), duration);
 }
+
+/* ---------- Modal Utility ---------- */
+function openModal(modal) { modal.setAttribute('aria-hidden', 'false'); }
+function closeModal(modal) { modal.setAttribute('aria-hidden', 'true'); }
+
+window.addEventListener('click', e => {
+  if (e.target.id === 'loginModal') closeModal(loginModal);
+  if (e.target.id === 'addPropertyModal') closeModal(addPropertyModal);
+  if (e.target.id === 'wishlistModal') closeModal(wishlistModal);
+  if (e.target.id === 'resetModal') closeModal(resetModal);
+});
 
 /* ---------- Elements ---------- */
 const propertiesContainer = document.getElementById('properties');
@@ -53,20 +64,8 @@ const applyFiltersBtn = document.getElementById('applyFilters');
 const adminSearchInput = document.getElementById('adminSearchInput');
 const adminSearchBtn = document.getElementById('adminSearchBtn');
 const adminFound = document.getElementById('adminFound');
-const propertyImageInput = document.getElementById('propertyImage');
 
-/* ---------- Modal Utility ---------- */
-function openModal(modal) { modal.setAttribute('aria-hidden', 'false'); }
-function closeModal(modal) { modal.setAttribute('aria-hidden', 'true'); }
-
-window.addEventListener('click', e => {
-  if (e.target === loginModal) closeModal(loginModal);
-  if (e.target === addPropertyModal) closeModal(addPropertyModal);
-  if (e.target === wishlistModal) closeModal(wishlistModal);
-  if (e.target === resetModal) closeModal(resetModal);
-});
-
-/* ---------- UI Initialization ---------- */
+/* ---------- UI Init ---------- */
 function uiInit() {
   loginBtn.style.display = role ? 'none' : 'inline-block';
   wishlistBtn.style.display = role ? 'inline-block' : 'none';
@@ -76,7 +75,7 @@ function uiInit() {
   openAddBtn.style.display = role === 'admin' ? 'block' : 'none';
 }
 
-/* ---------- Load Wishlist ---------- */
+/* ---------- Wishlist ---------- */
 async function loadWishlist(render = true) {
   if (!username) {
     if (render) wishlistContent.innerHTML = '<p>Влезте, за да видите списъка</p>';
@@ -120,7 +119,6 @@ async function loadWishlist(render = true) {
   }
 }
 
-/* ---------- Add / Remove Wishlist ---------- */
 async function addToWishlist(propertyId) {
   if (!username) { showToast('Влезте, за да добавяте в списък'); return; }
   try {
@@ -203,25 +201,23 @@ function renderPage(page = 1) {
 
   paginated.forEach(p => {
     const div = document.createElement('div');
-    div.className = `property ${p.status === 'taken' ? 'taken' : ''}`;
+    div.className = 'property' + (p.status === 'taken' ? ' taken' : '');
     div.innerHTML = `
+      ${p.status ? `<div class="status-badge">${p.status === 'free' ? 'Свободен' : 'Зает'}</div>` : ''}
       <img src="${p.image || ''}" alt="${p.name || ''}" />
-      <div class="status-badge">${p.status === 'free' ? 'Свободен' : 'Зает'}</div>
       <div class="property-content">
         <h3>${p.name || ''}</h3>
         <p>${p.location || ''}</p>
         <p>${p.price || ''} лв/мес</p>
-        <p>${p.type || ''}</p>
-      </div>
-      <div class="admin-buttons-right">
-        <button class="admin-btn edit-btn" onclick="editProperty('${p.id}')">Редактирай</button>
-        <button class="admin-btn delete-btn" onclick="deleteProperty('${p.id}')">Изтрий</button>
-        <button class="admin-btn toggle-btn" onclick="togglePropertyStatus('${p.id}')">
-          ${p.status === 'free' ? 'Маркирай като зает' : 'Маркирай като свободен'}
-        </button>
-        <div class="admin-id">ID: ${p.id}</div>
+        <p>${p.type || ''} • ${p.status || ''}</p>
       </div>
       <button class="wishlist-btn" onclick="addToWishlist('${p.id}')">Запази</button>
+      <div class="admin-buttons-right">
+        <button class="edit-btn" onclick="editProperty('${p.id}')">Редактирай</button>
+        <button class="delete-btn" onclick="deleteProperty('${p.id}')">Изтрий</button>
+        <button class="toggle-btn" onclick="toggleStatus('${p.id}')">Свободен/Зает</button>
+        <div class="admin-id">ID: ${p.id}</div>
+      </div>
     `;
     propertiesContainer.appendChild(div);
   });
@@ -229,34 +225,60 @@ function renderPage(page = 1) {
   currentPage = page;
 }
 
+/* ---------- Apply Filters ---------- */
 applyFiltersBtn.addEventListener('click', () => renderPage(1));
 
 /* ---------- Edit Property ---------- */
-async function editProperty(id) {
-  editingPropertyId = id;
+function editProperty(id) {
   const prop = allProperties.find(p => p.id === id);
-  if (!prop) { showToast('Имотът не е намерен'); return; }
+  if (!prop) return;
+  editingPropertyId = id;
 
   document.getElementById('propertyName').value = prop.name || '';
   document.getElementById('propertyLocation').value = prop.location || '';
   document.getElementById('propertyPrice').value = prop.price || '';
-  document.getElementById('propertyType').value = prop.type || 'apartment';
-  document.getElementById('propertyStatus').value = prop.status || 'free';
-  
-  // Show preview of current image if exists
-  if (prop.image) {
-    const imgPreview = document.createElement('img');
-    imgPreview.src = prop.image;
-    imgPreview.style.maxWidth = '100%';
-    imgPreview.style.marginBottom = '8px';
-    propertyForm.insertBefore(imgPreview, propertyForm.firstChild.nextSibling);
-  }
+  document.getElementById('propertyType').value = prop.type || '';
+  document.getElementById('propertyStatus').value = prop.status || '';
+  // Image input will stay empty unless user changes it
 
+  addPropertyModal.querySelector('h2').textContent = 'Редактирай имота';
   openModal(addPropertyModal);
-  document.querySelector('#addPropertyModal h2').textContent = 'Редактирай имот';
 }
 
-/* ---------- Add / Update Property ---------- */
+/* ---------- Delete Property ---------- */
+async function deleteProperty(id) {
+  if (!confirm('Сигурни ли сте, че искате да изтриете имота?')) return;
+  try {
+    await fetch(`${API_URL}/properties/${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'role': role }
+    });
+    showToast('Имотът е изтрит!');
+    loadProperties();
+  } catch {
+    showToast('Грешка при изтриване');
+  }
+}
+
+/* ---------- Toggle Status ---------- */
+async function toggleStatus(id) {
+  const prop = allProperties.find(p => p.id === id);
+  if (!prop) return;
+  const newStatus = prop.status === 'free' ? 'taken' : 'free';
+  try {
+    await fetch(`${API_URL}/properties/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'role': role },
+      body: JSON.stringify({ status: newStatus })
+    });
+    showToast('Статусът е променен');
+    loadProperties();
+  } catch {
+    showToast('Грешка при промяна на статус');
+  }
+}
+
+/* ---------- Add / Update Property Form ---------- */
 propertyForm.addEventListener('submit', async e => {
   e.preventDefault();
   const name = document.getElementById('propertyName').value.trim();
@@ -264,85 +286,42 @@ propertyForm.addEventListener('submit', async e => {
   const price = parseFloat(document.getElementById('propertyPrice').value) || 0;
   const type = document.getElementById('propertyType').value;
   const status = document.getElementById('propertyStatus').value;
+  const imageInput = document.getElementById('propertyImage');
   let image = '';
 
-  if (propertyImageInput.files.length > 0) {
-    const file = propertyImageInput.files[0];
+  if (imageInput.files.length > 0) {
+    const file = imageInput.files[0];
     const reader = new FileReader();
     await new Promise(resolve => {
       reader.onload = () => { image = reader.result; resolve(); };
       reader.readAsDataURL(file);
     });
-  } else if (editingPropertyId) {
-    const oldProp = allProperties.find(p => p.id === editingPropertyId);
-    image = oldProp.image; // keep old image
   }
 
-  const property = { name, location, price, type, status, image };
+  const property = { name, location, price, type, status };
+  if (image) property.image = image;
 
   try {
-    let res, data;
-    if (editingPropertyId) {
-      res = await fetch(`${API_URL}/properties/${editingPropertyId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role, property })
-      });
-      data = await res.json();
-    } else {
-      res = await fetch(`${API_URL}/properties`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role, property })
-      });
-      data = await res.json();
-    }
-
+    const url = editingPropertyId ? `${API_URL}/properties/${editingPropertyId}` : `${API_URL}/properties`;
+    const method = editingPropertyId ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', 'role': role },
+      body: JSON.stringify({ property })
+    });
+    const data = await res.json();
     if (data.success) {
-      showToast(editingPropertyId ? 'Имотът е редактиран успешно!' : 'Имотът е добавен успешно!');
+      showToast(editingPropertyId ? 'Имотът е обновен!' : 'Имотът е добавен успешно!');
       closeModal(addPropertyModal);
       propertyForm.reset();
-      const previews = propertyForm.querySelectorAll('img');
-      previews.forEach(img => img.remove());
       editingPropertyId = null;
-      document.querySelector('#addPropertyModal h2').textContent = 'Добави нов имот';
+      addPropertyModal.querySelector('h2').textContent = 'Добави нов имот';
       loadProperties();
-    } else showToast(data.message || 'Грешка при добавяне/редактиране на имота');
+    } else showToast(data.message || 'Грешка');
   } catch {
-    showToast('Грешка при добавяне/редактиране на имота');
+    showToast('Грешка при изпращане на имота');
   }
 });
-
-/* ---------- Delete Property ---------- */
-async function deleteProperty(id) {
-  if (!confirm('Сигурни ли сте, че искате да изтриете този имот?')) return;
-  try {
-    const res = await fetch(`${API_URL}/properties/${id}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json', 'role': role }
-    });
-    const data = await res.json();
-    showToast(data.success ? 'Имотът е изтрит' : 'Грешка при изтриване');
-    loadProperties();
-  } catch { showToast('Грешка при изтриване'); }
-}
-
-/* ---------- Toggle Property Status ---------- */
-async function togglePropertyStatus(id) {
-  const prop = allProperties.find(p => p.id === id);
-  if (!prop) return;
-  const newStatus = prop.status === 'free' ? 'taken' : 'free';
-  try {
-    const res = await fetch(`${API_URL}/properties/${id}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'role': role },
-      body: JSON.stringify({ status: newStatus })
-    });
-    const data = await res.json();
-    showToast(data.success ? 'Статусът е променен' : 'Грешка');
-    loadProperties();
-  } catch { showToast('Грешка'); }
-}
 
 /* ---------- Login / Logout ---------- */
 loginBtn.addEventListener('click', () => openModal(loginModal));
@@ -376,62 +355,6 @@ logoutBtn.addEventListener('click', () => {
   uiInit(); showToast('Успешен изход!'); loadProperties();
 });
 
-/* ---------- Reset Password ---------- */
-forgotPasswordLink.addEventListener('click', e => { e.preventDefault(); openModal(resetModal); });
-closeReset.addEventListener('click', () => closeModal(resetModal));
-resetForm.addEventListener('submit', async e => {
-  e.preventDefault();
-  const val = resetInput.value.trim();
-  if(!val){ showToast('Въведете имейл или потребителско име'); return; }
-  try {
-    const res = await fetch(`${API_URL}/reset-password`,{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({emailOrUsername: val})
-    });
-    const data = await res.json();
-    closeModal(resetModal);
-    showToast(data.message||'Заявката е създадена');
-    resetForm.reset();
-  } catch { showToast('Грешка при изпращане'); }
-});
-
-/* ---------- Support Form ---------- */
-supportForm.addEventListener('submit', async e => {
-  e.preventDefault();
-  const name=document.getElementById('supportName').value;
-  const email=document.getElementById('supportEmail').value;
-  const message=document.getElementById('supportMessage').value;
-  try{
-    await fetch(`${API_URL}/support`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,message})});
-    showToast('Съобщението е изпратено');
-    supportForm.reset();
-  } catch { showToast('Грешка при изпращане на съобщение'); }
-});
-
-/* ---------- Admin Sidebar ---------- */
-sidebarToggle.addEventListener('click',()=>adminSidebar.classList.toggle('show'));
-viewSupportBtn.addEventListener('click', async () => {
-  try{
-    const res=await fetch(`${API_URL}/support-messages`);
-    const data=Array.isArray(await res.json())?await res.json():[];
-    supportMessagesDiv.innerHTML='';
-    data.forEach(m => {
-      const div=document.createElement('div');
-      div.innerHTML=`<p><strong>${m.name}</strong> (${m.email})</p><p>${m.message}</p><hr>`;
-      supportMessagesDiv.appendChild(div);
-    });
-  } catch { showToast('Грешка при зареждане на съобщения'); }
-});
-
-/* ---------- Admin Search Property by ID ---------- */
-adminSearchBtn.addEventListener('click', () => {
-  const id=adminSearchInput.value.trim();
-  if(!id) return;
-  const prop = allProperties.find(p=>p.id===id);
-  if(prop) adminFound.textContent=`Намерено: ${prop.name} (${prop.status})`;
-  else adminFound.textContent='Не е намерен имот с това ID';
-});
-
-/* ---------- Initialization ---------- */
+/* ---------- Init ---------- */
 uiInit();
 loadProperties();
