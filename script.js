@@ -307,9 +307,6 @@ viewSupportBtn.addEventListener('click', async ()=>{
 sidebarToggle.addEventListener('click',()=>adminSidebar.classList.toggle('show'));
 
 /* ---------- Add Property (Admin) ---------- */
-openAddBtn.addEventListener('click',()=>openModal(addPropertyModal));
-closeAdd.addEventListener('click',()=>closeModal(addPropertyModal));
-
 propertyForm.addEventListener('submit', async e => {
   e.preventDefault();
   const name = document.getElementById('propertyName').value.trim();
@@ -320,30 +317,45 @@ propertyForm.addEventListener('submit', async e => {
   const imageInput = document.getElementById('propertyImage');
   let image = '';
 
-  if(imageInput.files.length>0){
+  if(imageInput.files.length > 0){
     const file = imageInput.files[0];
     const reader = new FileReader();
-    await new Promise(resolve=>{
-      reader.onload=()=>{image=reader.result; resolve();};
+    await new Promise(resolve => {
+      reader.onload = () => { image = reader.result; resolve(); };
       reader.readAsDataURL(file);
     });
   }
 
-  const property={name,location,price,type,status,image};
+  const property = { name, location, price, type, status, image };
 
-  try{
-    const res=await fetch(`${API_URL}/properties`,{
-      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({role,property})
+  try {
+    const res = await fetch(`${API_URL}/properties`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ role, property })
     });
-    const data=await res.json();
+    const data = await res.json();
+
     if(data.success){
       showToast('Имотът е добавен успешно!');
       closeModal(addPropertyModal);
       propertyForm.reset();
-      loadProperties();
-    } else showToast(data.message||'Грешка при добавяне на имота');
-  } catch { showToast('Грешка при добавяне на имота'); }
+
+      // Push immediately to allProperties so it appears without re-fetch
+      if(data.property?.id){
+        allProperties.push(data.property);
+        renderPage(currentPage);
+      } else {
+        // fallback if backend didn't return property with ID
+        loadProperties(currentPage);
+      }
+
+    } else showToast(data.message || 'Грешка при добавяне на имота');
+  } catch {
+    showToast('Грешка при добавяне на имота');
+  }
 });
+
 
 /* ---------- Admin: Search Property by ID ---------- */
 adminSearchBtn.addEventListener('click', ()=>{
