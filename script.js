@@ -125,7 +125,7 @@ async function addToWishlist(propertyId) {
     if (json.success) showToast('Добавено в списъка');
     else showToast('Вече е в списъка');
     loadWishlist();
-    loadProperties(currentPage);
+    renderPage(currentPage);
   } catch {
     showToast('Грешка при добавяне');
   }
@@ -141,7 +141,7 @@ async function removeFromWishlist(propertyId) {
     });
     showToast('Премахнато от списъка');
     loadWishlist();
-    loadProperties(currentPage);
+    renderPage(currentPage);
   } catch {
     showToast('Грешка при премахване');
   }
@@ -162,6 +162,55 @@ async function loadProperties(page = 1) {
     showToast('Грешка при зареждане на имотите');
   }
 }
+
+/* ---------- Render Properties & Filters ---------- */
+function renderPage(page = 1) {
+  let filtered = [...allProperties];
+
+  const loc = filterLocation.value.trim().toLowerCase();
+  const min = parseFloat(filterMinPrice.value) || 0;
+  const max = parseFloat(filterMaxPrice.value) || Infinity;
+  const type = filterType.value;
+  const free = filterFree.checked;
+  const taken = filterTaken.checked;
+
+  filtered = filtered.filter(p => {
+    if (loc && !p.location.toLowerCase().includes(loc)) return false;
+    if (p.price < min || p.price > max) return false;
+    if (type && p.type !== type) return false;
+    if (free && p.status !== 'free') return false;
+    if (taken && p.status !== 'taken') return false;
+    return true;
+  });
+
+  const start = (page - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const paginated = filtered.slice(start, end);
+
+  propertiesContainer.innerHTML = '';
+  if (!paginated.length) {
+    propertiesContainer.innerHTML = '<p>Няма имоти за показване.</p>';
+    return;
+  }
+
+  paginated.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'property-card';
+    div.innerHTML = `
+      <img src="${p.image}" alt="${p.name}" />
+      <h3>${p.name}</h3>
+      <p>${p.location}</p>
+      <p>${p.price} лв/мес</p>
+      <p>${p.type} • ${p.status}</p>
+      <button onclick="addToWishlist('${p.id}')">♥</button>
+    `;
+    propertiesContainer.appendChild(div);
+  });
+
+  currentPage = page;
+}
+
+applyFiltersBtn.addEventListener('click', () => renderPage(1));
 
 /* ---------- Login / Logout ---------- */
 loginBtn.addEventListener('click', () => openModal(loginModal));
@@ -195,8 +244,6 @@ logoutBtn.addEventListener('click', () => {
   uiInit(); showToast('Успешен изход!'); loadProperties();
 });
 
-/* ---------- Signup handled separately in signup.js ---------- */
-
 /* ---------- Reset Password ---------- */
 forgotPasswordLink.addEventListener('click', e => { e.preventDefault(); openModal(resetModal); });
 closeReset.addEventListener('click', () => closeModal(resetModal));
@@ -226,7 +273,7 @@ supportForm.addEventListener('submit', async e => {
     await fetch(`${API_URL}/support`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,message})});
     showToast('Съобщението е изпратено!');
     supportForm.reset();
-  } catch{ showToast('Грешка при изпращане'); }
+  } catch{showToast('Грешка при изпращане'); }
 });
 
 /* ---------- Admin: View Support ---------- */
