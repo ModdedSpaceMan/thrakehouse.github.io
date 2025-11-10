@@ -19,14 +19,14 @@ function showToast(message, duration = 3000) {
 }
 
 /* ---------- Modal Utility ---------- */
-function openModal(modal) { modal.setAttribute('aria-hidden', 'false'); }
-function closeModal(modal) { modal.setAttribute('aria-hidden', 'true'); }
+function openModal(modal) { if(modal) modal.setAttribute('aria-hidden', 'false'); }
+function closeModal(modal) { if(modal) modal.setAttribute('aria-hidden', 'true'); }
 
 window.addEventListener('click', e => {
-  if (e.target.id === 'loginModal') closeModal(loginModal);
-  if (e.target.id === 'addPropertyModal') closeModal(addPropertyModal);
-  if (e.target.id === 'wishlistModal') closeModal(wishlistModal);
-  if (e.target.id === 'resetModal') closeModal(resetModal);
+  if (e.target === loginModal) closeModal(loginModal);
+  if (e.target === addPropertyModal) closeModal(addPropertyModal);
+  if (e.target === wishlistModal) closeModal(wishlistModal);
+  if (e.target === resetModal) closeModal(resetModal);
 });
 
 /* ---------- Elements ---------- */
@@ -92,23 +92,30 @@ async function loadWishlist(render = true) {
     }
 
     const pres = await fetch(`${API_URL}/properties`);
-    const props = Array.isArray(await pres.json()) ? await pres.json() : [];
+    const props = await pres.json();
+    const properties = Array.isArray(props) ? props : [];
 
     if (!render) return;
 
     wishlistContent.innerHTML = '';
     wishlistIds.forEach(id => {
-      const p = props.find(x => x.id === id);
+      const p = properties.find(x => x.id === id);
       const row = document.createElement('div');
       row.className = 'wish-item';
 
       if (!p) {
-        row.innerHTML = `<div class="wish-meta"><div style="font-size:13px;color:#6b7280"><strong>ID:</strong> ${id}</div>Имот е изтрит или недостъпен</div>
-                         <button class="remove-wish" onclick="removeFromWishlist('${id}')">Премахни</button>`;
+        row.innerHTML = `<div class="wish-meta">
+                          <div style="font-size:13px;color:#6b7280"><strong>ID:</strong> ${id}</div>
+                          Имот е изтрит или недостъпен
+                        </div>
+                        <button class="remove-wish" onclick="removeFromWishlist('${id}')">Премахни</button>`;
       } else {
         row.innerHTML = `<img class="wish-thumb" src="${p.image || ''}" />
-                         <div class="wish-meta"><div style="font-size:13px;color:#6b7280"><strong>ID:</strong> ${p.id}</div>
-                         <strong>${p.name || ''}</strong><div style="font-size:13px;color:#6b7280">${p.location || ''} • ${p.price || ''}</div></div>
+                         <div class="wish-meta">
+                           <div style="font-size:13px;color:#6b7280"><strong>ID:</strong> ${p.id}</div>
+                           <strong>${p.name || ''}</strong>
+                           <div style="font-size:13px;color:#6b7280">${p.location || ''} • ${p.price || ''}</div>
+                         </div>
                          <button class="remove-wish" onclick="removeFromWishlist('${p.id}')">Премахни</button>`;
       }
       wishlistContent.appendChild(row);
@@ -159,8 +166,8 @@ closeWishlist.addEventListener('click', () => closeModal(wishlistModal));
 async function loadProperties(page = 1) {
   try {
     const res = await fetch(`${API_URL}/properties`);
-    const props = Array.isArray(await res.json()) ? await res.json() : [];
-    allProperties = props;
+    const props = await res.json();
+    allProperties = Array.isArray(props) ? props : [];
     if (username) await loadWishlist(false);
     renderPage(page);
   } catch {
@@ -184,8 +191,7 @@ function renderPage(page = 1) {
     if (loc && !(p.location || '').toLowerCase().includes(loc)) return false;
     if ((p.price || 0) < min || (p.price || 0) > max) return false;
     if (type && (p.type || '') !== type) return false;
-    if (free && (p.status || '') !== 'free') return false;
-    if (taken && (p.status || '') !== 'taken') return false;
+    if ((free && p.status !== 'free') || (taken && p.status !== 'taken')) return false;
     return true;
   });
 
@@ -239,7 +245,6 @@ function editProperty(id) {
   document.getElementById('propertyPrice').value = prop.price || '';
   document.getElementById('propertyType').value = prop.type || '';
   document.getElementById('propertyStatus').value = prop.status || '';
-  // Image input will stay empty unless user changes it
 
   addPropertyModal.querySelector('h2').textContent = 'Редактирай имота';
   openModal(addPropertyModal);
@@ -296,6 +301,9 @@ propertyForm.addEventListener('submit', async e => {
       reader.onload = () => { image = reader.result; resolve(); };
       reader.readAsDataURL(file);
     });
+  } else if (editingPropertyId) {
+    const prop = allProperties.find(p => p.id === editingPropertyId);
+    if (prop?.image) image = prop.image;
   }
 
   const property = { name, location, price, type, status };
