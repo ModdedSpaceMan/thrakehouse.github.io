@@ -174,136 +174,58 @@ async function loadProperties(page = 1) {
 }
 
 /* ---------- Render Properties ---------- */
-function renderPage(page = 1) {
-  let filtered = [...allProperties];
-
-  const loc = filterLocation.value.trim().toLowerCase();
-  const min = parseFloat(filterMinPrice.value) || 0;
-  const max = parseFloat(filterMaxPrice.value) || Infinity;
-  const type = filterType.value;
-  const free = filterFree.checked;
-  const taken = filterTaken.checked;
-
-  filtered = filtered.filter(p => {
-    if (!p) return false;
-    if (loc && !(p.location || '').toLowerCase().includes(loc)) return false;
-    if ((p.price || 0) < min || (p.price || 0) > max) return false;
-    if (type && (p.type || '') !== type) return false;
-    if (free && (p.status || '') !== 'free') return false;
-    if (taken && (p.status || '') !== 'taken') return false;
-    return true;
-  });
-
-  const start = (page - 1) * itemsPerPage;
-  const end = start + itemsPerPage;
-  const paginated = filtered.slice(start, end);
-
-  propertiesContainer.innerHTML = '';
-  if (!paginated.length) {
-    propertiesContainer.innerHTML = '<p>Няма имоти за показване.</p>';
+async function loadWishlist(render = true) {
+  if (!username) {
+    if (render) wishlistContent.innerHTML = '<p>Влезте, за да видите списъка</p>';
     return;
   }
-
-  paginated.forEach(p => {
-    const div = document.createElement('div');
-    div.className = 'property';
-    if (p.status === 'taken') div.classList.add('taken');
-
-    div.innerHTML = `
-      <img src="${p.image || ''}" alt="${p.name || ''}" />
-      <div class="status-badge">${p.status === 'free' ? 'Свободен' : 'Зает'}</div>
-      <div class="property-id">${p.id || ''}</div>
-
-      <div class="property-content">
-        <h3>${p.name || ''}</h3>
-        <p>${p.location || ''}</p>
-        <p>${p.price || ''} лв/мес</p>
-        <p>${p.type || ''}</p>
-      </div>
-
-      <button class="wishlist-btn" onclick="addToWishlist('${p.id}')">♥</button>
-
-      ${role === 'admin' ? `
-      <div class="admin-buttons-right">
-        <button class="admin-btn delete-btn" onclick="deleteProperty('${p.id}')">Delete</button>
-        <button class="admin-btn edit-btn" onclick="editProperty('${p.id}')">Edit</button>
-        <button class="admin-btn toggle-btn" onclick="toggleProperty('${p.id}')">${p.status === 'free' ? 'Taken' : 'Free'}</button>
-        <div class="admin-id">${p.id}</div>
-      </div>` : ''}
-    `;
-
-    propertiesContainer.appendChild(div);
-  });
-
-  currentPage = page;
-}
-
-async function deleteProperty(id) {
-  if (!confirm('Сигурни ли сте, че искате да изтриете този имот?')) return;
   try {
-    const res = await fetch(`${API_URL}/properties/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'Role': role } });
-    if (res.ok) { showToast('Имотът е изтрит'); loadProperties(currentPage); }
-    else showToast('Грешка при изтриване');
-  } catch { showToast('Грешка при изтриване'); }
-}
+    const res = await fetch(`${API_URL}/wishlists/${username}`);
+    const data = await res.json().catch(() => ({ items: [] }));
+    wishlistIds = Array.isArray(data.items) ? data.items : [];
 
-function editProperty(id) {
-  // Option: open addPropertyModal with prefilled data
-  const prop = allProperties.find(p => p.id === id);
-  if (!prop) { showToast('Имотът не е намерен'); return; }
+    if (!wishlistIds.length) {
+      if (render) wishlistContent.innerHTML = '<p>Списъкът е празен</p>';
+      return;
+    }
 
-  document.getElementById('propertyName').value = prop.name;
-  document.getElementById('propertyLocation').value = prop.location;
-  document.getElementById('propertyPrice').value = prop.price;
-  document.getElementById('propertyType').value = prop.type;
-  document.getElementById('propertyStatus').value = prop.status;
+    const pres = await fetch(`${API_URL}/properties`);
+    const props = Array.isArray(await pres.json()) ? await pres.json() : [];
 
-  openModal(addPropertyModal);
+    if (!render) return;
 
-  // Change form submit temporarily to update
-  propertyForm.onsubmit = async e => {
-    e.preventDefault();
-    const name = document.getElementById('propertyName').value.trim();
-    const location = document.getElementById('propertyLocation').value.trim();
-    const price = parseFloat(document.getElementById('propertyPrice').value) || 0;
-    const type = document.getElementById('propertyType').value;
-    const status = document.getElementById('propertyStatus').value;
+    wishlistContent.innerHTML = '';
+    wishlistIds.forEach(id => {
+      const p = props.find(x => x.id === id);
+      const row = document.createElement('div');
+      row.className = 'wish-item';
 
-    const property = { name, location, price, type, status, image: prop.image };
-
-    try {
-      const res = await fetch(`${API_URL}/properties/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Role': role },
-        body: JSON.stringify({ property })
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast('Имотът е обновен');
-        closeModal(addPropertyModal);
-        propertyForm.reset();
-        loadProperties(currentPage);
-        propertyForm.onsubmit = originalSubmit; // restore original
-      } else showToast(data.message || 'Грешка при обновяване');
-    } catch { showToast('Грешка при обновяване'); }
-  };
-}
-
-async function toggleProperty(id) {
-  const prop = allProperties.find(p => p.id === id);
-  if (!prop) return;
-  const newStatus = prop.status === 'free' ? 'taken' : 'free';
-  try {
-    const res = await fetch(`${API_URL}/properties/${id}/toggle`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Role': role },
-      body: JSON.stringify({ status: newStatus })
+      if (!p) {
+        row.innerHTML = `
+          <div class="wish-meta">
+            <div style="font-size:13px;color:#6b7280"><strong>ID:</strong> ${id}</div>
+            Имотът е изтрит или недостъпен
+          </div>
+          <button class="remove-wish" onclick="removeFromWishlist('${id}')">Премахни</button>
+        `;
+      } else {
+        row.innerHTML = `
+          <img class="wish-thumb" src="${p.image || ''}" />
+          <div class="wish-meta">
+            <div style="font-size:13px;color:#6b7280"><strong>ID:</strong> ${p.id}</div>
+            <strong>${p.name || ''}</strong>
+            <div style="font-size:13px;color:#6b7280">${p.location || ''} • ${p.price || ''} лв/мес • ${p.type || ''}</div>
+          </div>
+          <button class="remove-wish" onclick="removeFromWishlist('${p.id}')">Премахни</button>
+        `;
+      }
+      wishlistContent.appendChild(row);
     });
-    if (res.ok) { showToast(`Статусът е променен на ${newStatus}`); loadProperties(currentPage); }
-    else showToast('Грешка при промяна на статуса');
-  } catch { showToast('Грешка при промяна на статуса'); }
+  } catch {
+    if (render) wishlistContent.innerHTML = '<p>Списъкът е празен</p>';
+    showToast('Грешка при зареждане на списъка');
+  }
 }
-
 
 /* ---------- Login / Logout ---------- */
 loginBtn.addEventListener('click', () => openModal(loginModal));
