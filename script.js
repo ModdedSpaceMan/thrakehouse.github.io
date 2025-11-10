@@ -159,11 +159,16 @@ closeWishlist.addEventListener('click', () => closeModal(wishlistModal));
 async function loadProperties(page = 1) {
   try {
     const res = await fetch(`${API_URL}/properties`);
-    const props = Array.isArray(await res.json()) ? await res.json() : [];
+    if (!res.ok) throw new Error('Network error');
+
+    const data = await res.json();
+    const props = Array.isArray(data) ? data : (data.items || []);
+
     allProperties = props;
     if (username) await loadWishlist(false);
     renderPage(page);
-  } catch {
+  } catch (err) {
+    console.error(err);
     showToast('Грешка при зареждане на имотите');
   }
 }
@@ -279,7 +284,7 @@ supportForm.addEventListener('submit', async e => {
     await fetch(`${API_URL}/support`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,message})});
     showToast('Съобщението е изпратено!');
     supportForm.reset();
-  } catch{showToast('Грешка при изпращане'); }
+  } catch{showToast('Грешка при изпращане');}
 });
 
 /* ---------- Admin: View Support ---------- */
@@ -307,6 +312,9 @@ viewSupportBtn.addEventListener('click', async ()=>{
 sidebarToggle.addEventListener('click',()=>adminSidebar.classList.toggle('show'));
 
 /* ---------- Add Property (Admin) ---------- */
+openAddBtn.addEventListener('click',()=>openModal(addPropertyModal));
+closeAdd.addEventListener('click',()=>closeModal(addPropertyModal));
+
 propertyForm.addEventListener('submit', async e => {
   e.preventDefault();
   const name = document.getElementById('propertyName').value.trim();
@@ -317,45 +325,32 @@ propertyForm.addEventListener('submit', async e => {
   const imageInput = document.getElementById('propertyImage');
   let image = '';
 
-  if(imageInput.files.length > 0){
+  if(imageInput.files.length>0){
     const file = imageInput.files[0];
     const reader = new FileReader();
-    await new Promise(resolve => {
-      reader.onload = () => { image = reader.result; resolve(); };
+    await new Promise(resolve=>{
+      reader.onload=()=>{image=reader.result; resolve();};
       reader.readAsDataURL(file);
     });
   }
 
-  const property = { name, location, price, type, status, image };
+  const property={name,location,price,type,status,image};
 
-  try {
-    const res = await fetch(`${API_URL}/properties`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ role, property })
+  try{
+    const res=await fetch(`${API_URL}/properties`,{
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({role,property})
     });
-    const data = await res.json();
-
+    const data=await res.json();
     if(data.success){
       showToast('Имотът е добавен успешно!');
       closeModal(addPropertyModal);
       propertyForm.reset();
-
-      // Push immediately to allProperties so it appears without re-fetch
-      if(data.property?.id){
-        allProperties.push(data.property);
-        renderPage(currentPage);
-      } else {
-        // fallback if backend didn't return property with ID
-        loadProperties(currentPage);
-      }
-
-    } else showToast(data.message || 'Грешка при добавяне на имота');
-  } catch {
-    showToast('Грешка при добавяне на имота');
-  }
+      // push into allProperties so it shows immediately
+      allProperties.push(data.property || property);
+      renderPage(currentPage);
+    } else showToast(data.message||'Грешка при добавяне на имота');
+  } catch { showToast('Грешка при добавяне на имота'); }
 });
-
 
 /* ---------- Admin: Search Property by ID ---------- */
 adminSearchBtn.addEventListener('click', ()=>{
