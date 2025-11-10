@@ -35,9 +35,6 @@ const wishlistContent = document.getElementById('wishlistContent');
 const adminSidebar = document.getElementById('adminSidebar');
 const viewSupportBtn = document.getElementById('viewSupportBtn');
 const supportMessagesDiv = document.getElementById('supportMessages');
-const adminSearchInput = document.getElementById('adminSearchInput');
-const adminSearchBtn = document.getElementById('adminSearchBtn');
-const adminFound = document.getElementById('adminFound');
 const sidebarToggle = document.getElementById('sidebarToggle');
 const supportForm = document.getElementById('supportForm');
 const resetModal = document.getElementById('resetModal');
@@ -82,32 +79,38 @@ async function loadWishlist(render = true) {
   }
   try {
     const res = await fetch(`${API_URL}/wishlists/${username}`);
-    const data = await res.json();
-    wishlistIds = data.items || [];
+    const data = (await res.json()) || { items: [] };
+    wishlistIds = Array.isArray(data.items) ? data.items : [];
+
     if (!wishlistIds.length) {
       if (render) wishlistContent.innerHTML = '<p>Списъкът е празен</p>';
       return;
     }
+
     const pres = await fetch(`${API_URL}/properties`);
-    const props = await pres.json();
+    const props = Array.isArray(await pres.json()) ? await pres.json() : [];
+
     if (!render) return;
+
     wishlistContent.innerHTML = '';
     wishlistIds.forEach(id => {
       const p = props.find(x => x.id === id);
       const row = document.createElement('div');
       row.className = 'wish-item';
+
       if (!p) {
         row.innerHTML = `<div class="wish-meta"><div style="font-size:13px;color:#6b7280"><strong>ID:</strong> ${id}</div>Имот е изтрит или недостъпен</div>
                          <button class="remove-wish" onclick="removeFromWishlist('${id}')">Премахни</button>`;
       } else {
-        row.innerHTML = `<img class="wish-thumb" src="${p.image}" />
+        row.innerHTML = `<img class="wish-thumb" src="${p.image || ''}" />
                          <div class="wish-meta"><div style="font-size:13px;color:#6b7280"><strong>ID:</strong> ${p.id}</div>
-                         <strong>${p.name}</strong><div style="font-size:13px;color:#6b7280">${p.location} • ${p.price}</div></div>
+                         <strong>${p.name || ''}</strong><div style="font-size:13px;color:#6b7280">${p.location || ''} • ${p.price || ''}</div></div>
                          <button class="remove-wish" onclick="removeFromWishlist('${p.id}')">Премахни</button>`;
       }
       wishlistContent.appendChild(row);
     });
   } catch {
+    if (render) wishlistContent.innerHTML = '<p>Списъкът е празен</p>';
     showToast('Грешка при зареждане на списъка');
   }
 }
@@ -122,8 +125,7 @@ async function addToWishlist(propertyId) {
       body: JSON.stringify({ username, propertyId })
     });
     const json = await res.json();
-    if (json.success) showToast('Добавено в списъка');
-    else showToast('Вече е в списъка');
+    showToast(json.success ? 'Добавено в списъка' : 'Вече е в списъка');
     loadWishlist();
     renderPage(currentPage);
   } catch {
@@ -154,7 +156,7 @@ closeWishlist.addEventListener('click', () => closeModal(wishlistModal));
 async function loadProperties(page = 1) {
   try {
     const res = await fetch(`${API_URL}/properties`);
-    const props = await res.json();
+    const props = Array.isArray(await res.json()) ? await res.json() : [];
     allProperties = props;
     if (username) await loadWishlist(false);
     renderPage(page);
@@ -175,11 +177,12 @@ function renderPage(page = 1) {
   const taken = filterTaken.checked;
 
   filtered = filtered.filter(p => {
-    if (loc && !p.location.toLowerCase().includes(loc)) return false;
-    if (p.price < min || p.price > max) return false;
-    if (type && p.type !== type) return false;
-    if (free && p.status !== 'free') return false;
-    if (taken && p.status !== 'taken') return false;
+    if (!p) return false;
+    if (loc && !(p.location || '').toLowerCase().includes(loc)) return false;
+    if ((p.price || 0) < min || (p.price || 0) > max) return false;
+    if (type && (p.type || '') !== type) return false;
+    if (free && (p.status || '') !== 'free') return false;
+    if (taken && (p.status || '') !== 'taken') return false;
     return true;
   });
 
@@ -197,12 +200,12 @@ function renderPage(page = 1) {
     const div = document.createElement('div');
     div.className = 'property-card';
     div.innerHTML = `
-      <img src="${p.image}" alt="${p.name}" />
-      <h3>${p.name}</h3>
-      <p>${p.location}</p>
-      <p>${p.price} лв/мес</p>
-      <p>${p.type} • ${p.status}</p>
-      <button onclick="addToWishlist('${p.id}')">♥</button>
+      <img src="${p.image || ''}" alt="${p.name || ''}" />
+      <h3>${p.name || ''}</h3>
+      <p>${p.location || ''}</p>
+      <p>${p.price || ''} лв/мес</p>
+      <p>${p.type || ''} • ${p.status || ''}</p>
+      <button onclick="addToWishlist('${p.id || ''}')">♥</button>
     `;
     propertiesContainer.appendChild(div);
   });
@@ -282,14 +285,16 @@ viewSupportBtn.addEventListener('click', async ()=>{
   try{
     const res=await fetch(`${API_URL}/support?role=${role}`);
     if(res.status===403){showToast('Нямате права'); return;}
-    const msgs=await res.json();
+    const msgs=Array.isArray(await res.json()) ? await res.json() : [];
     supportMessagesDiv.innerHTML='';
     if(!msgs.length){supportMessagesDiv.textContent='Няма съобщения'; return;}
     msgs.slice().reverse().forEach(m=>{
       const el=document.createElement('div');
       el.style.padding='8px';
       el.style.borderBottom='1px solid rgba(0,0,0,0.06)';
-      el.innerHTML=`<strong>${escapeHtml(m.name)} (${escapeHtml(m.email||m.emailOrUsername||'')})</strong><p style="margin-top:6px">${escapeHtml(m.message)}</p><small style="color:#9aa3ac">${new Date(m.createdAt).toLocaleString()}</small>`;
+      el.innerHTML=`<strong>${escapeHtml(m.name)} (${escapeHtml(m.email||m.emailOrUsername||'')})</strong>
+                     <p style="margin-top:6px">${escapeHtml(m.message)}</p>
+                     <small style="color:#9aa3ac">${new Date(m.createdAt).toLocaleString()}</small>`;
       supportMessagesDiv.appendChild(el);
     });
   }catch{showToast('Грешка при зареждане на съобщения');}
