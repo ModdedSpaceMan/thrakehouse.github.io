@@ -49,12 +49,15 @@ const filterType = document.getElementById('filterType');
 const filterFree = document.getElementById('filterFree');
 const filterTaken = document.getElementById('filterTaken');
 const applyFiltersBtn = document.getElementById('applyFilters');
+const adminSearchInput = document.getElementById('adminSearchInput');
+const adminSearchBtn = document.getElementById('adminSearchBtn');
+const adminFound = document.getElementById('adminFound');
 
 /* ---------- Modal Utility ---------- */
 function openModal(modal) { modal.setAttribute('aria-hidden', 'false'); }
 function closeModal(modal) { modal.setAttribute('aria-hidden', 'true'); }
 
-window.addEventListener('click', (e) => {
+window.addEventListener('click', e => {
   if (e.target === loginModal) closeModal(loginModal);
   if (e.target === addPropertyModal) closeModal(addPropertyModal);
   if (e.target === wishlistModal) closeModal(wishlistModal);
@@ -79,7 +82,7 @@ async function loadWishlist(render = true) {
   }
   try {
     const res = await fetch(`${API_URL}/wishlists/${username}`);
-    const data = (await res.json()) || { items: [] };
+    const data = await res.json().catch(() => ({ items: [] }));
     wishlistIds = Array.isArray(data.items) ? data.items : [];
 
     if (!wishlistIds.length) {
@@ -152,7 +155,7 @@ async function removeFromWishlist(propertyId) {
 wishlistBtn.addEventListener('click', () => { openModal(wishlistModal); loadWishlist(); });
 closeWishlist.addEventListener('click', () => closeModal(wishlistModal));
 
-/* ---------- Properties ---------- */
+/* ---------- Load Properties ---------- */
 async function loadProperties(page = 1) {
   try {
     const res = await fetch(`${API_URL}/properties`);
@@ -165,7 +168,7 @@ async function loadProperties(page = 1) {
   }
 }
 
-/* ---------- Render Properties & Filters ---------- */
+/* ---------- Render Properties ---------- */
 function renderPage(page = 1) {
   let filtered = [...allProperties];
 
@@ -283,18 +286,18 @@ supportForm.addEventListener('submit', async e => {
 viewSupportBtn.addEventListener('click', async ()=>{
   if(role!=='admin'){showToast('Нямате права!'); return;}
   try{
-    const res=await fetch(`${API_URL}/support?role=${role}`);
-    if(res.status===403){showToast('Нямате права'); return;}
-    const msgs=Array.isArray(await res.json()) ? await res.json() : [];
-    supportMessagesDiv.innerHTML='';
+    const res = await fetch(`${API_URL}/support?role=${role}`);
+    if(!res.ok){showToast('Грешка при зареждане на съобщения'); return;}
+    const msgs = Array.isArray(await res.json()) ? await res.json() : [];
+    supportMessagesDiv.innerHTML = '';
     if(!msgs.length){supportMessagesDiv.textContent='Няма съобщения'; return;}
     msgs.slice().reverse().forEach(m=>{
       const el=document.createElement('div');
       el.style.padding='8px';
       el.style.borderBottom='1px solid rgba(0,0,0,0.06)';
       el.innerHTML=`<strong>${escapeHtml(m.name)} (${escapeHtml(m.email||m.emailOrUsername||'')})</strong>
-                     <p style="margin-top:6px">${escapeHtml(m.message)}</p>
-                     <small style="color:#9aa3ac">${new Date(m.createdAt).toLocaleString()}</small>`;
+                     <p style="margin-top:6px">${escapeHtml(m.message||'')}</p>
+                     <small style="color:#9aa3ac">${new Date(m.createdAt||Date.now()).toLocaleString()}</small>`;
       supportMessagesDiv.appendChild(el);
     });
   }catch{showToast('Грешка при зареждане на съобщения');}
@@ -303,13 +306,12 @@ viewSupportBtn.addEventListener('click', async ()=>{
 /* ---------- Sidebar Toggle ---------- */
 sidebarToggle.addEventListener('click',()=>adminSidebar.classList.toggle('show'));
 
-// ---------- Add Property (Admin) ----------
-openAddBtn.addEventListener('click', () => openModal(addPropertyModal));
-closeAdd.addEventListener('click', () => closeModal(addPropertyModal));
+/* ---------- Add Property (Admin) ---------- */
+openAddBtn.addEventListener('click',()=>openModal(addPropertyModal));
+closeAdd.addEventListener('click',()=>closeModal(addPropertyModal));
 
-propertyForm.addEventListener('submit', async (e) => {
+propertyForm.addEventListener('submit', async e => {
   e.preventDefault();
-
   const name = document.getElementById('propertyName').value.trim();
   const location = document.getElementById('propertyLocation').value.trim();
   const price = parseFloat(document.getElementById('propertyPrice').value) || 0;
@@ -318,38 +320,48 @@ propertyForm.addEventListener('submit', async (e) => {
   const imageInput = document.getElementById('propertyImage');
   let image = '';
 
-  // optional: handle image as base64
-  if (imageInput.files.length > 0) {
+  if(imageInput.files.length>0){
     const file = imageInput.files[0];
     const reader = new FileReader();
-    await new Promise((resolve) => {
-      reader.onload = () => { image = reader.result; resolve(); };
+    await new Promise(resolve=>{
+      reader.onload=()=>{image=reader.result; resolve();};
       reader.readAsDataURL(file);
     });
   }
 
-  const property = { name, location, price, type, status, image };
+  const property={name,location,price,type,status,image};
 
-  try {
-    const res = await fetch(`${API_URL}/properties`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role, property })
+  try{
+    const res=await fetch(`${API_URL}/properties`,{
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({role,property})
     });
-    const data = await res.json();
-    if (data.success) {
+    const data=await res.json();
+    if(data.success){
       showToast('Имотът е добавен успешно!');
       closeModal(addPropertyModal);
       propertyForm.reset();
       loadProperties();
-    } else {
-      showToast(data.message || 'Грешка при добавяне на имота');
-    }
-  } catch {
-    showToast('Грешка при добавяне на имота');
-  }
+    } else showToast(data.message||'Грешка при добавяне на имота');
+  } catch { showToast('Грешка при добавяне на имота'); }
 });
 
+/* ---------- Admin: Search Property by ID ---------- */
+adminSearchBtn.addEventListener('click', ()=>{
+  const id = adminSearchInput.value.trim();
+  if(!id){ adminFound.textContent='Въведете ID за търсене'; return; }
+
+  const prop = allProperties.find(p=>p.id===id);
+  if(!prop){ adminFound.textContent='Имотът не е намерен'; return; }
+
+  adminFound.innerHTML = `
+    <strong>${prop.name || ''}</strong><br>
+    Локация: ${prop.location || ''}<br>
+    Цена: ${prop.price || ''} лв/мес<br>
+    Тип: ${prop.type || ''}<br>
+    Статус: ${prop.status || ''}<br>
+    <img src="${prop.image || ''}" alt="${prop.name || ''}" style="max-width:100px;margin-top:5px;">
+  `;
+});
 
 /* ---------- Escape HTML ---------- */
 function escapeHtml(text){
