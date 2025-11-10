@@ -260,35 +260,35 @@ function editProperty(id) {
   openModal(addPropertyModal);
 }
 
-//////////////////////////
-// DELETE PROPERTY
-//////////////////////////
 async function deleteProperty(id) {
   if (!confirm('Сигурни ли сте, че искате да изтриете имота?')) return;
   if (!role || role !== 'admin') {
     showToast('Нямате права да изтривате');
     return;
   }
+
   try {
     const res = await fetch(`${API_URL}/properties/${id}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json', 'role': role },
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role }) // move role into body to avoid CORS
     });
+
     const data = await res.json();
+
     if (data.success) {
       showToast('Имотът е изтрит!');
       await loadProperties(currentPage);
     } else {
       showToast(data.message || 'Грешка при изтриване');
     }
-  } catch {
+  } catch (err) {
+    console.error(err);
     showToast('Грешка при изтриване');
   }
 }
 
-//////////////////////////
-// TOGGLE STATUS (Taken/Free)
-//////////////////////////
+
 async function toggleStatus(id) {
   const prop = allProperties.find(p => p.id === id);
   if (!prop) return;
@@ -296,34 +296,38 @@ async function toggleStatus(id) {
     showToast('Нямате права да променяте статуса');
     return;
   }
+
   const newStatus = prop.status === 'free' ? 'taken' : 'free';
+
   try {
     const res = await fetch(`${API_URL}/properties/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'role': role },
-      body: JSON.stringify({ status: newStatus }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus, role }) // role moved to body
     });
+
     const data = await res.json();
+
     if (data.success) {
       showToast('Статусът е променен');
       await loadProperties(currentPage);
     } else {
       showToast(data.message || 'Грешка при промяна на статус');
     }
-  } catch {
+  } catch (err) {
+    console.error(err);
     showToast('Грешка при промяна на статус');
   }
 }
 
-//////////////////////////
-// ADD / UPDATE PROPERTY FORM
-//////////////////////////
+
 propertyForm.addEventListener('submit', async e => {
   e.preventDefault();
   if (!role || role !== 'admin') {
     showToast('Нямате права да добавяте или редактирате имоти');
     return;
   }
+
   const name = document.getElementById('propertyName').value.trim();
   const location = document.getElementById('propertyLocation').value.trim();
   const price = parseFloat(document.getElementById('propertyPrice').value) || 0;
@@ -335,8 +339,8 @@ propertyForm.addEventListener('submit', async e => {
   if (imageInput.files.length > 0) {
     const file = imageInput.files[0];
     const reader = new FileReader();
-    await new Promise(resolve => {
-      reader.onload = () => { image = reader.result; resolve(); };
+    image = await new Promise(resolve => {
+      reader.onload = () => resolve(reader.result);
       reader.readAsDataURL(file);
     });
   } else if (editingPropertyId) {
@@ -348,15 +352,20 @@ propertyForm.addEventListener('submit', async e => {
   if (image) property.image = image;
 
   try {
-    const url = editingPropertyId ? `${API_URL}/properties/${editingPropertyId}` : `${API_URL}/properties`;
-    // Use PATCH for updates (usually better for partial updates), but if backend expects PUT keep as is.
+    const url = editingPropertyId
+      ? `${API_URL}/properties/${editingPropertyId}`
+      : `${API_URL}/properties`;
     const method = editingPropertyId ? 'PUT' : 'POST';
+
+    // Send role inside the body, not headers
     const res = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json', 'role': role },
-      body: JSON.stringify({ property }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...property, role })
     });
+
     const data = await res.json();
+
     if (data.success) {
       showToast(editingPropertyId ? 'Имотът е обновен!' : 'Имотът е добавен успешно!');
       closeModal(addPropertyModal);
@@ -367,10 +376,12 @@ propertyForm.addEventListener('submit', async e => {
     } else {
       showToast(data.message || 'Грешка');
     }
-  } catch {
+  } catch (err) {
+    console.error(err);
     showToast('Грешка при изпращане на имота');
   }
 });
+
 
 /* ---------- Login / Logout ---------- */
 loginBtn.addEventListener('click', () => openModal(loginModal));
