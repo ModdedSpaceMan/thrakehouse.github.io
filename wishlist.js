@@ -1,23 +1,25 @@
 // wishlist.js
-import { username, showToast } from './ui.js';
+import { showToast } from './ui.js';
 import { loadProperties } from './properties.js';
 
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
-let wishlistIds = [];
 
+let wishlistIds = [];
 const wishlistBtn = document.getElementById('wishlistBtn');
 const wishlistModal = document.getElementById('wishlistModal');
 const wishlistContent = document.getElementById('wishlistContent');
 const closeWishlist = document.getElementById('closeWishlist');
 
+// ✅ Load wishlist for the current logged-in user
 export async function loadWishlist(render = true) {
-  if (!username) {
+  const currentUser = localStorage.getItem('username');
+  if (!currentUser) {
     if (render) wishlistContent.innerHTML = '<p>Влезте, за да видите списъка</p>';
     return;
   }
 
   try {
-    const res = await fetch(`${API_URL}/wishlists/${username}`);
+    const res = await fetch(`${API_URL}/wishlists/${currentUser}`);
     const data = await res.json().catch(() => ({ items: [] }));
     wishlistIds = Array.isArray(data.items) ? data.items : [];
 
@@ -57,13 +59,16 @@ export async function loadWishlist(render = true) {
   }
 }
 
+// ✅ Add property to wishlist
 export async function addToWishlist(propertyId) {
-  if (!username) { showToast('Влезте, за да добавяте в списък'); return; }
+  const currentUser = localStorage.getItem('username');
+  if (!currentUser) { showToast('Влезте, за да добавяте в списък'); return; }
+
   try {
     const res = await fetch(`${API_URL}/wishlists/add`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, propertyId })
+      body: JSON.stringify({ username: currentUser, propertyId })
     });
     const json = await res.json();
     showToast(json.success ? 'Добавено в списъка' : 'Вече е в списъка');
@@ -74,13 +79,16 @@ export async function addToWishlist(propertyId) {
   }
 }
 
+// ✅ Remove property from wishlist
 export async function removeFromWishlist(propertyId) {
-  if (!username) { showToast('Влезте, за да премахвате'); return; }
+  const currentUser = localStorage.getItem('username');
+  if (!currentUser) { showToast('Влезте, за да премахвате'); return; }
+
   try {
     const res = await fetch(`${API_URL}/wishlists/remove`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, propertyId })
+      body: JSON.stringify({ username: currentUser, propertyId })
     });
     const json = await res.json();
     if (json.success) {
@@ -93,12 +101,21 @@ export async function removeFromWishlist(propertyId) {
   }
 }
 
-// Wishlist modal events
-wishlistBtn.addEventListener('click', async () => {
-  openModal(wishlistModal);
-  await loadWishlist();
+// ✅ Wishlist modal open/close
+wishlistBtn.addEventListener('click', () => {
+  wishlistModal.setAttribute('aria-hidden','false');
+  loadWishlist();
 });
-closeWishlist.addEventListener('click', () => closeModal(wishlistModal));
+closeWishlist.addEventListener('click', () => wishlistModal.setAttribute('aria-hidden','true'));
 
-function openModal(modal) { if(modal) modal.setAttribute('aria-hidden', 'false'); }
-function closeModal(modal) { if(modal) modal.setAttribute('aria-hidden', 'true'); }
+// ✅ Automatically show/hide wishlist button based on login
+function updateWishlistButton() {
+  const currentUser = localStorage.getItem('username');
+  wishlistBtn.style.display = currentUser ? 'inline-block' : 'none';
+}
+
+// Update button on page load
+document.addEventListener('DOMContentLoaded', updateWishlistButton);
+
+// Update button whenever login/logout happens
+window.addEventListener('storage', updateWishlistButton);
