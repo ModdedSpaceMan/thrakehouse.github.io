@@ -102,4 +102,28 @@ logoutBtn.addEventListener('click', async () => {
   if (typeof loadProperties === 'function') {
     await loadProperties();
   }
+  
 });
+function updateUI() {
+  const loggedIn = !!localStorage.getItem('username');
+  const userDisplay = document.getElementById('userDisplay');
+
+  if (loggedIn) {
+    const name = localStorage.getItem('username');
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-block';
+    if (userDisplay) {
+      userDisplay.textContent = `Влязъл като: ${name}`;
+      userDisplay.style.display = 'inline-block';
+    }
+  } else {
+    loginBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+    if (userDisplay) {
+      userDisplay.style.display = 'none';
+    }
+  }
+}
+
+// ✅ Initialize on load
+document.addEventListener('DOMContentLoaded', updateUI);
