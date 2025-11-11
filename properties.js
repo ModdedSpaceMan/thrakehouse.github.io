@@ -80,7 +80,7 @@ document.addEventListener('click', async e => {
 
   if (e.target.classList.contains('edit-btn')) {
     const id = e.target.dataset.id;
-    // Call propertyForm.js function to open form for editing
+    // Open edit form
     import('./propertyForm.js').then(mod => {
       const propCard = e.target.closest('.property-card');
       const property = {
