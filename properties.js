@@ -1,13 +1,20 @@
 import { showToast } from './ui.js';
 
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
-export let wishlistIds = [];
+let wishlistIds = [];
+const propertyContainer = document.getElementById('properties');
 
-// Get the container where properties will be shown
-const property = document.getElementById('properties'); // <-- make sure your HTML has this div
+// Initialize everything
+export async function initProperties() {
+  await loadWishlist();
+  await loadProperties();
+  setupFilterListeners();
+}
 
-// Load all properties
+// Fetch all properties and render
 export async function loadProperties() {
+  if (!propertyContainer) return;
+
   try {
     const res = await fetch(`${API_URL}/properties`, {
       headers: {
@@ -15,21 +22,28 @@ export async function loadProperties() {
       }
     });
     const data = await res.json();
-    if (!Array.isArray(data)) return [];
-    renderProperties(data); // render as soon as we fetch
+
+    if (!Array.isArray(data)) {
+      console.warn('Properties response is not an array:', data);
+      propertyContainer.innerHTML = '<p>Няма налични имоти.</p>';
+      return [];
+    }
+
+    renderProperties(data);
     return data;
   } catch (err) {
     console.error('Грешка при зареждане на имоти:', err);
+    propertyContainer.innerHTML = '<p>Грешка при зареждане на имоти.</p>';
     return [];
   }
 }
 
-// Render properties into the container
+// Render property cards
 export function renderProperties(properties) {
-  if (!property) return;
+  if (!propertyContainer) return;
 
-  property.innerHTML = properties.map(p => {
-    const takenClass = p.status === 'Taken' ? 'taken' : '';
+  propertyContainer.innerHTML = properties.map(p => {
+    const takenClass = p.status?.toLowerCase() === 'taken' ? 'taken' : '';
     const inWishlist = wishlistIds.includes(p.id) ? '❤️' : '🤍';
 
     return `
@@ -43,21 +57,24 @@ export function renderProperties(properties) {
           <p>Статус: ${p.status}</p>
         </div>
         <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
-        <div class="property-id">${p.id}</div>
       </div>
     `;
   }).join('');
 
-  // Add wishlist button event listeners
-  property.querySelectorAll('.wishlist-btn').forEach(btn => {
-    btn.addEventListener('click', () => toggleWishlist(btn.dataset.id).then(() => loadProperties()));
+  // Add click listeners for wishlist buttons
+  propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await toggleWishlist(btn.dataset.id);
+      await loadProperties(); // re-render after toggle
+    });
   });
 }
 
-// Load wishlist for logged-in user
+// Load wishlist for the current user
 export async function loadWishlist() {
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
+
   if (!username || !token) {
     wishlistIds = [];
     return;
@@ -79,12 +96,14 @@ export async function loadWishlist() {
 export async function toggleWishlist(propertyId) {
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
+
   if (!username || !token) {
     showToast('Трябва да сте влезли, за да добавите в wishlist');
     return;
   }
 
   const action = wishlistIds.includes(propertyId) ? 'remove' : 'add';
+
   try {
     const res = await fetch(`${API_URL}/wishlists/${username}/${action}`, {
       method: 'POST',
@@ -94,14 +113,45 @@ export async function toggleWishlist(propertyId) {
       },
       body: JSON.stringify({ propertyId })
     });
+
     const data = await res.json();
     if (data.success) {
       if (action === 'add') wishlistIds.push(propertyId);
       else wishlistIds = wishlistIds.filter(id => id !== propertyId);
+
       showToast(action === 'add' ? 'Добавено в wishlist!' : 'Премахнато от wishlist');
     }
   } catch (err) {
     console.error(err);
     showToast('Грешка при добавяне/премахване на wishlist');
   }
+}
+
+// Optional: filter handling (if you implement filters)
+function setupFilterListeners() {
+  const applyBtn = document.getElementById('applyFilters');
+  if (!applyBtn) return;
+
+  applyBtn.addEventListener('click', async () => {
+    let properties = await loadProperties();
+    const locationFilter = document.getElementById('filterLocation').value.toLowerCase();
+    const minPrice = Number(document.getElementById('filterMinPrice').value);
+    const maxPrice = Number(document.getElementById('filterMaxPrice').value);
+    const typeFilter = document.getElementById('filterType').value;
+    const freeChecked = document.getElementById('filterFree').checked;
+    const takenChecked = document.getElementById('filterTaken').checked;
+
+    properties = properties.filter(p => {
+      const price = Number(p.price);
+      if (locationFilter && !p.location.toLowerCase().includes(locationFilter)) return false;
+      if (!isNaN(minPrice) && price < minPrice) return false;
+      if (!isNaN(maxPrice) && price > maxPrice) return false;
+      if (typeFilter && p.type !== typeFilter) return false;
+      if (freeChecked && p.status.toLowerCase() !== 'free') return false;
+      if (takenChecked && p.status.toLowerCase() !== 'taken') return false;
+      return true;
+    });
+
+    renderProperties(properties);
+  });
 }
