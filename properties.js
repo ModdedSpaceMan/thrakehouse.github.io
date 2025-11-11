@@ -3,6 +3,24 @@ import { showToast } from './ui.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 export let wishlistIds = [];
 
+// Load all properties from backend
+export async function loadProperties() {
+  try {
+    const res = await fetch(`${API_URL}/properties`, {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      }
+    });
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    return data;
+  } catch (err) {
+    console.error('Грешка при зареждане на имоти:', err);
+    return [];
+  }
+}
+
+// Load wishlist for current user
 export async function loadWishlist() {
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
@@ -23,6 +41,7 @@ export async function loadWishlist() {
   }
 }
 
+// Toggle property in wishlist
 export async function toggleWishlist(propertyId) {
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
