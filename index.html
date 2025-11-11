@@ -25,23 +25,38 @@
   <section class="hero">
     <div class="hero-inner">
       <h2>Намерете своя дом в Гърция</h2>
-      <p class="hero-sub">Апартаменти, Kъщи, земеделски земи и вили — лесно и бързо</p>
+      <p class="hero-sub">Апартаменти, Къщи, земеделски земи и вили — лесно и бързо</p>
     </div>
   </section>
 
   <main>
-    <div id="propertyFilters">
+    <!-- Property Filters -->
+    <div class="filters">
       <input type="text" id="filterLocation" placeholder="Локация" />
       <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
       <input type="number" id="filterMaxPrice" placeholder="Макс. цена" />
+
       <select id="filterType">
         <option value="">Всички типове</option>
         <option value="apartment">Апартамент</option>
         <option value="house">Къща</option>
+        <option value="villa">Вила</option>
+        <option value="farm">Земеделски имот</option>
       </select>
-      <label><input type="checkbox" id="filterFree" /> Свободни</label>
-      <label><input type="checkbox" id="filterTaken" /> Заети</label>
-      <button id="applyFilters">Приложи</button>
+
+      <select id="filterCategory">
+        <option value="">Всички категории</option>
+        <option value="sale">Продажба</option>
+        <option value="rental">Наем</option>
+      </select>
+
+      <select id="filterStatus">
+        <option value="">Всички статуси</option>
+        <option value="free">Свободен</option>
+        <option value="taken">Зает</option>
+      </select>
+
+      <button id="applyFilters">Филтрирай</button>
     </div>
 
     <section id="properties" class="properties"></section>
@@ -88,16 +103,25 @@
       <form id="propertyForm" class="modal-form">
         <input type="text" id="propertyName" placeholder="Име на имота" required />
         <input type="text" id="propertyLocation" placeholder="Местоположение" required />
-        <input type="text" id="propertyPrice" placeholder="Цена на месец (лв)" required />
+        <input type="text" id="propertyPrice" placeholder="Цена (лв)" required />
+
         <select id="propertyType">
           <option value="apartment">Апартамент</option>
           <option value="house">Къща</option>
           <option value="villa">Вила</option>
+          <option value="farm">Земеделски имот</option>
         </select>
-        <select id="propertyStatus">
+
+        <select id="propertyCategory">
+          <option value="sale">Продажба</option>
+          <option value="rental">Наем</option>
+        </select>
+
+        <select id="propertyStatus" style="display:none;">
           <option value="free">Свободен</option>
           <option value="taken">Зает</option>
         </select>
+
         <input type="text" id="propertyImage" placeholder="URL на изображение" required />
         <button type="submit" class="modal-submit">Добави имот</button>
       </form>
@@ -127,6 +151,13 @@
           <input type="text" name="type" id="editType" required />
         </label>
         <label>
+          Категория:
+          <select name="category" id="editCategory">
+            <option value="sale">Продажба</option>
+            <option value="rental">Наем</option>
+          </select>
+        </label>
+        <label id="editStatusContainer" style="display:none;">
           Статус:
           <select name="status" id="editStatus">
             <option value="free">Свободен</option>
@@ -177,6 +208,25 @@
   <script type="module" src="admin.js" defer></script>
   <script type="module" src="propertyForms.js"></script>
   <script type="module" src="properties.js" defer></script>
-  v1
+
+  <script>
+    // Hide/show status select depending on category
+    const categorySelect = document.getElementById('propertyCategory');
+    const statusSelect = document.getElementById('propertyStatus');
+    if (categorySelect && statusSelect) {
+      categorySelect.addEventListener('change', () => {
+        statusSelect.style.display = categorySelect.value === 'rental' ? 'block' : 'none';
+      });
+    }
+
+    // Same behavior in edit modal
+    const editCategory = document.getElementById('editCategory');
+    const editStatusContainer = document.getElementById('editStatusContainer');
+    if (editCategory && editStatusContainer) {
+      editCategory.addEventListener('change', () => {
+        editStatusContainer.style.display = editCategory.value === 'rental' ? 'block' : 'none';
+      });
+    }
+  </script>
 </body>
 </html>
