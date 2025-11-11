@@ -4,8 +4,6 @@ import { showToast, openModal, closeModal } from './ui.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
 // Elements
-const adminSidebar = document.getElementById('adminSidebar');
-const sidebarToggle = document.getElementById('sidebarToggle');
 const addPropertyBtn = document.getElementById('addPropertySidebarBtn');
 const addPropertyModal = document.getElementById('addPropertyModal');
 const closeAddModalBtn = document.getElementById('closeAdd');
@@ -15,11 +13,6 @@ const adminSearchBtn = document.getElementById('adminSearchBtn');
 const adminFound = document.getElementById('adminFound');
 const viewSupportBtn = document.getElementById('viewSupportBtn');
 const supportMessagesContainer = document.getElementById('supportMessages');
-
-// --- Sidebar toggle ---
-sidebarToggle?.addEventListener('click', () => {
-  adminSidebar.classList.toggle('show');
-});
 
 // --- Open / Close Add Property Modal ---
 addPropertyBtn?.addEventListener('click', () => openModal(addPropertyModal));
