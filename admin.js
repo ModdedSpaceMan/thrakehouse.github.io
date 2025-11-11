@@ -1,114 +1,119 @@
 // admin.js
-import { showToast, openModal, closeModal } from './ui.js';
-
+import { openModal, closeModal, showToast } from './ui.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
-document.addEventListener('DOMContentLoaded', () => {
-  const viewSupportBtn = document.getElementById('viewSupportBtn');
-  const supportMessagesDiv = document.getElementById('supportMessages');
-  const adminSearchBtn = document.getElementById('adminSearchBtn');
-  const adminSearchInput = document.getElementById('adminSearchInput');
+// --- Elements ---
+const openAddBtn = document.getElementById('addPropertySidebarBtn');
+const addPropertyModal = document.getElementById('addPropertyModal');
+const closeAddBtn = document.getElementById('closeAdd');
+const propertyForm = document.getElementById('propertyForm');
+const adminSearchInput = document.getElementById('adminSearchInput');
+const adminSearchBtn = document.getElementById('adminSearchBtn');
+const adminFound = document.getElementById('adminFound');
+const viewSupportBtn = document.getElementById('viewSupportBtn');
+const supportMessages = document.getElementById('supportMessages');
 
-  const addPropertySidebarBtn = document.getElementById('addPropertySidebarBtn');
-  const addPropertyModal = document.getElementById('addPropertyModal');
-  const closeAdd = document.getElementById('closeAdd');
-  const propertyForm = document.getElementById('propertyForm');
+// --- Add Property Modal ---
+if (openAddBtn && addPropertyModal) {
+  openAddBtn.addEventListener('click', () => openModal(addPropertyModal));
+}
 
-  // --- Ticket ID search ---
-  if (adminSearchBtn && adminSearchInput) {
-    adminSearchBtn.addEventListener('click', async () => {
-      const id = adminSearchInput.value.trim();
-      if (!id) return showToast('Въведете ID за търсене');
-      try {
-        const res = await fetch(`${API_URL}/properties`);
-        const props = await res.json();
-        const found = props.find(p => p.id === id);
-        const adminFoundDiv = document.getElementById('adminFound');
-        if (found) {
-          adminFoundDiv.textContent = `ID: ${found.id}, Name: ${found.name}, Location: ${found.location}, Price: ${found.price}`;
-        } else {
-          adminFoundDiv.textContent = 'Не е намерен имот с това ID';
-        }
-      } catch (err) {
-        console.error(err);
-        showToast('Грешка при търсене');
+if (closeAddBtn && addPropertyModal) {
+  closeAddBtn.addEventListener('click', () => closeModal(addPropertyModal));
+}
+
+// --- Property Form Submission ---
+if (propertyForm) {
+  propertyForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const role = localStorage.getItem('role');
+    if (role !== 'admin') {
+      showToast('Нямате права за добавяне на имот');
+      return;
+    }
+
+    const propertyName = document.getElementById('propertyName').value.trim();
+    const propertyLocation = document.getElementById('propertyLocation').value.trim();
+    const propertyPrice = document.getElementById('propertyPrice').value.trim();
+    const propertyType = document.getElementById('propertyType').value;
+    const propertyStatus = document.getElementById('propertyStatus').value;
+    const propertyImage = document.getElementById('propertyImage').files[0];
+
+    let imageBase64 = '';
+    if (propertyImage) imageBase64 = await fileToBase64(propertyImage);
+
+    const newProperty = {
+      name: propertyName,
+      location: propertyLocation,
+      price: propertyPrice,
+      type: propertyType,
+      status: propertyStatus,
+      image: imageBase64
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/properties`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ property: newProperty, role })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        showToast('Имотът е добавен успешно');
+        propertyForm.reset();
+        closeModal(addPropertyModal);
+      } else {
+        showToast(data.message || 'Грешка при добавяне на имот');
       }
-    });
-  }
+    } catch (err) {
+      console.error(err);
+      showToast('Грешка при добавяне на имот');
+    }
+  });
+}
 
-  // --- View support tickets ---
-  if (viewSupportBtn && supportMessagesDiv) {
-    viewSupportBtn.addEventListener('click', async () => {
-      try {
-        const res = await fetch(`${API_URL}/support?role=admin`);
-        const messages = await res.json();
-        supportMessagesDiv.innerHTML = '';
-        messages.forEach(msg => {
-          const div = document.createElement('div');
-          div.className = 'support-message';
-          div.innerHTML = `<strong>${msg.name} (${msg.email})</strong><p>${msg.message}</p>`;
-          supportMessagesDiv.appendChild(div);
-        });
-      } catch (err) {
-        console.error(err);
-        showToast('Грешка при зареждане на съобщенията');
-      }
-    });
-  }
+// --- Helper: File to Base64 ---
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (err) => reject(err);
+  });
+}
 
-  // --- Add Property Modal ---
-  if (addPropertySidebarBtn && addPropertyModal) {
-    addPropertySidebarBtn.addEventListener('click', () => openModal(addPropertyModal));
-  }
-  if (closeAdd && addPropertyModal) {
-    closeAdd.addEventListener('click', () => closeModal(addPropertyModal));
-  }
+// --- Admin Ticket Search (placeholder) ---
+if (adminSearchBtn) {
+  adminSearchBtn.addEventListener('click', async () => {
+    const id = adminSearchInput.value.trim();
+    if (!id) return;
+    try {
+      const res = await fetch(`${API_URL}/support?id=${id}&role=admin`);
+      const data = await res.json();
+      adminFound.textContent = data.length
+        ? `Намерено съобщение: ${JSON.stringify(data[0])}`
+        : 'Няма съобщения с това ID';
+    } catch (err) {
+      console.error(err);
+      adminFound.textContent = 'Грешка при търсене';
+    }
+  });
+}
 
-  // --- Add Property Form Submission ---
-  if (propertyForm) {
-    propertyForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const name = document.getElementById('propertyName').value.trim();
-      const location = document.getElementById('propertyLocation').value.trim();
-      const price = document.getElementById('propertyPrice').value.trim();
-      const type = document.getElementById('propertyType').value;
-      const status = document.getElementById('propertyStatus').value;
-      const imageInput = document.getElementById('propertyImage');
-      const role = localStorage.getItem('role');
-
-      if (!role || role !== 'admin') return showToast('Нямате права за добавяне на имот');
-      if (!name || !location || !price || !imageInput.files.length) return showToast('Попълнете всички полета');
-
-      const file = imageInput.files[0];
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const imageBase64 = reader.result;
-
-        try {
-          const res = await fetch(`${API_URL}/properties`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              role,
-              property: { name, location, price, type, status, image: imageBase64 }
-            })
-          });
-
-          const data = await res.json();
-          if (data.success) {
-            showToast('Имотът е добавен успешно!');
-            propertyForm.reset();
-            closeModal(addPropertyModal);
-          } else {
-            showToast(data.message || 'Грешка при добавяне на имота');
-          }
-        } catch (err) {
-          console.error(err);
-          showToast('Грешка при добавяне на имота');
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-});
+// --- View Support Tickets (placeholder) ---
+if (viewSupportBtn) {
+  viewSupportBtn.addEventListener('click', async () => {
+    try {
+      const res = await fetch(`${API_URL}/support?role=admin`);
+      const data = await res.json();
+      supportMessages.innerHTML = data
+        .map(msg => `<div class="support-ticket"><strong>${msg.name}</strong>: ${msg.message}</div>`)
+        .join('') || 'Няма съобщения';
+    } catch (err) {
+      console.error(err);
+      supportMessages.textContent = 'Грешка при зареждане на съобщения';
+    }
+  });
+}
