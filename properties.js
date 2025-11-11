@@ -1,133 +1,76 @@
-// properties.js
-import { showToast, role } from './ui.js';
-import { openPropertyFormForEdit } from './propertyForm.js';
-
+import { role } from './ui.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
-const propertiesContainer = document.getElementById('properties');
-const username = localStorage.getItem('username');
 
-// ------------------ Load Properties ------------------
+const propertiesContainer = document.getElementById('propertiesContainer');
+
 export async function loadProperties() {
+  if (!propertiesContainer) return;
+
   try {
     const res = await fetch(`${API_URL}/properties`);
-    const data = await res.json();
+    const properties = await res.json();
 
     propertiesContainer.innerHTML = '';
+    if (!properties.length) {
+      propertiesContainer.innerHTML = '<p>Няма имоти за показване</p>';
+      return;
+    }
 
-    data.forEach(prop => {
+    properties.forEach(prop => {
       const div = document.createElement('div');
-      div.className = `property${prop.status === 'taken' ? ' taken' : ''}`;
-
-      const statusBG = prop.status === 'free' ? 'Свободен' : 'Зает';
-
+      div.className = 'property-card';
       div.innerHTML = `
-        <img src="${prop.image || ''}" alt="${prop.name}" />
-        <div class="property-content">
-          <h3>${prop.name}</h3>
-          <p>${prop.location}</p>
-          <p>${prop.price} лв/месец</p>
-        </div>
-        <div class="status-badge">${statusBG}</div>
-        <div class="property-id">ID: ${prop.id}</div>
+        <h3>${prop.name}</h3>
+        <p>${prop.location}</p>
+        <p>Цена: ${prop.price}</p>
+        <p>Тип: ${prop.type}</p>
+        <p>Статус: ${prop.status}</p>
+        ${prop.image ? `<img src="${prop.image}" alt="${prop.name}" />` : ''}
+        <button class="wishlist-btn" data-id="${prop.id}">Добави в списък</button>
+        ${role === 'admin' ? `<button class="edit-btn" data-id="${prop.id}">Редактирай</button>
+        <button class="delete-btn" data-id="${prop.id}">Изтрий</button>` : ''}
       `;
-
-      // Wishlist button
-      if (username) {
-        const wishlistBtn = document.createElement('button');
-        wishlistBtn.className = 'wishlist-btn';
-        wishlistBtn.innerHTML = '♥';
-        checkWishlist(prop.id, wishlistBtn);
-
-        wishlistBtn.addEventListener('click', async () => {
-          const isAdded = wishlistBtn.classList.contains('added');
-          try {
-            await fetch(`${API_URL}/wishlists/${username}/${isAdded ? 'remove' : 'add'}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ username, propertyId: prop.id })
-            });
-            wishlistBtn.classList.toggle('added');
-          } catch {
-            showToast('Грешка при актуализиране на списъка с любими');
-          }
-        });
-
-        div.appendChild(wishlistBtn);
-      }
-
-      // Admin buttons
-      if (role === 'admin') {
-        const adminBtns = document.createElement('div');
-        adminBtns.className = 'admin-buttons-right';
-
-        const editBtn = document.createElement('button');
-        editBtn.className = 'edit-btn';
-        editBtn.textContent = 'Редактирай';
-        editBtn.addEventListener('click', () => openPropertyFormForEdit(prop));
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-btn';
-        deleteBtn.textContent = 'Изтрий';
-        deleteBtn.addEventListener('click', async () => {
-          if (!confirm('Сигурни ли сте, че искате да изтриете имота?')) return;
-
-          try {
-            const res = await fetch(`${API_URL}/properties/${prop.id}`, {
-              method: 'DELETE',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ role })
-            });
-            const data = await res.json();
-            if (data.success) {
-              showToast('Имотът е изтрит');
-              loadProperties();
-            } else showToast(data.message || 'Грешка при изтриване');
-          } catch {
-            showToast('Грешка при изтриване на имота');
-          }
-        });
-
-        const toggleBtn = document.createElement('button');
-        toggleBtn.className = 'toggle-btn';
-        toggleBtn.textContent = 'Смени статус';
-        toggleBtn.addEventListener('click', async () => {
-          try {
-            const res = await fetch(`${API_URL}/properties/${prop.id}`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ role })
-            });
-            const data = await res.json();
-            if (data.success) {
-              showToast('Статусът е променен');
-              loadProperties();
-            } else showToast(data.message || 'Грешка при смяна на статус');
-          } catch {
-            showToast('Грешка при смяна на статус');
-          }
-        });
-
-        adminBtns.append(editBtn, deleteBtn, toggleBtn);
-        div.appendChild(adminBtns);
-      }
-
       propertiesContainer.appendChild(div);
     });
+
   } catch (err) {
     console.error(err);
-    showToast('Грешка при зареждане на имотите');
+    propertiesContainer.innerHTML = '<p>Грешка при зареждане на имотите</p>';
   }
 }
 
-// ------------------ Check Wishlist ------------------
-async function checkWishlist(propId, btn) {
+// Wishlist buttons
+document.addEventListener('click', async e => {
+  if (!e.target.classList.contains('wishlist-btn')) return;
+  const propId = e.target.dataset.id;
+  const username = localStorage.getItem('username');
+  if (!username) return alert('Моля, влезте в профила си');
+
   try {
-    const res = await fetch(`${API_URL}/wishlists/${username}`);
-    const data = await res.json();
-    if (data.items && data.items.includes(propId)) {
-      btn.classList.add('added');
-    }
+    await fetch(`${API_URL}/wishlists/${username}/add`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, propertyId })
+    });
+    alert('Имотът е добавен в списъка!');
   } catch {
-    console.warn('Неуспешно зареждане на wishlist');
+    alert('Грешка при добавяне в списъка');
   }
-}
+});
+
+// Admin edit/delete
+document.addEventListener('click', async e => {
+  if (e.target.classList.contains('delete-btn')) {
+    const id = e.target.dataset.id;
+    if (!confirm('Сигурни ли сте, че искате да изтриете този имот?')) return;
+
+    try {
+      await fetch(`${API_URL}/properties/${id}`, { method: 'DELETE' });
+      loadProperties();
+    } catch {
+      alert('Грешка при изтриване на имота');
+    }
+  }
+});
+
+export { loadProperties };
