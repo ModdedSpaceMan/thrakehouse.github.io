@@ -2,6 +2,18 @@
 import { openModal, closeModal, showToast } from './ui.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
+const token = localStorage.getItem('token'); // JWT from login/signup
+
+// --- Helper: decode JWT payload ---
+function getPayload() {
+  if (!token) return null;
+  try {
+    return JSON.parse(atob(token.split('.')[0]));
+  } catch {
+    return null;
+  }
+}
+
 // --- Elements ---
 const openAddBtn = document.getElementById('addPropertySidebarBtn');
 const addPropertyModal = document.getElementById('addPropertyModal');
@@ -13,30 +25,20 @@ const adminFound = document.getElementById('adminFound');
 const viewSupportBtn = document.getElementById('viewSupportBtn');
 const supportMessages = document.getElementById('supportMessages');
 
-// Toggle admin class on body based on role
-const role = localStorage.getItem('role');
-if (role === 'admin') {
-  document.body.classList.add('admin');
-} else {
-  document.body.classList.remove('admin');
-}
+// Toggle admin class on body
+const payload = getPayload();
+if (payload?.role === 'admin') document.body.classList.add('admin');
 
 // --- Add Property Modal ---
-if (openAddBtn && addPropertyModal) {
-  openAddBtn.addEventListener('click', () => openModal(addPropertyModal));
-}
-
-if (closeAddBtn && addPropertyModal) {
-  closeAddBtn.addEventListener('click', () => closeModal(addPropertyModal));
-}
+if (openAddBtn && addPropertyModal) openAddBtn.addEventListener('click', () => openModal(addPropertyModal));
+if (closeAddBtn && addPropertyModal) closeAddBtn.addEventListener('click', () => closeModal(addPropertyModal));
 
 // --- Property Form Submission ---
 if (propertyForm) {
   propertyForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const role = localStorage.getItem('role');
-    if (role !== 'admin') {
+    if (payload?.role !== 'admin') {
       showToast('Нямате права за добавяне на имот');
       return;
     }
@@ -63,8 +65,11 @@ if (propertyForm) {
     try {
       const res = await fetch(`${API_URL}/properties`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ property: newProperty, role })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ property: newProperty })
       });
 
       const data = await res.json();
@@ -101,7 +106,6 @@ if (adminSearchBtn) {
     try {
       const res = await fetch(`${API_URL}/properties`);
       const properties = await res.json();
-
       const prop = properties.find(p => p.id === searchId);
 
       if (!prop) {
@@ -129,8 +133,15 @@ if (adminSearchBtn) {
 // --- View Support Tickets ---
 if (viewSupportBtn) {
   viewSupportBtn.addEventListener('click', async () => {
+    if (payload?.role !== 'admin') {
+      showToast('Нямате права за преглед на съобщения');
+      return;
+    }
+
     try {
-      const res = await fetch(`${API_URL}/support?role=admin`);
+      const res = await fetch(`${API_URL}/support`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const data = await res.json();
       supportMessages.innerHTML = data
         .map(msg => `<div class="support-ticket"><strong>${msg.name}</strong>: ${msg.message}</div>`)
