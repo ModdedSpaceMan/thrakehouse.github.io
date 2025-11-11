@@ -1,734 +1,156 @@
-/* --------------------
-   Base / Reset
-   -------------------- */
-   * {
-	box-sizing: border-box;
-	margin: 0;
-	padding: 0;
-	font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-}
-
-body {
-	background: #f4f6f8;
-	color: #2c3e50;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-}
-
-/* --------------------
-      Header
-      -------------------- */
-header {
-	background: #2c3e50;
-	color: #fff;
-	padding: 18px 24px;
-	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
-	position: sticky;
-	top: 0;
-	z-index: 50;
-}
-
-.header-inner {
-	max-width: 1200px;
-	margin: 0 auto;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-}
-
-header h1 {
-	font-size: 1.25rem;
-	letter-spacing: 0.2px;
-}
-
-.top-nav a,
-.top-nav button {
-	color: #fff;
-	text-decoration: none;
-	margin-left: 12px;
-	font-weight: 700;
-}
-
-.top-btn {
-	background: #e67e22;
-	border: 0;
-	padding: 8px 14px;
-	border-radius: 8px;
-	color: #fff;
-	cursor: pointer;
-	transition: transform .12s ease, background .12s ease;
-}
-
-.top-btn:hover {
-	transform: translateY(-2px);
-	background: #d35400;
-}
-
-/* --------------------
-      Hero
-      -------------------- */
-.hero {
-	background: url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1470&q=80') center/cover no-repeat;
-	height: 420px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.hero-inner {
-	text-align: center;
-	background: rgba(0, 0, 0, 0.32);
-	padding: 28px 36px;
-	border-radius: 12px;
-	color: #fff;
-	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
-}
-
-.hero h2 {
-	font-size: 2.6rem;
-	margin-bottom: 8px;
-}
-
-.hero-sub {
-	opacity: 0.95;
-}
-
-/* --------------------
-      Main / Properties
-      -------------------- */
-main {
-	max-width: 1200px;
-	margin: 28px auto;
-	padding: 0 20px;
-}
-
-.properties {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-	gap: 22px;
-	margin-bottom: 28px;
-}
-
-.property {
-	background: #fff;
-	border-radius: 14px;
-	overflow: hidden;
-	box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
-	transition: transform .18s ease, box-shadow .18s ease;
-	position: relative;
-	cursor: pointer;
-	overflow: hidden; /* ensure sidebar doesn't overflow */
-}
-
-.property:hover {
-	transform: translateY(-6px);
-	box-shadow: 0 18px 35px rgba(15, 23, 42, 0.09);
-}
-
-.property img {
-	width: 100%;
-	height: 200px;
-	object-fit: cover;
-	display: block;
-}
-
-.property-content {
-	padding: 18px 18px 22px;
-}
-
-.property-content h3 {
-	font-size: 1.15rem;
-	margin-bottom: 10px;
-	color: #1c2730;
-}
-
-.property-content p {
-	margin-bottom: 6px;
-	color: #4b5560;
-	font-size: 0.95rem;
-}
-
-/* Status badge (Free/Taken) */
-.property .status-badge {
-	position: absolute;
-	top: 12px;
-	left: 12px;
-	background: rgba(0, 0, 0, 0.6);
-	color: #fff;
-	padding: 6px 10px;
-	border-radius: 8px;
-	font-weight: 700;
-	font-size: 0.9rem;
-	z-index: 2;
-}
-
-/* Taken property visual tweak */
-.property.taken {
-	filter: grayscale(0.35) contrast(0.92);
-	pointer-events: auto;
-	opacity: 0.92;
-}
-
-.property.taken .overlay-note {
-	position: absolute;
-	right: 12px;
-	top: 12px;
-	background: #fff;
-	color: #111;
-	padding: 6px 10px;
-	border-radius: 8px;
-	font-weight: 700;
-	font-size: 0.85rem;
-	z-index: 2;
-}
-
-/* Property ID hover */
-.property .property-id {
-	position: absolute;
-	bottom: 12px;
-	right: 12px;
-	background: rgba(0, 0, 0, 0.6);
-	color: #fff;
-	padding: 4px 8px;
-	border-radius: 6px;
-	font-size: 0.8rem;
-	font-weight: 700;
-	opacity: 0;
-	transition: opacity 0.2s ease;
-	pointer-events: none;
-}
-
-.property:hover .property-id {
-	opacity: 1;
-}
-
-/* --------------------
-      Admin Slide-out Sidebar (per property)
-      -------------------- */
-.property .admin-buttons-right {
-	position: absolute;
-	top: 0;
-	right: -150px; /* hidden initially */
-	width: 150px;
-	height: 100%;
-	background: rgba(0, 0, 0, 0.85);
-	display: flex;
-	flex-direction: column;
-	padding: 12px;
-	gap: 6px;
-	border-radius: 0 12px 12px 0;
-	transition: right 0.3s ease;
-	z-index: 5;
-}
-
-.property:hover .admin-buttons-right {
-	right: 0; /* slide in on hover */
-}
-
-.property .admin-buttons-right .admin-btn {
-	width: 100%;
-	padding: 8px 10px;
-	font-size: 12px;
-	border-radius: 6px;
-	border: none;
-	cursor: pointer;
-	color: #fff;
-	text-align: center;
-}
-
-.property .admin-buttons-right .delete-btn {
-	background: #ef4444;
-}
-
-.property .admin-buttons-right .edit-btn {
-	background: #6b7280;
-}
-
-.property .admin-buttons-right .toggle-btn {
-	background: #0ea5a3;
-}
-
-.property .admin-buttons-right .admin-id {
-	font-size: 12px;
-	background: rgba(255, 255, 255, 0.1);
-	padding: 4px 6px;
-	border-radius: 6px;
-	color: #fff;
-	text-align: center;
-	margin-top: auto; /* stick ID at the bottom */
-}
-
-/* Wishlist / Heart button */
-.property .wishlist-btn {
-	position: absolute;
-	bottom: 12px;
-	right: 12px;
-	background: #e67e22;
-	border: none;
-	border-radius: 50%;
-	width: 36px;
-	height: 36px;
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-size: 1.1rem;
-	color: #fff;
-	z-index: 3;
-	transition: all 0.2s ease;
-}
-
-.property .wishlist-btn:hover {
-	background: #d35400;
-	transform: scale(1.1);
-}
-
-/* --------------------
-      Modals
-      -------------------- */
-.modal {
-	display: none;
-	position: fixed;
-	inset: 0;
-	z-index: 200;
-	background: rgba(0, 0, 0, 0.48);
-	align-items: center;
-	justify-content: center;
-	padding: 20px;
-}
-
-.modal[aria-hidden="false"] {
-	display: flex;
-}
-
-.modal-content {
-	width: 100%;
-	max-width: 540px;
-	background: #fff;
-	border-radius: 12px;
-	padding: 22px;
-	box-shadow: 0 20px 50px rgba(2, 6, 23, 0.2);
-	position: relative;
-}
-
-.close {
-	position: absolute;
-	right: 14px;
-	top: 10px;
-	font-size: 22px;
-	border: none;
-	background: transparent;
-	cursor: pointer;
-}
-
-.modal-content h2 {
-	text-align: center;
-	margin-bottom: 14px;
-}
-
-.modal-form input,
-.modal-form select,
-.modal-form textarea {
-	width: 100%;
-	padding: 12px 14px;
-	margin-bottom: 12px;
-	border-radius: 8px;
-	border: 1px solid #e6eef6;
-	background: #fbfdff;
-}
-
-.modal-submit {
-	width: 100%;
-	padding: 12px;
-	border-radius: 10px;
-	border: none;
-	background: #e67e22;
-	color: #fff;
-	font-weight: 700;
-	cursor: pointer;
-}
-
-.modal-submit:hover {
-	background: #d35400;
-}
-
-/* --------------------
-      Toast
-      -------------------- */
-.toast {
-	position: fixed;
-	right: 28px;
-	bottom: 28px;
-	background: #111827;
-	color: #fff;
-	padding: 12px 16px;
-	border-radius: 10px;
-	box-shadow: 0 8px 30px rgba(2, 6, 23, 0.4);
-	opacity: 0;
-	transform: translateY(8px);
-	transition: opacity .26s ease, transform .26s ease;
-	z-index: 999;
-	pointer-events: none;
-}
-
-.toast.show {
-	opacity: 1;
-	transform: translateY(0);
-	pointer-events: auto;
-}
-
-/* --------------------
-      Sidebar (Admin)
-      -------------------- */
-.sidebar {
-	position: fixed;
-	left: -320px;
-	top: 0;
-	width: 320px;
-	height: 100%;
-	background: #111827;
-	color: #fff;
-	padding: 22px;
-	transition: left .28s ease;
-	z-index: 150;
-	box-shadow: 6px 0 30px rgba(2, 6, 23, 0.2);
-}
-
-.sidebar.show {
-	left: 0;
-}
-
-.sidebar h3 {
-	font-size: 1.1rem;
-	margin-bottom: 12px;
-}
-
-.sidebar-btn {
-	display: block;
-	width: 100%;
-	padding: 10px;
-	margin-bottom: 10px;
-	border: none;
-	border-radius: 10px;
-	background: #e67e22;
-	color: #fff;
-	font-weight: 700;
-	cursor: pointer;
-}
-
-.sidebar-btn:hover {
-	background: #d35400;
-}
-
-.support-messages {
-	margin-top: 12px;
-	max-height: 60vh;
-	overflow: auto;
-	background: #f8fafc;
-	color: #0f1724;
-	padding: 10px;
-	border-radius: 8px;
-}
-
-#adminFound {
-	margin-top: 10px;
-	color: #e6eef6;
-}
-
-/* --------------------
-      Footer / Support
-      -------------------- */
-footer {
-	background: #fff;
-	margin-top: 28px;
-	padding: 30px 20px;
-	box-shadow: 0 -8px 30px rgba(2, 6, 23, 0.04);
-}
-
-.footer-inner {
-	max-width: 1200px;
-	margin: 0 auto;
-	display: flex;
-	gap: 24px;
-	align-items: flex-start;
-	justify-content: space-between;
-}
-
-.support-card {
-	max-width: 540px;
-	width: 100%;
-}
-
-.support-form input,
-.support-form textarea {
-	width: 100%;
-	padding: 12px;
-	margin-bottom: 10px;
-	border-radius: 10px;
-	border: 1px solid #e6eef6;
-	background: #fbfdff;
-}
-
-.support-submit {
-	background: #0ea5a3;
-	color: #fff;
-	border: none;
-	padding: 10px 14px;
-	border-radius: 10px;
-	font-weight: 700;
-	cursor: pointer;
-}
-
-.support-submit:hover {
-	background: #08969a;
-}
-
-/* --------------------
-      Wishlist Content
-      -------------------- */
-#wishlistContent .wish-item {
-	padding: 10px;
-	border-bottom: 1px solid #eef2f7;
-	display: flex;
-	gap: 10px;
-	align-items: center;
-}
-
-.wish-thumb {
-	width: 72px;
-	height: 56px;
-	object-fit: cover;
-	border-radius: 8px;
-}
-
-.wish-meta {
-	flex: 1;
-}
-
-.remove-wish {
-	background: #ff6b6b;
-	color: #fff;
-	border: none;
-	padding: 8px 10px;
-	border-radius: 8px;
-	cursor: pointer;
-}
-
-/* --------------------
-      Signup Page / Centered Card
-      -------------------- */
-.signup-hero {
-	background: url('https://images.unsplash.com/photo-1505691723518-41cb7f3fce73?auto=format&fit=crop&w=1470&q=80') center/cover no-repeat;
-	height: 220px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	color: #fff;
-	margin-bottom: -60px;
-}
-
-.centered-card.signup-container {
-	max-width: 400px;
-	width: 90%;
-	margin: 80px auto 40px;
-	padding: 30px 24px;
-	background: #fff;
-	border-radius: 12px;
-	box-shadow: 0 12px 30px rgba(2, 6, 23, 0.06);
-	text-align: center;
-}
-
-/* Signup Inputs */
-.centered-card.signup-container input {
-	width: 100%;
-	padding: 14px 16px;
-	margin-bottom: 14px;
-	border-radius: 10px;
-	border: 1px solid #e6eef6;
-	background: #fbfdff;
-	font-size: 1rem;
-	transition: all 0.2s ease;
-	outline: none;
-	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
-}
-
-/* Focus Effect */
-.centered-card.signup-container input:focus {
-	border-color: #e67e22;
-	box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
-	background: #fff;
-}
-
-/* Placeholder Styling */
-.centered-card.signup-container input::placeholder {
-	color: #a1aab8;
-	opacity: 1;
-	font-size: 0.95rem;
-}
-
-/* Submit Button */
-.centered-card.signup-container button {
-	width: 100%;
-	padding: 14px 16px;
-	border-radius: 10px;
-	border: none;
-	background-color: #e67e22;
-	color: #fff;
-	font-weight: 700;
-	font-size: 1rem;
-	cursor: pointer;
-	transition: all 0.2s ease;
-}
-
-/* Button Hover */
-.centered-card.signup-container button:hover {
-	background-color: #d35400;
-	transform: translateY(-2px);
-	box-shadow: 0 6px 12px rgba(230, 126, 34, 0.2);
-}
-
-/* --------------------
-      Utility
-      -------------------- */
-.muted {
-	color: #6b7280;
-	font-size: 0.95rem;
-}
-
-.accent {
-	color: #e67e22;
-	font-weight: 700;
-}
-
-@media (max-width:720px) {
-	.hero h2 {
-		font-size: 1.6rem;
-	}
-
-	.header-inner {
-		padding: 0 12px;
-	}
-
-	.footer-inner {
-		flex-direction: column;
-	}
-
-	.sidebar {
-		width: 80%;
-	}
-
-	.centered-card.signup-container {
-		margin: 60px auto 30px;
-		padding: 24px 18px;
-	}
-}
-
-/* --------------------
-      Filters & Pagination
-      -------------------- */
-.filter-btn {
-	background: #0ea5a3;
-	color: #fff;
-	border: none;
-	padding: 8px 16px;
-	margin: 2px;
-	border-radius: 8px;
-	cursor: pointer;
-	transition: all 0.2s;
-}
-
-.filter-btn:hover {
-	background: #14b8a6;
-	transform: scale(1.05);
-}
-
-.filter-btn.active {
-	background: #06b6d4;
-	font-weight: bold;
-}
-
-#propertyFilters {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 12px;
-	margin: 20px auto;
-	padding: 10px;
-	background: #fff;
-	border-radius: 12px;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-	justify-content: center;
-	max-width: 1000px;
-	position: sticky;
-	top: 80px;
-	z-index: 10;
-	border-bottom: 1px solid #ddd;
-}
-
-#propertyFilters input,
-#propertyFilters select {
-	padding: 10px 14px;
-	border: 1px solid #cbd5e1;
-	border-radius: 8px;
-	outline: none;
-	font-size: 14px;
-	transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-#propertyFilters input:focus,
-#propertyFilters select:focus {
-	border-color: #0ea5a3;
-	box-shadow: 0 0 0 2px rgba(14, 165, 163, 0.2);
-}
-
-#propertyFilters button#applyFilters {
-	padding: 10px 18px;
-	background-color: #0ea5a3;
-	color: #fff;
-	border: none;
-	border-radius: 8px;
-	font-weight: 500;
-	cursor: pointer;
-	transition: background 0.2s;
-}
-
-#propertyFilters button#applyFilters:hover {
-	background-color: #089ca1;
-}
-
-#pagination button {
-	padding: 8px 14px;
-	border: 1px solid #cbd5e1;
-	border-radius: 8px;
-	background: #fff;
-	cursor: pointer;
-	transition: background 0.2s, color 0.2s;
-}
-
-#pagination button.active {
-	background: #0ea5a3;
-	color: #fff;
-	border-color: #0ea5a3;
-}
-
-#pagination button:hover:not(.active) {
-	background: #e0f2f1;
-}
-wishlist-btn {
-    position: fixed;
-    bottom: 50%;
-    left: 50%;
-    transform: translate(-50%, 50%);
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    width: 120px;
-    height: 40px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  }
-  .wishlist-btn:hover {
-    background-color: #0056b3;
-  }
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Имоти под наем в Гърция</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>Имоти под наем в Гърция</h1>
+      <nav class="top-nav">
+        <a href="#properties" class="top-btn">Имоти</a>
+
+        <!-- Login / Logout / Username -->
+        <button id="loginBtn" class="top-btn">Вход</button>
+        <a href="signup.html" class="top-btn">Регистрация</a>
+        <span id="userDisplay" class="top-btn" style="display:none; margin-left:10px;"></span>
+        <button id="wishlistBtn" class="top-btn" style="display:none;">Списък ♥</button>
+        <button id="logoutBtn" class="top-btn" style="display:none;">Изход</button>
+        <button id="sidebarToggle" class="top-btn" style="display:none;">☰</button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <h2>Намерете своя дом в Гърция</h2>
+      <p class="hero-sub">Апартаменти, къщи и вили за наем — лесно и бързо</p>
+    </div>
+  </section>
+
+  <main>
+    <div id="propertyFilters" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
+      <input type="text" id="filterLocation" placeholder="Локация" />
+      <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
+      <input type="number" id="filterMaxPrice" placeholder="Макс. цена" />
+      <select id="filterType">
+        <option value="">Всички типове</option>
+        <option value="apartment">Апартамент</option>
+        <option value="house">Къща</option>
+      </select>
+      <label><input type="checkbox" id="filterFree" /> Свободни</label>
+      <label><input type="checkbox" id="filterTaken" /> Заети</label>
+      <button id="applyFilters">Приложи</button>
+    </div>
+    <section id="properties" class="properties"></section>
+  </main>
+
+  <!-- Admin Sidebar -->
+  <aside id="adminSidebar" class="sidebar" aria-hidden="true">
+    <div class="sidebar-inner">
+      <h3>Админ панел</h3>
+
+      <div class="sidebar-section">
+        <input id="adminSearchInput" placeholder="Търсене по ID..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef6;margin-bottom:8px;">
+        <button id="adminSearchBtn" class="sidebar-btn">Търси ID</button>
+        <div id="adminFound" style="margin-top:10px;color:#e6eef6;"></div>
+      </div>
+
+      <button id="viewSupportBtn" class="sidebar-btn">Потребителски съобщения</button>
+      <button id="addPropertySidebarBtn" class="sidebar-btn">Добави имот</button>
+
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:12px 0;">
+      <div id="supportMessages" class="support-messages"></div>
+    </div>
+  </aside>
+
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="close" id="closeLogin" aria-label="close">&times;</button>
+      <h2>Вход</h2>
+      <form id="loginForm" class="modal-form">
+        <input type="text" id="username" placeholder="Потребителско име" required />
+        <input type="password" id="password" placeholder="Парола" required />
+        <button type="submit" class="modal-submit">Вход</button>
+      </form>
+      <p class="modal-note"><a href="#" id="forgotPasswordLink">Забравена парола?</a></p>
+    </div>
+  </div>
+
+  <!-- Reset Password Modal -->
+  <div id="resetModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="close" id="closeReset" aria-label="close">&times;</button>
+      <h2>Заявка за нулиране на парола</h2>
+      <form id="resetForm" class="modal-form">
+        <input type="text" id="resetInput" placeholder="Въведете Имейл" required />
+        <button type="submit" class="modal-submit">Създай заявка</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Property Modal -->
+  <div id="addPropertyModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="close" id="closeAdd" aria-label="close">&times;</button>
+      <h2>Добави нов имот</h2>
+      <form id="propertyForm" class="modal-form">
+        <input type="text" id="propertyName" placeholder="Име на имота" required />
+        <input type="text" id="propertyLocation" placeholder="Местоположение" required />
+        <input type="text" id="propertyPrice" placeholder="Цена на месец (лв)" required />
+        <select id="propertyType">
+          <option value="apartment">Апартамент</option>
+          <option value="house">Къща</option>
+          <option value="villa">Вила</option>
+        </select>
+        <select id="propertyStatus">
+          <option value="free">Свободен</option>
+          <option value="taken">Зает</option>
+        </select>
+        <input type="file" id="propertyImage" accept="image/*" required />
+        <button type="submit" class="modal-submit">Добави имот</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Wishlist Modal -->
+  <div id="wishlistModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="close" id="closeWishlist" aria-label="close">&times;</button>
+      <h2>Вашият списък</h2>
+      <div id="wishlistContent"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="support-card">
+        <h4>Изпратете съобщение до нас</h4>
+        <form id="supportForm" class="support-form">
+          <input type="text" id="supportName" placeholder="Вашето име" required />
+          <input type="email" id="supportEmail" placeholder="Вашият имейл" required />
+          <textarea id="supportMessage" placeholder="Съобщение" required></textarea>
+          <button type="submit" class="support-submit">Изпрати</button>
+        </form>
+      </div>
+      <p class="copyright">&copy; 2025 Имоти под наем в Гърция. Всички права запазени.</p>
+    </div>
+  </footer>
+v1
+  <!-- Load scripts -->
+  <script type="module" src="auth.js" defer></script>
+  <script type="module" src="ui.js" defer></script>
+  <script type="module" src="properties.js" defer></script>
+  <script type="module" src="wishlist.js" defer></script>
+  <script type="module" src="support.js" defer></script>
+  <script type="module" src="reset.js" defer></script>
+  <script type="module" src="admin.js" defer></script>
+</body>
+</html>
