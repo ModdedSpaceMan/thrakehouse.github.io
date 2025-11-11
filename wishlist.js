@@ -21,9 +21,11 @@ export async function loadWishlist() {
 
   try {
     const res = await fetch(`${API_URL}/wishlists/${username}`);
+    if (!res.ok) throw new Error('Неуспешно зареждане на списъка');
     const data = await res.json();
     wishlistIds = data.items || [];
 
+    wishlistContent.innerHTML = '';
     if (!wishlistIds.length) {
       wishlistContent.innerHTML = '<p>Списъкът е празен</p>';
       updatePropertyWishlistButtons();
@@ -33,7 +35,6 @@ export async function loadWishlist() {
     const propsRes = await fetch(`${API_URL}/properties`);
     const propsData = await propsRes.json();
 
-    wishlistContent.innerHTML = '';
     wishlistIds.forEach(id => {
       const prop = propsData.find(p => p.id === id);
       const div = document.createElement('div');
@@ -61,16 +62,15 @@ export async function loadWishlist() {
   }
 }
 
-// Add property to wishlist
 export async function addToWishlist(id) {
   const username = localStorage.getItem('username');
   if (!username) { showToast('Влезте, за да добавяте'); return; }
 
   try {
-    const res = await fetch(`${API_URL}/wishlists/add`, {
+    const res = await fetch(`${API_URL}/wishlists/${username}/add`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ username, propertyId: id })
+      body: JSON.stringify({ propertyId: id })
     });
     const data = await res.json();
     if (data.success) {
@@ -79,22 +79,22 @@ export async function addToWishlist(id) {
       updatePropertyWishlistButtons();
       loadWishlist();
       loadProperties();
-    } else showToast('Вече е в списъка');
-  } catch {
+    } else showToast(data.message || 'Вече е в списъка');
+  } catch (err) {
+    console.error(err);
     showToast('Грешка при добавяне');
   }
 }
 
-// Remove property from wishlist
 export async function removeFromWishlist(id) {
   const username = localStorage.getItem('username');
   if (!username) { showToast('Влезте, за да премахвате'); return; }
 
   try {
-    const res = await fetch(`${API_URL}/wishlists/remove`, {
+    const res = await fetch(`${API_URL}/wishlists/${username}/remove`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ username, propertyId: id })
+      body: JSON.stringify({ propertyId: id })
     });
     const data = await res.json();
     if (data.success) {
@@ -104,31 +104,33 @@ export async function removeFromWishlist(id) {
       loadWishlist();
       loadProperties();
     } else showToast(data.message || 'Грешка при премахване');
-  } catch {
+  } catch (err) {
+    console.error(err);
     showToast('Грешка при премахване');
   }
 }
 
-// Update the visual state of per-property wishlist buttons
 function updatePropertyWishlistButtons() {
   const username = localStorage.getItem('username');
   if (!username) return;
 
   document.querySelectorAll('.property').forEach(propDiv => {
-    const propIdDiv = propDiv.querySelector('.property-id');
-    if (!propIdDiv) return;
-    const id = propIdDiv.textContent.replace('ID: ','').trim();
-
+    const propId = propDiv.dataset.id;
     const btn = propDiv.querySelector('.wishlist-btn');
     if (!btn) return;
 
-    if (wishlistIds.includes(id)) {
+    if (wishlistIds.includes(propId)) {
       btn.classList.add('added');
       btn.style.color = '#ff6b6b';
     } else {
       btn.classList.remove('added');
       btn.style.color = '#fff';
     }
+
+    btn.onclick = () => {
+      if (wishlistIds.includes(propId)) removeFromWishlist(propId);
+      else addToWishlist(propId);
+    };
   });
 }
 
@@ -139,3 +141,6 @@ wishlistBtn.addEventListener('click', () => {
 });
 
 closeWishlist.addEventListener('click', () => wishlistModal.setAttribute('aria-hidden','true'));
+
+// Load wishlist on page load
+document.addEventListener('DOMContentLoaded', loadWishlist);
