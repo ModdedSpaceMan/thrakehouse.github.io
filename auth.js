@@ -17,15 +17,6 @@ loginBtn.addEventListener('click', () => loginModal.setAttribute('aria-hidden', 
 // Close login modal
 closeLogin.addEventListener('click', () => loginModal.setAttribute('aria-hidden', 'true'));
 
-// Decode JWT payload
-function getPayload(token) {
-  try {
-    return JSON.parse(atob(token.split('.')[0]));
-  } catch {
-    return null;
-  }
-}
-
 // Login form submit
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -42,21 +33,19 @@ loginForm.addEventListener('submit', async (e) => {
     });
     const data = await res.json();
 
-    if (data.success && data.token) {
-      // Store JWT instead of role/username separately
+    if (data.success) {
+      // store only token and username
       localStorage.setItem('token', data.token);
-
-      const payload = getPayload(data.token);
-      if (payload?.username) {
-        userDisplay.textContent = payload.username;
-        userDisplay.style.display = 'inline-block';
-      }
+      localStorage.setItem('username', username);
 
       showToast('Влязохте успешно!');
       loginModal.setAttribute('aria-hidden', 'true');
-      uiInit(); // refresh UI
+      uiInit();
+
+      userDisplay.textContent = username;
+      userDisplay.style.display = 'inline-block';
     } else {
-      showToast(data.message || 'Невалидно потребителско име или парола');
+      showToast('Невалидно потребителско име или парола');
     }
   } catch (err) {
     console.error(err);
@@ -66,6 +55,7 @@ loginForm.addEventListener('submit', async (e) => {
 
 // Logout
 logoutBtn.addEventListener('click', () => {
+  localStorage.removeItem('username');
   localStorage.removeItem('token');
   userDisplay.textContent = '';
   userDisplay.style.display = 'none';
