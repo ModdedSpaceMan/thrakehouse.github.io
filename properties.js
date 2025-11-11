@@ -1,157 +1,95 @@
-import { showToast } from './ui.js';
+document.addEventListener('DOMContentLoaded', () => {
+  initProperties();
+});
 
-const API_URL = 'https://my-backend.martinmiskata.workers.dev';
-let wishlistIds = [];
-const propertyContainer = document.getElementById('properties');
-
-// Initialize everything
-export async function initProperties() {
-  await loadWishlist();
-  await loadProperties();
-  setupFilterListeners();
-}
-
-// Fetch all properties and render
-export async function loadProperties() {
+async function initProperties() {
+  const propertyContainer = document.getElementById('properties');
   if (!propertyContainer) return;
 
   try {
-    const res = await fetch(`${API_URL}/properties`, {
+    const res = await fetch('/api/properties', {
       headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
+        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
       }
     });
-    const data = await res.json();
 
-    if (!Array.isArray(data)) {
-      console.warn('Properties response is not an array:', data);
-      propertyContainer.innerHTML = '<p>Няма налични имоти.</p>';
-      return [];
-    }
+    if (!res.ok) throw new Error('Failed to fetch properties');
 
-    renderProperties(data);
-    return data;
+    const properties = await res.json();
+    renderProperties(properties, propertyContainer);
   } catch (err) {
-    console.error('Грешка при зареждане на имоти:', err);
-    propertyContainer.innerHTML = '<p>Грешка при зареждане на имоти.</p>';
-    return [];
+    console.error('Error loading properties:', err);
   }
 }
 
-// Render property cards
-export function renderProperties(properties) {
-  if (!propertyContainer) return;
+function renderProperties(properties, container) {
+  container.innerHTML = '';
 
-  propertyContainer.innerHTML = properties.map(p => {
-    const takenClass = p.status?.toLowerCase() === 'taken' ? 'taken' : '';
-    const inWishlist = wishlistIds.includes(p.id) ? '❤️' : '🤍';
+  if (!Array.isArray(properties) || properties.length === 0) {
+    container.innerHTML = '<p>No properties found.</p>';
+    return;
+  }
 
-    return `
-      <div class="property ${takenClass}">
-        ${p.image ? `<img src="${p.image}" alt="${p.name}">` : ''}
-        <div class="property-content">
-          <h3>${p.name}</h3>
-          <p>Локация: ${p.location}</p>
-          <p>Цена: ${p.price}</p>
-          <p>Тип: ${p.type}</p>
-          <p>Статус: ${p.status}</p>
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
+
+  for (const property of properties) {
+    const card = document.createElement('div');
+    card.className = 'property-card';
+    card.innerHTML = `
+      <img src="${property.image}" alt="${property.name}">
+      <h3>${property.name}</h3>
+      <p>Location: ${property.location}</p>
+      <p>Type: ${property.type}</p>
+      <p>Price: $${property.price}</p>
+      <p>Status: ${property.status}</p>
+      ${isAdmin ? `
+        <div class="admin-controls">
+          <button class="edit-btn" data-id="${property.id}">Edit</button>
+          <button class="delete-btn" data-id="${property.id}">Delete</button>
+          <button class="toggle-btn" data-id="${property.id}">
+            ${property.status === 'free' ? 'Mark as Taken' : 'Mark as Free'}
+          </button>
         </div>
-        <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
-      </div>
+      ` : ''}
     `;
-  }).join('');
+    container.appendChild(card);
+  }
 
-  // Add click listeners for wishlist buttons
-  propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      await toggleWishlist(btn.dataset.id);
-      await loadProperties(); // re-render after toggle
+  if (isAdmin) attachAdminListeners();
+}
+
+function attachAdminListeners() {
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      const id = e.target.dataset.id;
+      if (!confirm('Delete this property?')) return;
+      await fetch(`/api/properties/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        }
+      });
+      initProperties();
     });
   });
-}
 
-// Load wishlist for the current user
-export async function loadWishlist() {
-  const username = localStorage.getItem('username');
-  const token = localStorage.getItem('token');
-
-  if (!username || !token) {
-    wishlistIds = [];
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/wishlists/${username}`, {
-      headers: { 'Authorization': 'Bearer ' + token }
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      const id = e.target.dataset.id;
+      await fetch(`/api/properties/${id}/toggle`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        }
+      });
+      initProperties();
     });
-    const data = await res.json();
-    wishlistIds = data.items || [];
-  } catch (err) {
-    console.error('Грешка при зареждане на wishlist:', err);
-    wishlistIds = [];
-  }
-}
+  });
 
-// Toggle property in wishlist
-export async function toggleWishlist(propertyId) {
-  const username = localStorage.getItem('username');
-  const token = localStorage.getItem('token');
-
-  if (!username || !token) {
-    showToast('Трябва да сте влезли, за да добавите в wishlist');
-    return;
-  }
-
-  const action = wishlistIds.includes(propertyId) ? 'remove' : 'add';
-
-  try {
-    const res = await fetch(`${API_URL}/wishlists/${username}/${action}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token
-      },
-      body: JSON.stringify({ propertyId })
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const id = e.target.dataset.id;
+      window.location.href = `/admin/edit-property.html?id=${id}`;
     });
-
-    const data = await res.json();
-    if (data.success) {
-      if (action === 'add') wishlistIds.push(propertyId);
-      else wishlistIds = wishlistIds.filter(id => id !== propertyId);
-
-      showToast(action === 'add' ? 'Добавено в wishlist!' : 'Премахнато от wishlist');
-    }
-  } catch (err) {
-    console.error(err);
-    showToast('Грешка при добавяне/премахване на wishlist');
-  }
-}
-
-// Optional: filter handling (if you implement filters)
-function setupFilterListeners() {
-  const applyBtn = document.getElementById('applyFilters');
-  if (!applyBtn) return;
-
-  applyBtn.addEventListener('click', async () => {
-    let properties = await loadProperties();
-    const locationFilter = document.getElementById('filterLocation').value.toLowerCase();
-    const minPrice = Number(document.getElementById('filterMinPrice').value);
-    const maxPrice = Number(document.getElementById('filterMaxPrice').value);
-    const typeFilter = document.getElementById('filterType').value;
-    const freeChecked = document.getElementById('filterFree').checked;
-    const takenChecked = document.getElementById('filterTaken').checked;
-
-    properties = properties.filter(p => {
-      const price = Number(p.price);
-      if (locationFilter && !p.location.toLowerCase().includes(locationFilter)) return false;
-      if (!isNaN(minPrice) && price < minPrice) return false;
-      if (!isNaN(maxPrice) && price > maxPrice) return false;
-      if (typeFilter && p.type !== typeFilter) return false;
-      if (freeChecked && p.status.toLowerCase() !== 'free') return false;
-      if (takenChecked && p.status.toLowerCase() !== 'taken') return false;
-      return true;
-    });
-
-    renderProperties(properties);
   });
 }
