@@ -1,47 +1,24 @@
 // auth.js
 import { uiInit, showToast } from './ui.js';
-import { loadProperties } from './properties.js';
-import { loadWishlist } from './wishlist.js';
 
-let role = localStorage.getItem('role') || '';
-let username = localStorage.getItem('username') || '';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
-const loginBtn = document.getElementById('loginBtn');
-const closeLogin = document.getElementById('closeLogin');
-const loginForm = document.getElementById('loginForm');
-const logoutBtn = document.getElementById('logoutBtn');
-const loginModal = document.getElementById('loginModal');
-
-loginBtn.addEventListener('click', () => loginModal.setAttribute('aria-hidden', 'false'));
-closeLogin.addEventListener('click', () => loginModal.setAttribute('aria-hidden', 'true'));
-
-loginForm.addEventListener('submit', async e => {
-  e.preventDefault();
-  const u = document.getElementById('username').value.trim();
-  const p = document.getElementById('password').value.trim();
-  if (!u || !p) { showToast('Моля въведете потребителско име и парола'); return; }
-
+export async function login(usernameInput, passwordInput) {
   try {
     const res = await fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: u, password: p })
+      body: JSON.stringify({ username: usernameInput, password: passwordInput })
     });
+    if (!res.ok) throw new Error('Login failed');
 
     const data = await res.json();
     if (data.success) {
-      role = data.role;
-      username = data.username;
-      localStorage.setItem('role', role);
-      localStorage.setItem('username', username);
-
+      localStorage.setItem('username', data.username);
+      localStorage.setItem('role', data.role);
+      uiInit();
       showToast('Успешен вход!');
-      loginModal.setAttribute('aria-hidden', 'true');
-
-      uiInit();        // Update buttons
-      await loadProperties();  // Refresh properties
-      await loadWishlist();    // Refresh wishlist
+      location.reload(); // reload page to reflect login
     } else {
       showToast('Грешно потребителско име или парола');
     }
@@ -49,15 +26,12 @@ loginForm.addEventListener('submit', async e => {
     console.error(err);
     showToast('Грешка при опит за вход');
   }
-});
+}
 
-logoutBtn.addEventListener('click', async () => {
-  localStorage.removeItem('role');
+export function logout() {
   localStorage.removeItem('username');
-  role = '';
-  username = '';
-
+  localStorage.removeItem('role');
+  uiInit();
   showToast('Успешен изход!');
-  uiInit();            // Update buttons
-  await loadProperties();
-});
+  location.reload(); // reload page to reflect logout
+}
