@@ -17,39 +17,56 @@ function closeModal(modal) { if(modal) modal.setAttribute('aria-hidden', 'true')
 /* ---------- Main Script ---------- */
 document.addEventListener('DOMContentLoaded', () => {
   const supportContainer = document.getElementById('supportMessages'); // Admin view
-  const resetModal = document.getElementById('resetModal');
-  const closeReset = document.getElementById('closeReset');
 
-  // --- Close Reset Modal ---
-  closeReset?.addEventListener('click', () => closeModal(resetModal));
-
-  // --- Load reset requests (read-only) ---
-  async function loadResetRequests() {
+  // --- Load support messages (read-only, token required) ---
+  async function loadSupportMessages() {
     if (!supportContainer) return;
-    try {
-      const res = await fetch(`${API_URL}/reset-password?role=admin`);
-      const requests = await res.json();
 
-      supportContainer.innerHTML = '';
-      if (!Array.isArray(requests) || !requests.length) {
-        supportContainer.innerHTML = '<p>Няма заявки за нулиране на парола</p>';
+    const token = localStorage.getItem('token');
+    if (!token) {
+      supportContainer.innerHTML = '<p>Трябва да сте влезли, за да видите съобщенията</p>';
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/support?role=admin`, {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          supportContainer.innerHTML = '<p>Нямате достъп. Влезте като админ.</p>';
+        } else {
+          supportContainer.innerHTML = '<p>Грешка при зареждане на съобщенията</p>';
+        }
         return;
       }
 
-      requests.forEach(req => {
+      const messages = await res.json();
+
+      supportContainer.innerHTML = '';
+      if (!Array.isArray(messages) || !messages.length) {
+        supportContainer.innerHTML = '<p>Няма подадени съобщения</p>';
+        return;
+      }
+
+      messages.forEach(msg => {
         const div = document.createElement('div');
-        div.className = 'reset-request';
+        div.className = 'support-message';
         div.innerHTML = `
-          <strong>${req.emailOrUsername}</strong>
-          <small>${new Date(req.createdAt).toLocaleString()}</small>
+          <strong>${msg.name} (${msg.email})</strong>
+          <p>${msg.message}</p>
+          <small>${new Date(msg.createdAt).toLocaleString()}</small>
         `;
         supportContainer.appendChild(div);
       });
     } catch {
-      showToast('Грешка при зареждане на заявките');
+      showToast('Грешка при зареждане на съобщенията');
     }
   }
 
   // --- Initial load ---
-  loadResetRequests();
+  loadSupportMessages();
 });
