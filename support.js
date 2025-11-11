@@ -21,11 +21,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetModal = document.getElementById('resetModal');
   const closeReset = document.getElementById('closeReset');
   const supportContainer = document.getElementById('supportMessages'); // For admin view
+  const supportForm = document.getElementById('supportForm'); // Actual support form
+  const supportName = document.getElementById('supportName');
+  const supportEmail = document.getElementById('supportEmail');
+  const supportMessage = document.getElementById('supportMessage');
 
-  // Close modal button
+  // --- Close Reset Modal ---
   closeReset?.addEventListener('click', () => closeModal(resetModal));
 
-  // Submit reset form
+  // --- Submit Reset Form ---
   resetForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = resetInput.value.trim();
@@ -52,7 +56,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Optional: Admin view for reset requests
+  // --- Submit Support Form ---
+  supportForm?.addEventListener('submit', async (e) => {
+    e.preventDefault(); // <<< critical: prevents page reload
+    const name = supportName.value.trim();
+    const email = supportEmail.value.trim();
+    const message = supportMessage.value.trim();
+    if (!name || !email || !message) {
+      showToast('Моля, попълнете всички полета');
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/support`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Съобщението е изпратено успешно');
+        supportForm.reset();
+      } else {
+        showToast(data.message || 'Грешка при изпращане на съобщение');
+      }
+    } catch {
+      showToast('Грешка при изпращане на съобщение');
+    }
+  });
+
+  // --- Optional: Admin view for reset requests ---
   async function loadResetRequests() {
     if (!supportContainer) return;
     try {
@@ -78,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Delete reset request (admin)
+  // --- Delete reset request (admin) ---
   document.addEventListener('click', async (e) => {
     if (!e.target.classList.contains('delete-reset-btn')) return;
     const id = e.target.dataset.id;
@@ -100,6 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Initial load for admin
+  // --- Initial load for admin ---
   loadResetRequests();
 });
