@@ -1,4 +1,5 @@
-// signup.js
+import { loginUser } from './auth.js';
+
 const signupForm = document.getElementById('signupForm');
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
@@ -31,23 +32,14 @@ signupForm.addEventListener('submit', async (e) => {
   const password = document.getElementById('signupPassword').value;
   const confirm = document.getElementById('signupConfirmPassword').value;
 
-  if (password !== confirm) {
-    showToastLocal('Паролите не съвпадат!');
-    return;
-  }
+  if (password !== confirm) return showToastLocal('Паролите не съвпадат!');
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(emailInput)) {
-    showToastLocal('Моля, въведете валиден имейл');
-    return;
-  }
+  if (!emailRegex.test(emailInput)) return showToastLocal('Моля, въведете валиден имейл');
 
   const allowedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "mail.bg"];
   const domain = emailInput.split("@")[1];
-  if (!allowedDomains.includes(domain)) {
-    showToastLocal('Моля, използвайте валиден имейл (gmail, yahoo, outlook, hotmail, mail.bg)');
-    return;
-  }
+  if (!allowedDomains.includes(domain)) return showToastLocal('Моля, използвайте валиден имейл');
 
   try {
     const res = await fetch(`${API_URL}/signup`, {
@@ -60,12 +52,9 @@ signupForm.addEventListener('submit', async (e) => {
     const data = await res.json();
 
     if (data.success) {
-      // store token and username immediately
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('username', usernameInput);
-
-      showToastLocal('Успешна регистрация! Влязохте автоматично.');
+      showToastLocal('Успешна регистрация! Влизане автоматично...');
       signupForm.reset();
+      await loginUser(usernameInput, password); // auto-login
       setTimeout(() => window.location.href = 'index.html', 900);
     } else if (data.message === 'Username taken') {
       showToastLocal('Потребителското име вече е заето!');
