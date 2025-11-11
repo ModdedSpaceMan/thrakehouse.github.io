@@ -4,7 +4,7 @@ const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 export let wishlistIds = [];
 
 // Get the container where properties will be shown
-const property = document.getElementById('property'); // <-- make sure your HTML has this div
+const property = document.getElementById('properties'); // <-- make sure your HTML has this div
 
 // Load all properties
 export async function loadProperties() {
