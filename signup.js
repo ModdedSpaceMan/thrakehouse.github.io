@@ -45,7 +45,7 @@ signupForm.addEventListener('submit', async (e) => {
   const allowedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "mail.bg"];
   const domain = emailInput.split("@")[1];
   if (!allowedDomains.includes(domain)) {
-    showToastLocal('Моля, използвайте валиден имейл (gmail, yahoo, outlook, hotmail. mail.bg)');
+    showToastLocal('Моля, използвайте валиден имейл (gmail, yahoo, outlook, hotmail, mail.bg)');
     return;
   }
 
@@ -60,7 +60,11 @@ signupForm.addEventListener('submit', async (e) => {
     const data = await res.json();
 
     if (data.success) {
-      showToastLocal('Успешна регистрация! Можете да влезете с акаунта си.');
+      // store token and username immediately
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('username', usernameInput);
+
+      showToastLocal('Успешна регистрация! Влязохте автоматично.');
       signupForm.reset();
       setTimeout(() => window.location.href = 'index.html', 900);
     } else if (data.message === 'Username taken') {
@@ -70,7 +74,6 @@ signupForm.addEventListener('submit', async (e) => {
     } else {
       showToastLocal(data.message || 'Грешка при регистрация');
     }
-
   } catch (err) {
     showToastLocal('Грешка при регистрация');
     console.error(err);
