@@ -1,5 +1,5 @@
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
-const propertiesContainer = document.getElementById('propertiesContainer');
+const propertiesContainer = document.getElementById('properties');
 
 export async function loadProperties() {
   if (!propertiesContainer) return;
