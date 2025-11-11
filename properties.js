@@ -1,10 +1,20 @@
-import { addToWishlist, removeFromWishlist } from './wishlist.js';
-
+import { showToast } from './ui.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 const propertiesContainer = document.getElementById('properties');
+const currentUserRole = localStorage.getItem('role') || 'user'; // dynamic role after login
 
-const currentUsername = localStorage.getItem('username');
-const currentUserRole = localStorage.getItem('role') || 'user';
+// --- Edit Modal Elements ---
+const editModal = document.getElementById('editModal');
+const closeEditModal = document.getElementById('closeEditModal');
+const editForm = document.getElementById('editForm');
+const editImageInput = document.getElementById('editImage');
+const editImagePreview = document.getElementById('editImagePreview');
+let editingPropertyId = null;
+
+editImageInput.addEventListener('input', () => {
+  editImagePreview.src = editImageInput.value;
+});
+closeEditModal.addEventListener('click', () => editModal.setAttribute('aria-hidden','true'));
 
 export async function loadProperties() {
   if (!propertiesContainer) return;
@@ -12,7 +22,6 @@ export async function loadProperties() {
   try {
     const res = await fetch(`${API_URL}/properties`);
     const properties = await res.json();
-
     propertiesContainer.innerHTML = '';
 
     if (!properties.length) {
@@ -22,11 +31,10 @@ export async function loadProperties() {
 
     properties.forEach(prop => {
       const div = document.createElement('div');
-      div.className = 'property';
-      if (prop.status === 'taken') div.classList.add('taken');
+      div.className = `property ${prop.status === 'taken' ? 'taken' : ''}`;
+      div.dataset.id = prop.id;
 
       div.innerHTML = `
-        <div class="property-id" style="display:none;">ID: ${prop.id}</div>
         ${prop.status ? `<div class="status-badge">${prop.status === 'free' ? 'Свободен' : 'Зает'}</div>` : ''}
         ${prop.image ? `<img src="${prop.image}" alt="${prop.name}" />` : ''}
         <div class="property-content">
@@ -35,140 +43,120 @@ export async function loadProperties() {
           <p>Цена: ${prop.price}</p>
           <p>Тип: ${prop.type}</p>
         </div>
-        <div class="admin-buttons-right" ${currentUserRole !== 'admin' ? 'style="display:none;"' : ''}>
+        <div class="admin-buttons-right" style="display:${currentUserRole==='admin'?'flex':'none'};">
           <button class="admin-btn edit-btn">Edit</button>
           <button class="admin-btn delete-btn">Delete</button>
-          <button class="admin-btn toggle-btn">${prop.status === 'free' ? 'Свободен' : 'Зает'}</button>
+          <button class="admin-btn toggle-btn">${prop.status==='free'?'Свободен':'Зает'}</button>
         </div>
         <button class="wishlist-btn">♥</button>
       `;
-
       propertiesContainer.appendChild(div);
 
       const deleteBtn = div.querySelector('.delete-btn');
       const editBtn = div.querySelector('.edit-btn');
       const toggleBtn = div.querySelector('.toggle-btn');
-      const wishlistBtn = div.querySelector('.wishlist-btn');
 
       // DELETE
-      if (deleteBtn) {
-        deleteBtn.addEventListener('click', async e => {
-          e.stopPropagation();
-          if (!prop.id) return;
-          if (!confirm(`Сигурни ли сте, че искате да изтриете "${prop.name}"?`)) return;
-          try {
-            const res = await fetch(`${API_URL}/properties/${prop.id}`, {
-              method: 'DELETE',
-              headers: { 'Content-Type': 'application/json' }
-            });
-            if (!res.ok) throw new Error('Неуспешно изтриване');
-            div.remove();
-          } catch (err) {
-            console.error(err);
-            alert('Грешка при изтриване на имота');
-          }
-        });
-      }
+      deleteBtn?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!prop.id) return;
+        if (!confirm(`Сигурни ли сте, че искате да изтриете "${prop.name}"?`)) return;
+        try {
+          await fetch(`${API_URL}/properties/${prop.id}`, { method: 'DELETE' });
+          div.remove();
+          showToast('Имотът е изтрит');
+        } catch (err) {
+          console.error(err);
+          showToast('Грешка при изтриване на имота');
+        }
+      });
 
       // EDIT
-      if (editBtn) {
-        editBtn.addEventListener('click', async e => {
-          e.stopPropagation();
-          if (!prop.id) return;
-
-          const newName = prompt('Ново име на имота:', prop.name);
-          if (!newName) return;
-          const newLocation = prompt('Нова локация:', prop.location);
-          if (!newLocation) return;
-
-          try {
-            const res = await fetch(`${API_URL}/properties/${prop.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ property: { ...prop, name: newName, location: newLocation }, role: currentUserRole })
-            });
-            if (!res.ok) throw new Error('Неуспешно обновяване');
-
-            prop.name = newName;
-            prop.location = newLocation;
-
-            const content = div.querySelector('.property-content');
-            content.querySelector('h3').textContent = newName;
-            content.querySelector('p').textContent = newLocation;
-          } catch (err) {
-            console.error(err);
-            alert('Грешка при обновяване на имота');
-          }
-        });
-      }
+      editBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditModal(prop);
+      });
 
       // TOGGLE STATUS
-      if (toggleBtn) {
-        toggleBtn.addEventListener('click', async e => {
-          e.stopPropagation();
-          if (!prop.id) return;
+      toggleBtn?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!prop.id) return;
 
-          const newStatus = prop.status === 'free' ? 'taken' : 'free';
+        const newStatus = prop.status==='free'?'taken':'free';
+        try {
+          const res = await fetch(`${API_URL}/properties/${prop.id}`, {
+            method:'PUT',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+              property: {...prop, status:newStatus},
+              role: currentUserRole
+            })
+          });
+          if(!res.ok) throw new Error('Неуспешно обновяване');
 
-          try {
-            const res = await fetch(`${API_URL}/properties/${prop.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ property: { ...prop, status: newStatus }, role: currentUserRole })
-            });
-            if (!res.ok) throw new Error('Неуспешно обновяване');
-
-            prop.status = newStatus;
-            toggleBtn.textContent = newStatus === 'free' ? 'Свободен' : 'Зает';
-
-            const badge = div.querySelector('.status-badge');
-            if (badge) {
-              badge.textContent = newStatus === 'free' ? 'Свободен' : 'Зает';
-            } else {
-              const newBadge = document.createElement('div');
-              newBadge.className = 'status-badge';
-              newBadge.textContent = newStatus === 'free' ? 'Свободен' : 'Зает';
-              div.insertBefore(newBadge, div.firstChild);
-            }
-
-            div.classList.toggle('taken', newStatus === 'taken');
-          } catch (err) {
-            console.error(err);
-            alert('Грешка при обновяване на статуса');
-          }
-        });
-      }
-
-      // WISHLIST
-      if (wishlistBtn && currentUsername) {
-        wishlistBtn.addEventListener('click', async e => {
-          e.stopPropagation();
-          if (!prop.id) return;
-          if (wishlistBtn.classList.contains('added')) {
-            await removeFromWishlist(prop.id);
-          } else {
-            await addToWishlist(prop.id);
-          }
-        });
-      }
-
-      // Update wishlist button state
-      if (wishlistBtn && currentUsername) {
-        const wishlistIds = JSON.parse(localStorage.getItem('wishlist') || '[]');
-        if (wishlistIds.includes(prop.id)) {
-          wishlistBtn.classList.add('added');
-          wishlistBtn.style.color = '#ff6b6b';
-        } else {
-          wishlistBtn.classList.remove('added');
-          wishlistBtn.style.color = '#fff';
+          prop.status = newStatus;
+          toggleBtn.textContent = newStatus==='free'?'Свободен':'Зает';
+          const badge = div.querySelector('.status-badge');
+          if(badge) badge.textContent = newStatus==='free'?'Свободен':'Зает';
+          div.classList.toggle('taken', newStatus==='taken');
+        } catch(err) {
+          console.error(err);
+          showToast('Грешка при обновяване на статуса');
         }
-      }
-    });
+      });
 
-  } catch (err) {
+    });
+  } catch(err) {
     console.error(err);
     propertiesContainer.innerHTML = '<p>Грешка при зареждане на имотите</p>';
   }
 }
 
+// --- EDIT MODAL LOGIC ---
+export function openEditModal(property) {
+  if (!property) return;
+  editingPropertyId = property.id;
+
+  editForm.name.value = property.name || '';
+  editForm.location.value = property.location || '';
+  editForm.price.value = property.price || '';
+  editForm.type.value = property.type || '';
+  editForm.status.value = property.status || 'free';
+  editImageInput.value = property.image || '';
+  editImagePreview.src = property.image || '';
+
+  editModal.setAttribute('aria-hidden','false');
+}
+
+editForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if(!editingPropertyId) return;
+
+  const updatedProperty = {
+    name: editForm.name.value,
+    location: editForm.location.value,
+    price: editForm.price.value,
+    type: editForm.type.value,
+    status: editForm.status.value,
+    image: editForm.image.value
+  };
+
+  try {
+    const res = await fetch(`${API_URL}/properties/${editingPropertyId}`, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ property: updatedProperty, role: currentUserRole })
+    });
+    if(!res.ok) throw new Error('Неуспешно обновяване');
+
+    loadProperties();
+    editModal.setAttribute('aria-hidden','true');
+    showToast('Имотът е обновен');
+  } catch(err) {
+    console.error(err);
+    showToast('Грешка при обновяване на имота');
+  }
+});
+
+// Init
 document.addEventListener('DOMContentLoaded', loadProperties);
