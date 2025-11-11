@@ -1,58 +1,75 @@
-import { openModal, closeModal, showToast, checkTokenExpired } from './ui.js';
+import { openModal, closeModal, showToast } from './ui.js';
+import { loadProperties } from './properties.js';
+
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
 const openAddBtn = document.getElementById('addPropertySidebarBtn');
 const addPropertyModal = document.getElementById('addPropertyModal');
 const closeAddBtn = document.getElementById('closeAdd');
 const propertyForm = document.getElementById('propertyForm');
+const adminSearchInput = document.getElementById('adminSearchInput');
+const adminSearchBtn = document.getElementById('adminSearchBtn');
+const adminFound = document.getElementById('adminFound');
+const viewSupportBtn = document.getElementById('viewSupportBtn');
+const supportMessages = document.getElementById('supportMessages');
 
 const role = localStorage.getItem('role');
 if (role === 'admin') document.body.classList.add('admin');
-else document.body.classList.remove('admin');
 
-openAddBtn?.addEventListener('click', () => openModal(addPropertyModal));
-closeAddBtn?.addEventListener('click', () => closeModal(addPropertyModal));
+if (openAddBtn && addPropertyModal) {
+  openAddBtn.addEventListener('click', () => openModal(addPropertyModal));
+}
+if (closeAddBtn && addPropertyModal) {
+  closeAddBtn.addEventListener('click', () => closeModal(addPropertyModal));
+}
 
-propertyForm?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const role = localStorage.getItem('role');
-  if (!role || role !== 'admin') { showToast('Нямате права'); return; }
+if (adminSearchBtn) {
+  adminSearchBtn.addEventListener('click', async () => {
+    const searchId = adminSearchInput.value.trim();
+    if (!searchId) return;
 
-  const name = document.getElementById('propertyName').value.trim();
-  const location = document.getElementById('propertyLocation').value.trim();
-  const price = document.getElementById('propertyPrice').value.trim();
-  const type = document.getElementById('propertyType').value;
-  const status = document.getElementById('propertyStatus').value;
-  const propertyImage = document.getElementById('propertyImage').files[0];
+    try {
+      const res = await fetch(`${API_URL}/properties`, {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      });
+      const properties = await res.json();
+      const prop = properties.find(p => p.id === searchId);
 
-  let imageBase64 = '';
-  if (propertyImage) {
-    imageBase64 = await new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.readAsDataURL(propertyImage);
-    });
-  }
+      if (!prop) {
+        adminFound.textContent = 'Няма намерен имот с това ID';
+        return;
+      }
 
-  const newProperty = { name, location, price, type, status };
-  if (imageBase64) newProperty.image = imageBase64;
+      adminFound.innerHTML = `
+        <div class="admin-property-found">
+          <h4>${prop.name}</h4>
+          <p>Локация: ${prop.location}</p>
+          <p>Цена: ${prop.price}</p>
+          <p>Тип: ${prop.type}</p>
+          <p>Статус: ${prop.status}</p>
+          ${prop.image ? `<img src="${prop.image}" alt="${prop.name}" style="max-width:100%;margin-top:10px;border-radius:8px;">` : ''}
+        </div>
+      `;
+    } catch (err) {
+      console.error(err);
+      adminFound.textContent = 'Грешка при търсене на имота';
+    }
+  });
+}
 
-  const token = localStorage.getItem('token');
-
-  try {
-    const res = await fetch(`${API_URL}/properties`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ property: newProperty })
-    });
-    if (checkTokenExpired(res)) return;
-    const data = await res.json();
-    if (data.success) { showToast('Имотът е добавен успешно'); propertyForm.reset(); closeModal(addPropertyModal); }
-    else showToast(data.message || 'Грешка при добавяне');
-  } catch {
-    showToast('Грешка при добавяне');
-  }
-});
+if (viewSupportBtn) {
+  viewSupportBtn.addEventListener('click', async () => {
+    try {
+      const res = await fetch(`${API_URL}/support?role=admin`, {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      });
+      const data = await res.json();
+      supportMessages.innerHTML = data
+        .map(msg => `<div class="support-ticket"><strong>${msg.name}</strong>: ${msg.message}</div>`)
+        .join('') || 'Няма съобщения';
+    } catch (err) {
+      console.error(err);
+      supportMessages.textContent = 'Грешка при зареждане на съобщения';
+    }
+  });
+}
