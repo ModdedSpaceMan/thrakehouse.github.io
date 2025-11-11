@@ -733,3 +733,41 @@ footer {
 	background-color: #8e6a4b;
 	transform: scale(1.05);
 }
+/* --------------------
+      Admin Sidebar
+      -------------------- */
+.sidebar {
+	position: fixed;
+	left: -320px; /* keep hidden initially */
+	top: 0;
+	width: 320px;
+	height: 100%;
+	background: #111827;
+	color: #fff;
+	padding: 22px;
+	transition: left .28s ease;
+	z-index: 150;
+	box-shadow: 6px 0 30px rgba(2, 6, 23, 0.2);
+	opacity: 0; /* hide by default */
+	pointer-events: none;
+}
+
+body.admin .sidebar {
+	left: 0;
+	opacity: 1;
+	pointer-events: auto;
+}
+
+/* Admin bar on property hover */
+.property .admin-buttons-right {
+	right: -150px;
+	opacity: 0; /* hide by default */
+	pointer-events: none;
+}
+
+body.admin .property:hover .admin-buttons-right {
+	right: 0;
+	opacity: 1;
+	pointer-events: auto;
+}
+
