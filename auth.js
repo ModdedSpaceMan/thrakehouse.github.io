@@ -35,3 +35,11 @@ export function logout() {
   showToast('Успешен изход!');
   location.reload(); // reload page to reflect logout
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('role');
+    localStorage.removeItem('username');
+    location.reload(); // reload page so UI updates
+  });
+});
