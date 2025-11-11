@@ -1,20 +1,6 @@
+import { showToast } from './toast.js'; // same as used in auth.js
 const signupForm = document.getElementById('signupForm');
-const API_URL = 'https://my-backend.martinmiskata.workers.dev'; // <-- Worker URL
-
-function showToastLocal(msg, duration = 3000) {
-  const t = document.createElement('div');
-  t.textContent = msg;
-  t.style.position = 'fixed';
-  t.style.right = '28px';
-  t.style.bottom = '28px';
-  t.style.padding = '12px 16px';
-  t.style.background = '#111827';
-  t.style.color = '#fff';
-  t.style.borderRadius = '10px';
-  t.style.boxShadow = '0 8px 30px rgba(2,6,23,0.4)';
-  document.body.appendChild(t);
-  setTimeout(() => document.body.removeChild(t), duration);
-}
+const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
 signupForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -25,20 +11,20 @@ signupForm.addEventListener('submit', async (e) => {
   const confirm = document.getElementById('signupConfirmPassword').value;
 
   if (password !== confirm) {
-    showToastLocal('Паролите не съвпадат!');
+    showToast('Паролите не съвпадат!', 'error');
     return;
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(emailInput)) {
-    showToastLocal('Моля, въведете валиден имейл');
+    showToast('Моля, въведете валиден имейл', 'error');
     return;
   }
 
   const allowedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com"];
   const domain = emailInput.split("@")[1];
   if (!allowedDomains.includes(domain)) {
-    showToastLocal('Моля, използвайте валиден имейл (gmail, yahoo, outlook...)');
+    showToast('Моля, използвайте валиден имейл (gmail, yahoo, outlook...)', 'error');
     return;
   }
 
@@ -52,11 +38,11 @@ signupForm.addEventListener('submit', async (e) => {
     const checkData = await checkRes.json();
 
     if (checkData.usernameTaken) {
-      showToastLocal('Потребителското име вече е заето!');
+      showToast('Потребителското име вече е заето!', 'error');
       return;
     }
     if (checkData.emailTaken) {
-      showToastLocal('Имейлът вече е регистриран!');
+      showToast('Имейлът вече е регистриран!', 'error');
       return;
     }
 
@@ -69,15 +55,15 @@ signupForm.addEventListener('submit', async (e) => {
     const data = await res.json();
 
     if (data.success) {
-      showToastLocal('Успешна регистрация! Можете да влезете с акаунта си.');
+      showToast('Успешна регистрация! Можете да влезете с акаунта си.', 'success');
       signupForm.reset();
       setTimeout(() => window.location.href = 'index.html', 900);
     } else {
-      showToastLocal(data.message || 'Грешка при регистрация');
+      showToast(data.message || 'Грешка при регистрация', 'error');
     }
 
   } catch (err) {
-    showToastLocal('Грешка при регистрация');
+    showToast('Грешка при регистрация', 'error');
     console.error(err);
   }
 });
