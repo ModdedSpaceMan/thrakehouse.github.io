@@ -50,24 +50,6 @@ signupForm.addEventListener('submit', async (e) => {
   }
 
   try {
-    const checkRes = await fetch(`${API_URL}/check-availability`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: usernameInput, email: emailInput })
-    });
-
-    if (!checkRes.ok) throw new Error('Check request failed');
-    const checkData = await checkRes.json();
-
-    if (checkData.usernameTaken) {
-      showToastLocal('Потребителското име вече е заето!');
-      return;
-    }
-    if (checkData.emailTaken) {
-      showToastLocal('Имейлът вече е регистриран!');
-      return;
-    }
-
     const res = await fetch(`${API_URL}/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -81,6 +63,10 @@ signupForm.addEventListener('submit', async (e) => {
       showToastLocal('Успешна регистрация! Можете да влезете с акаунта си.');
       signupForm.reset();
       setTimeout(() => window.location.href = 'index.html', 900);
+    } else if (data.message === 'Username taken') {
+      showToastLocal('Потребителското име вече е заето!');
+    } else if (data.message === 'Email taken') {
+      showToastLocal('Имейлът вече е регистриран!');
     } else {
       showToastLocal(data.message || 'Грешка при регистрация');
     }
