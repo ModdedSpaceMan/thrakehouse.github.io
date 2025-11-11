@@ -1,13 +1,14 @@
 // wishlist.js
 import { username, showToast } from './ui.js';
+import { loadProperties } from './properties.js';
+
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
+let wishlistIds = [];
 
 const wishlistBtn = document.getElementById('wishlistBtn');
 const wishlistModal = document.getElementById('wishlistModal');
 const wishlistContent = document.getElementById('wishlistContent');
 const closeWishlist = document.getElementById('closeWishlist');
-
-let wishlistIds = [];
 
 export async function loadWishlist(render = true) {
   if (!username) {
@@ -36,7 +37,6 @@ export async function loadWishlist(render = true) {
       const p = properties.find(x => x.id === id);
       const row = document.createElement('div');
       row.className = 'wish-item';
-
       if (!p) {
         row.innerHTML = `<div class="wish-meta"><strong>ID:</strong> ${id}</div>
                          <p>Имот е изтрит или недостъпен</p>
@@ -58,38 +58,47 @@ export async function loadWishlist(render = true) {
 }
 
 export async function addToWishlist(propertyId) {
-  if (!username) { showToast('Влезте, за да добавяте'); return; }
+  if (!username) { showToast('Влезте, за да добавяте в списък'); return; }
   try {
     const res = await fetch(`${API_URL}/wishlists/add`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, propertyId })
     });
     const json = await res.json();
     showToast(json.success ? 'Добавено в списъка' : 'Вече е в списъка');
     loadWishlist();
-  } catch { showToast('Грешка при добавяне'); }
+    loadProperties();
+  } catch {
+    showToast('Грешка при добавяне');
+  }
 }
 
 export async function removeFromWishlist(propertyId) {
   if (!username) { showToast('Влезте, за да премахвате'); return; }
   try {
     const res = await fetch(`${API_URL}/wishlists/remove`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, propertyId })
     });
     const json = await res.json();
     if (json.success) {
       showToast('Премахнато от списъка');
       loadWishlist();
+      loadProperties();
     } else showToast(json.message || 'Грешка при премахване');
-  } catch { showToast('Грешка при премахване'); }
+  } catch {
+    showToast('Грешка при премахване');
+  }
 }
 
-// Modal open/close
-wishlistBtn.addEventListener('click', () => {
-  wishlistModal.setAttribute('aria-hidden','false');
-  loadWishlist();
+// Wishlist modal events
+wishlistBtn.addEventListener('click', async () => {
+  openModal(wishlistModal);
+  await loadWishlist();
 });
-closeWishlist.addEventListener('click', () => wishlistModal.setAttribute('aria-hidden','true'));
+closeWishlist.addEventListener('click', () => closeModal(wishlistModal));
+
+function openModal(modal) { if(modal) modal.setAttribute('aria-hidden', 'false'); }
+function closeModal(modal) { if(modal) modal.setAttribute('aria-hidden', 'true'); }
