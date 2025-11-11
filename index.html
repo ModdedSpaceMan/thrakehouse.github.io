@@ -28,6 +28,40 @@
       <p class="hero-sub">Апартаменти, Къщи, земеделски земи и вили — лесно и бързо</p>
     </div>
   </section>
+  <!-- Ticket Manager Modal -->
+<div id="ticketModal" class="modal" aria-hidden="true">
+  <div class="modal-content ticket-manager">
+    <button class="close" id="closeTicketModal">&times;</button>
+    <h2>Управление на тикети</h2>
+
+    <div class="ticket-manager-inner">
+      <!-- Left: Ticket List -->
+      <div class="ticket-list">
+        <input type="text" id="ticketSearch" placeholder="Търси по потребител или имейл..." />
+        <div id="ticketsLeftPanel"></div>
+      </div>
+
+      <!-- Middle: Ticket Content -->
+      <div class="ticket-details">
+        <h3 id="ticketTitle">Изберете тикет</h3>
+        <p id="ticketMessage"></p>
+      </div>
+
+      <!-- Right: Actions -->
+      <div class="ticket-actions">
+        <label>
+          Статус:
+          <select id="ticketStatus">
+            <option value="pending">В очакване</option>
+            <option value="ongoing">В процес</option>
+            <option value="finished">Завършен</option>
+          </select>
+        </label>
+        <button id="deleteTicketBtn">Изтрий тикет</button>
+      </div>
+    </div>
+  </div>
+</div>
 
   <main>
     <!-- Property Filters -->
