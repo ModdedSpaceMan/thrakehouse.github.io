@@ -11,7 +11,15 @@ export async function loadProperties() {
     const data = await res.json();
     const username = localStorage.getItem('username');
     const role = localStorage.getItem('role');
-    
+
+    // Get user's wishlist
+    let wishlistIds = [];
+    if (username) {
+      const wishRes = await fetch(`${API_URL}/wishlists/${username}`);
+      const wishData = await wishRes.json();
+      wishlistIds = wishData.items || [];
+    }
+
     propertiesContainer.innerHTML = '';
 
     data.forEach(prop => {
@@ -32,24 +40,32 @@ export async function loadProperties() {
         <div class="property-id">ID: ${prop.id}</div>
       `;
 
-      // Wishlist button (only if logged in)
+      // Wishlist button (for logged-in users/admins)
       if (username) {
         const wishlistBtn = document.createElement('button');
         wishlistBtn.className = 'wishlist-btn';
         wishlistBtn.innerHTML = '♥';
+        if (wishlistIds.includes(prop.id)) {
+          wishlistBtn.classList.add('added');
+          wishlistBtn.style.color = '#ff6b6b';
+        }
+
         wishlistBtn.addEventListener('click', () => {
           if (wishlistBtn.classList.contains('added')) {
             removeFromWishlist(prop.id);
             wishlistBtn.classList.remove('added');
+            wishlistBtn.style.color = '#fff';
           } else {
             addToWishlist(prop.id);
             wishlistBtn.classList.add('added');
+            wishlistBtn.style.color = '#ff6b6b';
           }
         });
+
         div.appendChild(wishlistBtn);
       }
 
-      // Admin buttons (only if admin)
+      // Admin buttons (only for admins)
       if (role === 'admin') {
         const adminBtns = document.createElement('div');
         adminBtns.className = 'admin-buttons-right';
@@ -74,3 +90,6 @@ export async function loadProperties() {
 window.editProperty = function(id) { showToast(`Редакция на имот ${id}`); }
 window.deleteProperty = function(id) { showToast(`Изтриване на имот ${id}`); }
 window.togglePropertyStatus = function(id) { showToast(`Смяна на статус за имот ${id}`); }
+
+// Auto-load properties on page load
+document.addEventListener('DOMContentLoaded', () => loadProperties());
