@@ -42,10 +42,10 @@ signupForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  const allowedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com"];
+  const allowedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "mail.bg"];
   const domain = emailInput.split("@")[1];
   if (!allowedDomains.includes(domain)) {
-    showToastLocal('Моля, използвайте валиден имейл (gmail, yahoo, outlook...)');
+    showToastLocal('Моля, използвайте валиден имейл (gmail, yahoo, outlook, hotmail. mail.bg)');
     return;
   }
 
