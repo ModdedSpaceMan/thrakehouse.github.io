@@ -1,17 +1,23 @@
-// admin.js
 import { openModal, closeModal, showToast } from './ui.js';
+import { loadProperties } from './properties.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
-const token = localStorage.getItem('token'); // JWT from login/signup
+// --- Helpers ---
+async function fetchWithAuth(url, options = {}) {
+  const token = localStorage.getItem('token');
+  if (!options.headers) options.headers = {};
+  if (token) options.headers['Authorization'] = `Bearer ${token}`;
 
-// --- Helper: decode JWT payload ---
-function getPayload() {
-  if (!token) return null;
-  try {
-    return JSON.parse(atob(token.split('.')[0]));
-  } catch {
-    return null;
+  const res = await fetch(url, options);
+  if (res.status === 401 || res.status === 403) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('role');
+    alert('Сесията ви е изтекла. Моля, влезте отново.');
+    window.location.href = '/login.html';
+    throw new Error('Session expired');
   }
+  return res.json();
 }
 
 // --- Elements ---
@@ -26,93 +32,69 @@ const viewSupportBtn = document.getElementById('viewSupportBtn');
 const supportMessages = document.getElementById('supportMessages');
 
 // Toggle admin class on body
-const payload = getPayload();
-if (payload?.role === 'admin') document.body.classList.add('admin');
+if (localStorage.getItem('role')==='admin') document.body.classList.add('admin');
 
-// --- Add Property Modal ---
+// --- Add Property ---
 if (openAddBtn && addPropertyModal) openAddBtn.addEventListener('click', () => openModal(addPropertyModal));
 if (closeAddBtn && addPropertyModal) closeAddBtn.addEventListener('click', () => closeModal(addPropertyModal));
 
-// --- Property Form Submission ---
 if (propertyForm) {
-  propertyForm.addEventListener('submit', async (e) => {
+  propertyForm.addEventListener('submit', async e => {
     e.preventDefault();
+    if (localStorage.getItem('role') !== 'admin') return showToast('Нямате права за добавяне на имот');
 
-    if (payload?.role !== 'admin') {
-      showToast('Нямате права за добавяне на имот');
-      return;
+    const name = document.getElementById('propertyName').value.trim();
+    const location = document.getElementById('propertyLocation').value.trim();
+    const price = parseFloat(document.getElementById('propertyPrice').value) || 0;
+    const type = document.getElementById('propertyType').value;
+    const status = document.getElementById('propertyStatus').value;
+    const imageInput = document.getElementById('propertyImage');
+    let image = '';
+
+    if (imageInput.files.length > 0) {
+      const file = imageInput.files[0];
+      const reader = new FileReader();
+      image = await new Promise(resolve => {
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
     }
 
-    const propertyName = document.getElementById('propertyName').value.trim();
-    const propertyLocation = document.getElementById('propertyLocation').value.trim();
-    const propertyPrice = document.getElementById('propertyPrice').value.trim();
-    const propertyType = document.getElementById('propertyType').value;
-    const propertyStatus = document.getElementById('propertyStatus').value;
-    const propertyImage = document.getElementById('propertyImage').files[0];
-
-    let imageBase64 = '';
-    if (propertyImage) imageBase64 = await fileToBase64(propertyImage);
-
-    const newProperty = {
-      name: propertyName,
-      location: propertyLocation,
-      price: propertyPrice,
-      type: propertyType,
-      status: propertyStatus,
-      image: imageBase64
-    };
+    const propertyData = { name, location, price, type, status, ...(image && { image }) };
+    const method = propertyForm.dataset.editing ? 'PUT' : 'POST';
+    const url = propertyForm.dataset.editing ? `${API_URL}/properties/${propertyForm.dataset.editing}` : `${API_URL}/properties`;
 
     try {
-      const res = await fetch(`${API_URL}/properties`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ property: newProperty })
+      const data = await fetchWithAuth(url, {
+        method,
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({ property: propertyData })
       });
 
-      const data = await res.json();
       if (data.success) {
-        showToast('Имотът е добавен успешно');
+        showToast(method==='POST' ? 'Имотът е добавен успешно' : 'Имотът е обновен');
         propertyForm.reset();
-        closeModal(addPropertyModal);
+        addPropertyModal.setAttribute('aria-hidden','true');
+        await loadProperties();
       } else {
-        showToast(data.message || 'Грешка при добавяне на имот');
+        showToast(data.message || 'Грешка при изпращане на имота');
       }
     } catch (err) {
       console.error(err);
-      showToast('Грешка при добавяне на имот');
+      showToast('Грешка при изпращане на имота');
     }
   });
 }
 
-// --- Helper: File to Base64 ---
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = (err) => reject(err);
-  });
-}
-
-// --- Admin Property Search by ID ---
+// --- Admin Search ---
 if (adminSearchBtn) {
   adminSearchBtn.addEventListener('click', async () => {
     const searchId = adminSearchInput.value.trim();
     if (!searchId) return;
-
     try {
-      const res = await fetch(`${API_URL}/properties`);
-      const properties = await res.json();
+      const properties = await fetchWithAuth(`${API_URL}/properties`);
       const prop = properties.find(p => p.id === searchId);
-
-      if (!prop) {
-        adminFound.textContent = 'Няма намерен имот с това ID';
-        return;
-      }
-
+      if (!prop) { adminFound.textContent = 'Няма намерен имот с това ID'; return; }
       adminFound.innerHTML = `
         <div class="admin-property-found">
           <h4>${prop.name}</h4>
@@ -133,19 +115,9 @@ if (adminSearchBtn) {
 // --- View Support Tickets ---
 if (viewSupportBtn) {
   viewSupportBtn.addEventListener('click', async () => {
-    if (payload?.role !== 'admin') {
-      showToast('Нямате права за преглед на съобщения');
-      return;
-    }
-
     try {
-      const res = await fetch(`${API_URL}/support`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      supportMessages.innerHTML = data
-        .map(msg => `<div class="support-ticket"><strong>${msg.name}</strong>: ${msg.message}</div>`)
-        .join('') || 'Няма съобщения';
+      const data = await fetchWithAuth(`${API_URL}/support`);
+      supportMessages.innerHTML = data.map(msg => `<div class="support-ticket"><strong>${msg.name}</strong>: ${msg.message}</div>`).join('') || 'Няма съобщения';
     } catch (err) {
       console.error(err);
       supportMessages.textContent = 'Грешка при зареждане на съобщения';
