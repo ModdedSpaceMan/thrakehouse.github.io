@@ -11,9 +11,12 @@
     <div class="header-inner">
       <h1>Имоти под наем в Гърция</h1>
       <nav class="top-nav">
-        <a href="#properties">Имоти</a>
+        <a href="#properties" class="top-btn">Имоти</a>
+
+        <!-- Login / Logout / Username -->
         <button id="loginBtn" class="top-btn">Вход</button>
         <a href="signup.html" class="top-btn">Регистрация</a>
+        <span id="userDisplay" class="top-btn" style="display:none; margin-left:10px;"></span>
         <button id="wishlistBtn" class="top-btn" style="display:none;">Списък ♥</button>
         <button id="logoutBtn" class="top-btn" style="display:none;">Изход</button>
         <button id="sidebarToggle" class="top-btn" style="display:none;">☰</button>
@@ -30,22 +33,21 @@
 
   <main>
     <div id="propertyFilters" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
-        <input type="text" id="filterLocation" placeholder="Локация" />
-        <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
-        <input type="number" id="filterMaxPrice" placeholder="Макс. цена" />
-        <select id="filterType">
-          <option value="">Всички типове</option>
-          <option value="apartment">Апартамент</option>
-          <option value="house">Къща</option>
-        </select>
-        <label><input type="checkbox" id="filterFree" /> Свободни</label>
-        <label><input type="checkbox" id="filterTaken" /> Заети</label>
-        <button id="applyFilters">Приложи</button>
-      </div>
+      <input type="text" id="filterLocation" placeholder="Локация" />
+      <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
+      <input type="number" id="filterMaxPrice" placeholder="Макс. цена" />
+      <select id="filterType">
+        <option value="">Всички типове</option>
+        <option value="apartment">Апартамент</option>
+        <option value="house">Къща</option>
+      </select>
+      <label><input type="checkbox" id="filterFree" /> Свободни</label>
+      <label><input type="checkbox" id="filterTaken" /> Заети</label>
+      <button id="applyFilters">Приложи</button>
+    </div>
     <section id="properties" class="properties"></section>
   </main>
-  
-  
+
   <!-- Admin Sidebar -->
   <aside id="adminSidebar" class="sidebar" aria-hidden="true">
     <div class="sidebar-inner">
@@ -79,7 +81,7 @@
     </div>
   </div>
 
-  <!-- Reset Password Modal (creates ticket) -->
+  <!-- Reset Password Modal -->
   <div id="resetModal" class="modal" aria-hidden="true">
     <div class="modal-content">
       <button class="close" id="closeReset" aria-label="close">&times;</button>
@@ -92,43 +94,28 @@
   </div>
 
   <!-- Add Property Modal -->
-<div id="addPropertyModal" class="modal" aria-hidden="true">
+  <div id="addPropertyModal" class="modal" aria-hidden="true">
     <div class="modal-content">
       <button class="close" id="closeAdd" aria-label="close">&times;</button>
       <h2>Добави нов имот</h2>
       <form id="propertyForm" class="modal-form">
-        
-        <!-- Property Name -->
         <input type="text" id="propertyName" placeholder="Име на имота" required />
-  
-        <!-- Location -->
         <input type="text" id="propertyLocation" placeholder="Местоположение" required />
-  
-        <!-- Price -->
         <input type="text" id="propertyPrice" placeholder="Цена на месец (лв)" required />
-  
-        <!-- Type -->
         <select id="propertyType">
           <option value="apartment">Апартамент</option>
           <option value="house">Къща</option>
           <option value="villa">Вила</option>
         </select>
-  
-        <!-- Status -->
         <select id="propertyStatus">
           <option value="free">Свободен</option>
           <option value="taken">Зает</option>
         </select>
-  
-        <!-- Image -->
         <input type="file" id="propertyImage" accept="image/*" required />
-  
-        <!-- Submit -->
         <button type="submit" class="modal-submit">Добави имот</button>
       </form>
     </div>
   </div>
-  
 
   <!-- Wishlist Modal -->
   <div id="wishlistModal" class="modal" aria-hidden="true">
@@ -139,7 +126,7 @@
     </div>
   </div>
 
-    <!-- Toast -->
+  <!-- Toast -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <footer>
@@ -156,7 +143,7 @@
       <p class="copyright">&copy; 2025 Имоти под наем в Гърция. Всички права запазени.</p>
     </div>
   </footer>
-v6
+
   <!-- Load scripts -->
   <script type="module" src="auth.js" defer></script>
   <script type="module" src="ui.js" defer></script>
@@ -166,4 +153,3 @@ v6
   <script type="module" src="reset.js" defer></script>
 </body>
 </html>
-
