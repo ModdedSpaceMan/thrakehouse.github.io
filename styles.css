@@ -9,7 +9,7 @@
 }
 
 body {
-	background: #f4f1eb; /* soft warm background */
+	background: #f4f1eb;
 	color: #3b3a36;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
@@ -202,7 +202,7 @@ main {
 }
 
 /* --------------------
-      Admin Slide-out Sidebar
+      Admin buttons on property
 -------------------- */
 .property .admin-buttons-right {
 	position: absolute;
@@ -216,12 +216,16 @@ main {
 	padding: 12px;
 	gap: 6px;
 	border-radius: 0 12px 12px 0;
-	transition: right 0.3s ease;
+	transition: right 0.3s ease, opacity 0.3s ease;
 	z-index: 5;
+	opacity: 0;
+	pointer-events: none;
 }
 
 .property:hover .admin-buttons-right {
 	right: 0;
+	opacity: 1;
+	pointer-events: auto;
 }
 
 .property .admin-buttons-right .admin-btn {
@@ -385,16 +389,20 @@ main {
 	top: 0;
 	width: 320px;
 	height: 100%;
-	background: #3b3a36;
+	background: #111827;
 	color: #fff;
 	padding: 22px;
-	transition: left .28s ease;
+	transition: left 0.28s ease, opacity 0.28s ease;
 	z-index: 150;
 	box-shadow: 6px 0 30px rgba(2, 6, 23, 0.2);
+	opacity: 0;
+	pointer-events: none;
 }
 
 .sidebar.show {
 	left: 0;
+	opacity: 1;
+	pointer-events: auto;
 }
 
 .sidebar h3 {
@@ -733,41 +741,3 @@ footer {
 	background-color: #8e6a4b;
 	transform: scale(1.05);
 }
-/* --------------------
-      Admin Sidebar
-      -------------------- */
-.sidebar {
-	position: fixed;
-	left: -320px; /* keep hidden initially */
-	top: 0;
-	width: 320px;
-	height: 100%;
-	background: #111827;
-	color: #fff;
-	padding: 22px;
-	transition: left .28s ease;
-	z-index: 150;
-	box-shadow: 6px 0 30px rgba(2, 6, 23, 0.2);
-	opacity: 0; /* hide by default */
-	pointer-events: none;
-}
-
-body.admin .sidebar {
-	left: 0;
-	opacity: 1;
-	pointer-events: auto;
-}
-
-/* Admin bar on property hover */
-.property .admin-buttons-right {
-	right: -150px;
-	opacity: 0; /* hide by default */
-	pointer-events: none;
-}
-
-body.admin .property:hover .admin-buttons-right {
-	right: 0;
-	opacity: 1;
-	pointer-events: auto;
-}
-
