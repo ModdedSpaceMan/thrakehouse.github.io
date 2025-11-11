@@ -1,8 +1,10 @@
 // auth.js
 import { uiInit, showToast } from './ui.js';
-export let role = localStorage.getItem('role') || '';
-export let username = localStorage.getItem('username') || '';
+import { loadProperties } from './properties.js';
+import { loadWishlist } from './wishlist.js';
 
+let role = localStorage.getItem('role') || '';
+let username = localStorage.getItem('username') || '';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
 const loginBtn = document.getElementById('loginBtn');
@@ -11,41 +13,51 @@ const loginForm = document.getElementById('loginForm');
 const logoutBtn = document.getElementById('logoutBtn');
 const loginModal = document.getElementById('loginModal');
 
-loginBtn.addEventListener('click', () => openModal(loginModal));
-closeLogin.addEventListener('click', () => closeModal(loginModal));
+loginBtn.addEventListener('click', () => loginModal.setAttribute('aria-hidden', 'false'));
+closeLogin.addEventListener('click', () => loginModal.setAttribute('aria-hidden', 'true'));
 
 loginForm.addEventListener('submit', async e => {
   e.preventDefault();
   const u = document.getElementById('username').value.trim();
   const p = document.getElementById('password').value.trim();
-  if (!u || !p) return showToast('Моля въведете потребителско име и парола');
+  if (!u || !p) { showToast('Моля въведете потребителско име и парола'); return; }
 
   try {
     const res = await fetch(`${API_URL}/login`, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: u, password: p })
     });
+
     const data = await res.json();
     if (data.success) {
       role = data.role;
       username = data.username;
       localStorage.setItem('role', role);
       localStorage.setItem('username', username);
-      uiInit();
+
       showToast('Успешен вход!');
-      closeModal(loginModal);
-    } else showToast('Грешно потребителско име или парола');
-  } catch {
+      loginModal.setAttribute('aria-hidden', 'true');
+
+      uiInit();        // Update buttons
+      await loadProperties();  // Refresh properties
+      await loadWishlist();    // Refresh wishlist
+    } else {
+      showToast('Грешно потребителско име или парола');
+    }
+  } catch (err) {
+    console.error(err);
     showToast('Грешка при опит за вход');
   }
 });
 
-logoutBtn.addEventListener('click', () => {
+logoutBtn.addEventListener('click', async () => {
   localStorage.removeItem('role');
   localStorage.removeItem('username');
   role = '';
   username = '';
-  uiInit();
+
   showToast('Успешен изход!');
+  uiInit();            // Update buttons
+  await loadProperties();
 });
