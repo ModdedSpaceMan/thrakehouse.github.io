@@ -6,7 +6,6 @@ const addPropertyModal = document.getElementById('addPropertyModal');
 const propertyForm = document.getElementById('propertyForm');
 let editingPropertyId = null;
 
-// --- Open form for editing ---
 export function openPropertyFormForEdit(property) {
   if (!property) return;
   editingPropertyId = property.id;
@@ -21,37 +20,15 @@ export function openPropertyFormForEdit(property) {
   addPropertyModal.setAttribute('aria-hidden', 'false');
 }
 
-// --- Reset form ---
 function resetForm() {
   propertyForm.reset();
   editingPropertyId = null;
   addPropertyModal.querySelector('h2').textContent = 'Добави нов имот';
 }
 
-// --- Decode JWT to get payload ---
-function getPayload(token) {
-  try {
-    return JSON.parse(atob(token.split('.')[0]));
-  } catch {
-    return null;
-  }
-}
-
-// --- Submit handler ---
 propertyForm.addEventListener('submit', async e => {
   e.preventDefault();
-
-  const token = localStorage.getItem('token');
-  if (!token) {
-    showToast('Нямате права да добавяте или редактирате имоти');
-    return;
-  }
-
-  const payload = getPayload(token);
-  if (!payload || payload.role !== 'admin') {
-    showToast('Нямате права да добавяте или редактирате имоти');
-    return;
-  }
+  const role = 'admin'; // only admin can open this form
 
   const name = document.getElementById('propertyName').value.trim();
   const location = document.getElementById('propertyLocation').value.trim();
@@ -83,11 +60,10 @@ propertyForm.addEventListener('submit', async e => {
       method,
       headers: { 
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
       },
-      body: JSON.stringify({ property: propertyData })
+      body: JSON.stringify({ property: propertyData, role })
     });
-
     const data = await res.json();
 
     if (data.success) {
@@ -98,13 +74,11 @@ propertyForm.addEventListener('submit', async e => {
     } else {
       showToast(data.message || 'Грешка при изпращане на имота');
     }
-  } catch (err) {
-    console.error(err);
+  } catch {
     showToast('Грешка при изпращане на имота');
   }
 });
 
-// --- Close form ---
 document.getElementById('closeAdd').addEventListener('click', () => {
   addPropertyModal.setAttribute('aria-hidden', 'true');
   resetForm();
