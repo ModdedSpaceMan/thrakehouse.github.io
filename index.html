@@ -12,8 +12,6 @@
       <h1>Имоти под наем в Гърция</h1>
       <nav class="top-nav">
         <a href="#properties" class="top-btn">Имоти</a>
-
-        <!-- Login / Logout / Username -->
         <button id="loginBtn" class="top-btn">Вход</button>
         <a href="signup.html" class="top-btn">Регистрация</a>
         <span id="userDisplay" class="top-btn" style="display:none; margin-left:10px;"></span>
@@ -45,23 +43,66 @@
       <label><input type="checkbox" id="filterTaken" /> Заети</label>
       <button id="applyFilters">Приложи</button>
     </div>
-    <section id="properties" class="properties"></section>
+
+    <section id="properties" class="properties">
+
+      <!-- Example Property 1 -->
+      <div class="property">
+        <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80" alt="House 1">
+        <div class="property-content">
+          <h3>Къща в Атина</h3>
+          <p>Център на града</p>
+        </div>
+        <div class="status-badge">Свободен</div>
+
+        <!-- Admin hover buttons -->
+        <div class="admin-buttons-right">
+          <button class="admin-btn edit-btn">Edit</button>
+          <button class="admin-btn delete-btn">Delete</button>
+          <button class="admin-btn toggle-btn">Toggle</button>
+          <div class="admin-id">ID001</div>
+        </div>
+
+        <!-- Wishlist button -->
+        <button class="wishlist-btn">♥</button>
+      </div>
+
+      <!-- Example Property 2 -->
+      <div class="property">
+        <img src="https://images.unsplash.com/photo-1572120360610-d971b9b7a6f2?auto=format&fit=crop&w=800&q=80" alt="House 2">
+        <div class="property-content">
+          <h3>Вила в Солун</h3>
+          <p>Крайбрежие</p>
+        </div>
+        <div class="status-badge">Зает</div>
+
+        <!-- Admin hover buttons -->
+        <div class="admin-buttons-right">
+          <button class="admin-btn edit-btn">Edit</button>
+          <button class="admin-btn delete-btn">Delete</button>
+          <button class="admin-btn toggle-btn">Toggle</button>
+          <div class="admin-id">ID002</div>
+        </div>
+
+        <!-- Wishlist button -->
+        <button class="wishlist-btn">♥</button>
+      </div>
+
+      <!-- Add more properties dynamically via JS -->
+    </section>
   </main>
 
   <!-- Admin Sidebar -->
   <aside id="adminSidebar" class="sidebar" aria-hidden="true">
     <div class="sidebar-inner">
       <h3>Админ панел</h3>
-
       <div class="sidebar-section">
         <input id="adminSearchInput" placeholder="Търсене по ID..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef6;margin-bottom:8px;">
         <button id="adminSearchBtn" class="sidebar-btn">Търси ID</button>
         <div id="adminFound" style="margin-top:10px;color:#e6eef6;"></div>
       </div>
-
       <button id="viewSupportBtn" class="sidebar-btn">Потребителски съобщения</button>
       <button id="addPropertySidebarBtn" class="sidebar-btn">Добави имот</button>
-
       <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:12px 0;">
       <div id="supportMessages" class="support-messages"></div>
     </div>
@@ -143,7 +184,7 @@
       <p class="copyright">&copy; 2025 Имоти под наем в Гърция. Всички права запазени.</p>
     </div>
   </footer>
-v1
+
   <!-- Load scripts -->
   <script type="module" src="auth.js" defer></script>
   <script type="module" src="ui.js" defer></script>
