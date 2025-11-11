@@ -12,19 +12,13 @@ export async function loadProperties() {
     const username = localStorage.getItem('username');
     const role = localStorage.getItem('role');
 
-    // Get user's wishlist
-    let wishlistIds = [];
-    if (username) {
-      const wishRes = await fetch(`${API_URL}/wishlists/${username}`);
-      const wishData = await wishRes.json();
-      wishlistIds = wishData.items || [];
-    }
-
     propertiesContainer.innerHTML = '';
 
     data.forEach(prop => {
       const div = document.createElement('div');
       div.className = `property${prop.status === 'taken' ? ' taken' : ''}`;
+
+      // Status mapping to Bulgarian
       const statusBG = prop.status === 'free' ? 'Свободен' : 'Зает';
 
       div.innerHTML = `
@@ -38,86 +32,102 @@ export async function loadProperties() {
         <div class="property-id">ID: ${prop.id}</div>
       `;
 
-      // Wishlist button
+      // Wishlist button (only if logged in)
       if (username) {
         const wishlistBtn = document.createElement('button');
         wishlistBtn.className = 'wishlist-btn';
         wishlistBtn.innerHTML = '♥';
-        if (wishlistIds.includes(prop.id)) {
-          wishlistBtn.classList.add('added');
-          wishlistBtn.style.color = '#ff6b6b';
-        }
         wishlistBtn.addEventListener('click', async () => {
           if (wishlistBtn.classList.contains('added')) {
             await removeFromWishlist(prop.id);
             wishlistBtn.classList.remove('added');
-            wishlistBtn.style.color = '#fff';
           } else {
             await addToWishlist(prop.id);
             wishlistBtn.classList.add('added');
-            wishlistBtn.style.color = '#ff6b6b';
           }
-          document.getElementById('wishlistBtn').dispatchEvent(new Event('click'));
+          loadProperties(); // refresh button state
         });
         div.appendChild(wishlistBtn);
       }
 
-      // Admin buttons
+      // Admin buttons (only if admin)
       if (role === 'admin') {
         const adminBtns = document.createElement('div');
         adminBtns.className = 'admin-buttons-right';
-        adminBtns.innerHTML = `
-          <button class="edit-btn">Редактирай</button>
-          <button class="delete-btn">Изтрий</button>
-          <button class="toggle-btn">Смени статус</button>
-          <div class="admin-id">${prop.id}</div>
-        `;
 
-        // Edit property
-        adminBtns.querySelector('.edit-btn').addEventListener('click', async () => {
-          const newName = prompt('Ново име на имота:', prop.name);
+        // Delete
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.textContent = 'Изтрий';
+        deleteBtn.addEventListener('click', async () => {
+          try {
+            const res = await fetch(`${API_URL}/properties`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'delete', id: prop.id, role })
+            });
+            const data = await res.json();
+            if (data.success) {
+              showToast('Имотът е изтрит');
+              loadProperties();
+            } else showToast(data.message || 'Грешка при изтриване');
+          } catch {
+            showToast('Грешка при изтриване');
+          }
+        });
+        adminBtns.appendChild(deleteBtn);
+
+        // Edit
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit-btn';
+        editBtn.textContent = 'Редактирай';
+        editBtn.addEventListener('click', async () => {
+          const newName = prompt('Ново име на имота', prop.name);
           if (!newName) return;
           try {
             const res = await fetch(`${API_URL}/properties`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ role, property: { ...prop, name: newName } })
+              body: JSON.stringify({ action: 'edit', id: prop.id, property: { name: newName }, role })
             });
             const data = await res.json();
-            showToast(data.success ? 'Имотът е редактиран' : data.message || 'Грешка');
-            loadProperties();
-          } catch (err) { console.error(err); showToast('Грешка при редакция'); }
+            if (data.success) {
+              showToast('Имотът е редактиран');
+              loadProperties();
+            } else showToast(data.message || 'Грешка при редакция');
+          } catch {
+            showToast('Грешка при редакция');
+          }
         });
+        adminBtns.appendChild(editBtn);
 
-        // Delete property
-        adminBtns.querySelector('.delete-btn').addEventListener('click', async () => {
-          if (!confirm('Сигурни ли сте, че искате да изтриете имота?')) return;
-          try {
-            const res = await fetch(`${API_URL}/properties/delete`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ id: prop.id, role })
-            });
-            const data = await res.json();
-            showToast(data.success ? 'Имотът е изтрит' : data.message || 'Грешка при изтриване');
-            loadProperties();
-          } catch (err) { console.error(err); showToast('Грешка при изтриване'); }
-        });
-
-        // Toggle status
-        adminBtns.querySelector('.toggle-btn').addEventListener('click', async () => {
-          const newStatus = prop.status === 'free' ? 'taken' : 'free';
+        // Toggle Status
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'toggle-btn';
+        toggleBtn.textContent = 'Смени статус';
+        toggleBtn.addEventListener('click', async () => {
           try {
             const res = await fetch(`${API_URL}/properties`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ role, property: { ...prop, status: newStatus } })
+              body: JSON.stringify({ action: 'toggle', id: prop.id, role })
             });
             const data = await res.json();
-            showToast(data.success ? 'Статусът е сменен' : data.message || 'Грешка при смяна на статус');
-            loadProperties();
-          } catch (err) { console.error(err); showToast('Грешка при смяна на статус'); }
+            if (data.success) {
+              showToast('Статусът е сменен');
+              loadProperties();
+            } else showToast(data.message || 'Грешка при смяна на статус');
+          } catch {
+            showToast('Грешка при смяна на статус');
+          }
         });
+        adminBtns.appendChild(toggleBtn);
+
+        // Admin ID
+        const adminId = document.createElement('div');
+        adminId.className = 'admin-id';
+        adminId.textContent = `ID: ${prop.id}`;
+        adminBtns.appendChild(adminId);
 
         div.appendChild(adminBtns);
       }
@@ -129,6 +139,3 @@ export async function loadProperties() {
     showToast('Грешка при зареждане на имотите');
   }
 }
-
-// Auto-load properties on page load
-document.addEventListener('DOMContentLoaded', () => loadProperties());
