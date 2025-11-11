@@ -47,7 +47,6 @@ propertyForm.addEventListener('submit', async e => {
   const imageInput = document.getElementById('propertyImage');
   let image = '';
 
-  // ------------------ Image Upload ------------------
   if (imageInput.files.length > 0) {
     const file = imageInput.files[0];
     const reader = new FileReader();
@@ -60,6 +59,7 @@ propertyForm.addEventListener('submit', async e => {
   const propertyData = { name, location, price, type, status };
   if (image) propertyData.image = image;
 
+  // Use POST for new properties, PUT for editing
   const url = editingPropertyId
     ? `${API_URL}/properties/${editingPropertyId}`
     : `${API_URL}/properties`;
@@ -93,5 +93,31 @@ document.getElementById('closeAdd').addEventListener('click', () => {
   resetForm();
 });
 
-// ------------------ Export Reset ------------------
+// ------------------ Delete Property (Admin Only) ------------------
+export async function deleteProperty(id) {
+  if (!role || role !== 'admin') {
+    showToast('Нямате права да изтривате имоти');
+    return;
+  }
+  if (!confirm('Сигурни ли сте, че искате да изтриете имота?')) return;
+
+  try {
+    const res = await fetch(`${API_URL}/properties/${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'role': role }
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Имотът е изтрит успешно');
+      await loadProperties();
+    } else {
+      showToast(data.message || 'Грешка при изтриване на имота');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Грешка при изтриване на имота');
+  }
+}
+
+// ------------------ Export ------------------
 export { resetForm };
