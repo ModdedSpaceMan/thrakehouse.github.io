@@ -4,8 +4,6 @@ import { showToast, openModal, closeModal } from './ui.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
 document.addEventListener('DOMContentLoaded', () => {
-  const sidebarToggle = document.getElementById('sidebarToggle');
-  const adminSidebar = document.getElementById('adminSidebar');
   const viewSupportBtn = document.getElementById('viewSupportBtn');
   const supportMessagesDiv = document.getElementById('supportMessages');
   const adminSearchBtn = document.getElementById('adminSearchBtn');
@@ -15,11 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const addPropertyModal = document.getElementById('addPropertyModal');
   const closeAdd = document.getElementById('closeAdd');
   const propertyForm = document.getElementById('propertyForm');
-
-  // --- Sidebar toggle ---
-  if (sidebarToggle && adminSidebar) {
-    sidebarToggle.addEventListener('click', () => adminSidebar.classList.toggle('show'));
-  }
 
   // --- Ticket ID search ---
   if (adminSearchBtn && adminSearchInput) {
@@ -85,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const role = localStorage.getItem('role');
 
       if (!role || role !== 'admin') return showToast('Нямате права за добавяне на имот');
-
       if (!name || !location || !price || !imageInput.files.length) return showToast('Попълнете всички полета');
 
       const file = imageInput.files[0];
