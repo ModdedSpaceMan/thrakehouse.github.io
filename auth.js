@@ -43,6 +43,28 @@ closeLogin.addEventListener('click', () => {
   loginModal.setAttribute('inert', '');
 });
 
+// ✅ Update UI function (login/logout buttons + username display)
+function updateUI() {
+  const loggedIn = !!localStorage.getItem('username');
+  const userDisplay = document.getElementById('userDisplay');
+
+  if (loggedIn) {
+    const name = localStorage.getItem('username');
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-block';
+    if (userDisplay) {
+      userDisplay.textContent = `Влязъл като: ${name}`;
+      userDisplay.style.display = 'inline-block';
+    }
+  } else {
+    loginBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+    if (userDisplay) {
+      userDisplay.style.display = 'none';
+    }
+  }
+}
+
 // ✅ Login form submit
 loginForm.addEventListener('submit', async e => {
   e.preventDefault();
@@ -77,11 +99,13 @@ loginForm.addEventListener('submit', async e => {
       showToast('Успешен вход!');
       loginModal.setAttribute('aria-hidden', 'true');
       loginModal.setAttribute('inert', '');
+      updateUI(); // Update buttons and username display immediately
 
-      // Refresh your page data if loadProperties exists
+      // Refresh dynamic content if the function exists
       if (typeof loadProperties === 'function') {
         await loadProperties();
       }
+
     } else {
       showToast('Грешно потребителско име или парола');
     }
@@ -99,31 +123,12 @@ logoutBtn.addEventListener('click', async () => {
   username = '';
 
   showToast('Успешен изход!');
+  updateUI(); // Update buttons and username display immediately
+
   if (typeof loadProperties === 'function') {
     await loadProperties();
   }
-  
 });
-function updateUI() {
-  const loggedIn = !!localStorage.getItem('username');
-  const userDisplay = document.getElementById('userDisplay');
 
-  if (loggedIn) {
-    const name = localStorage.getItem('username');
-    loginBtn.style.display = 'none';
-    logoutBtn.style.display = 'inline-block';
-    if (userDisplay) {
-      userDisplay.textContent = `Влязъл като: ${name}`;
-      userDisplay.style.display = 'inline-block';
-    }
-  } else {
-    loginBtn.style.display = 'inline-block';
-    logoutBtn.style.display = 'none';
-    if (userDisplay) {
-      userDisplay.style.display = 'none';
-    }
-  }
-}
-
-// ✅ Initialize on load
+// ✅ Initialize UI on page load
 document.addEventListener('DOMContentLoaded', updateUI);
