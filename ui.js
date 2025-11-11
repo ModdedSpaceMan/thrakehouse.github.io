@@ -1,4 +1,10 @@
 // ui.js
+
+// ------------------ Exports for other modules ------------------
+export let role = localStorage.getItem('role') || '';
+export let username = localStorage.getItem('username') || '';
+
+// ------------------ Toast Utility ------------------
 export function showToast(message, duration = 3000) {
   const toast = document.getElementById('toast');
   if (!toast) return;
@@ -7,6 +13,7 @@ export function showToast(message, duration = 3000) {
   setTimeout(() => toast.classList.remove('show'), duration);
 }
 
+// ------------------ Modal Controls ------------------
 export function openModal(modal) {
   if (modal) modal.setAttribute('aria-hidden', 'false');
 }
@@ -15,9 +22,11 @@ export function closeModal(modal) {
   if (modal) modal.setAttribute('aria-hidden', 'true');
 }
 
+// ------------------ Initialize UI ------------------
 export function uiInit() {
-  const role = localStorage.getItem('role') || '';
-  const username = localStorage.getItem('username') || '';
+  // Refresh role and username from localStorage
+  role = localStorage.getItem('role') || '';
+  username = localStorage.getItem('username') || '';
 
   const loginBtn = document.getElementById('loginBtn');
   const logoutBtn = document.getElementById('logoutBtn');
@@ -38,19 +47,21 @@ export function uiInit() {
   if (sidebarToggle) sidebarToggle.style.display = role === 'admin' ? 'inline-block' : 'none';
   if (openAddBtn) openAddBtn.style.display = role === 'admin' ? 'block' : 'none';
 
-  if (adminSidebar && role !== 'admin') adminSidebar.classList.remove('show');
+  if (role !== 'admin' && adminSidebar) adminSidebar.classList.remove('show');
 }
 
-// Attach event listeners once
+// ------------------ Event Listeners ------------------
 document.addEventListener('DOMContentLoaded', () => {
   const sidebarToggle = document.getElementById('sidebarToggle');
   const adminSidebar = document.getElementById('adminSidebar');
   const logoutBtn = document.getElementById('logoutBtn');
 
+  // Admin sidebar toggle
   if (sidebarToggle && adminSidebar) {
     sidebarToggle.addEventListener('click', () => adminSidebar.classList.toggle('show'));
   }
 
+  // Logout button
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
       localStorage.removeItem('username');
@@ -59,14 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Global modal click-to-close
-  const modals = ['loginModal', 'addPropertyModal', 'wishlistModal', 'resetModal'];
+  // Close modals when clicking outside
   window.addEventListener('click', (e) => {
+    const modals = ['loginModal', 'addPropertyModal', 'wishlistModal', 'resetModal'];
     modals.forEach((id) => {
       const modal = document.getElementById(id);
-      if (modal && e.target === modal) closeModal(modal);
+      if (e.target === modal) closeModal(modal);
     });
   });
 
+  // Initialize UI state
   uiInit();
 });
