@@ -1,9 +1,5 @@
 // ui.js
 
-// ------------------ Exports for other modules ------------------
-export let role = localStorage.getItem('role') || '';
-export let username = localStorage.getItem('username') || '';
-
 // ------------------ Toast Utility ------------------
 export function showToast(message, duration = 3000) {
   const toast = document.getElementById('toast');
@@ -14,19 +10,38 @@ export function showToast(message, duration = 3000) {
 }
 
 // ------------------ Modal Controls ------------------
-export function openModal(modal) {
-  if (modal) modal.setAttribute('aria-hidden', 'false');
+export function openModal(modal) { if(modal) modal.setAttribute('aria-hidden','false'); }
+export function closeModal(modal) { if(modal) modal.setAttribute('aria-hidden','true'); }
+
+// ------------------ JWT Decoding ------------------
+function getRoleFromToken() {
+  const token = localStorage.getItem('token');
+  if (!token) return '';
+  try {
+    const [payloadB64] = token.split('.');
+    const payload = JSON.parse(atob(payloadB64));
+    return payload.role || '';
+  } catch {
+    return '';
+  }
 }
 
-export function closeModal(modal) {
-  if (modal) modal.setAttribute('aria-hidden', 'true');
+function getUsernameFromToken() {
+  const token = localStorage.getItem('token');
+  if (!token) return '';
+  try {
+    const [payloadB64] = token.split('.');
+    const payload = JSON.parse(atob(payloadB64));
+    return payload.username || '';
+  } catch {
+    return '';
+  }
 }
 
 // ------------------ Initialize UI ------------------
 export function uiInit() {
-  // Refresh role and username from localStorage
-  role = localStorage.getItem('role') || '';
-  username = localStorage.getItem('username') || '';
+  const username = getUsernameFromToken();
+  const role = getRoleFromToken();
 
   const loginBtn = document.getElementById('loginBtn');
   const logoutBtn = document.getElementById('logoutBtn');
@@ -56,16 +71,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminSidebar = document.getElementById('adminSidebar');
   const logoutBtn = document.getElementById('logoutBtn');
 
-  // Admin sidebar toggle
   if (sidebarToggle && adminSidebar) {
     sidebarToggle.addEventListener('click', () => adminSidebar.classList.toggle('show'));
   }
 
-  // Logout button
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
-      localStorage.removeItem('username');
-      localStorage.removeItem('role');
+      localStorage.removeItem('token');
       location.reload();
     });
   }
@@ -79,6 +91,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Initialize UI state
   uiInit();
 });
