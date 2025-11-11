@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const res = await fetch(`${API_URL}/support?role=admin`, {
+      const res = await fetch(`${API_URL}/support`, {
         headers: {
           'Authorization': 'Bearer ' + token
         }
