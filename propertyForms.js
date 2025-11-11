@@ -28,7 +28,6 @@ function resetForm() {
 
 propertyForm.addEventListener('submit', async e => {
   e.preventDefault();
-  const role = 'admin'; // only admin can open this form
 
   const name = document.getElementById('propertyName').value.trim();
   const location = document.getElementById('propertyLocation').value.trim();
@@ -62,7 +61,7 @@ propertyForm.addEventListener('submit', async e => {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       },
-      body: JSON.stringify({ property: propertyData, role })
+      body: JSON.stringify({ property: propertyData })
     });
     const data = await res.json();
 
