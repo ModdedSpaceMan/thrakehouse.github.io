@@ -1,9 +1,8 @@
 // auth.js
 import { uiInit, showToast } from './ui.js';
-
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
-// Get DOM elements
+// DOM elements
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const loginModal = document.getElementById('loginModal');
@@ -11,18 +10,15 @@ const closeLogin = document.getElementById('closeLogin');
 const loginForm = document.getElementById('loginForm');
 const userDisplay = document.getElementById('userDisplay');
 
-// Open login modal
+// Open/close login modal
 loginBtn.addEventListener('click', () => loginModal.setAttribute('aria-hidden', 'false'));
-
-// Close login modal
 closeLogin.addEventListener('click', () => loginModal.setAttribute('aria-hidden', 'true'));
 
-// Login form submit
+// --- Login ---
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
-
   if (!username || !password) return showToast('Попълнете всички полета');
 
   try {
@@ -34,14 +30,12 @@ loginForm.addEventListener('submit', async (e) => {
     const data = await res.json();
 
     if (data.success) {
-      // store only token and username
       localStorage.setItem('token', data.token);
       localStorage.setItem('username', username);
-
+      localStorage.setItem('role', data.role);
       showToast('Влязохте успешно!');
       loginModal.setAttribute('aria-hidden', 'true');
       uiInit();
-
       userDisplay.textContent = username;
       userDisplay.style.display = 'inline-block';
     } else {
@@ -53,10 +47,11 @@ loginForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Logout
+// --- Logout ---
 logoutBtn.addEventListener('click', () => {
-  localStorage.removeItem('username');
   localStorage.removeItem('token');
+  localStorage.removeItem('username');
+  localStorage.removeItem('role');
   userDisplay.textContent = '';
   userDisplay.style.display = 'none';
   showToast('Излязохте успешно!');
