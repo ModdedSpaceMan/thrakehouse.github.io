@@ -4,7 +4,7 @@ const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 export let wishlistIds = [];
 
 // Get the container where properties will be shown
-const propertyContainer = document.getElementById('property'); // <-- make sure your HTML has this div
+const property = document.getElementById('property'); // <-- make sure your HTML has this div
 
 // Load all properties
 export async function loadProperties() {
@@ -26,9 +26,9 @@ export async function loadProperties() {
 
 // Render properties into the container
 export function renderProperties(properties) {
-  if (!propertyContainer) return;
+  if (!property) return;
 
-  propertyContainer.innerHTML = properties.map(p => {
+  property.innerHTML = properties.map(p => {
     const takenClass = p.status === 'Taken' ? 'taken' : '';
     const inWishlist = wishlistIds.includes(p.id) ? '❤️' : '🤍';
 
@@ -49,7 +49,7 @@ export function renderProperties(properties) {
   }).join('');
 
   // Add wishlist button event listeners
-  propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
+  property.querySelectorAll('.wishlist-btn').forEach(btn => {
     btn.addEventListener('click', () => toggleWishlist(btn.dataset.id).then(() => loadProperties()));
   });
 }
