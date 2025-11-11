@@ -98,8 +98,47 @@
           <option value="free">Свободен</option>
           <option value="taken">Зает</option>
         </select>
-        <input type="file" id="propertyImage" accept="image/*" required />
+        <input type="text" id="propertyImage" placeholder="URL на изображение" required />
         <button type="submit" class="modal-submit">Добави имот</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Property Modal -->
+  <div id="editModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <span id="closeEditModal" class="close">&times;</span>
+      <h2>Редактиране на имота</h2>
+      <form id="editForm">
+        <label>
+          Име:
+          <input type="text" name="name" id="editName" required />
+        </label>
+        <label>
+          Локация:
+          <input type="text" name="location" id="editLocation" required />
+        </label>
+        <label>
+          Цена:
+          <input type="number" name="price" id="editPrice" required />
+        </label>
+        <label>
+          Тип:
+          <input type="text" name="type" id="editType" required />
+        </label>
+        <label>
+          Статус:
+          <select name="status" id="editStatus">
+            <option value="free">Свободен</option>
+            <option value="taken">Зает</option>
+          </select>
+        </label>
+        <label>
+          Снимка:
+          <input type="text" name="image" id="editImage" placeholder="URL на изображение" />
+          <img id="editImagePreview" src="" alt="preview" style="max-width:100px;margin-top:5px;" />
+        </label>
+        <button type="submit">Запази</button>
       </form>
     </div>
   </div>
@@ -138,7 +177,5 @@
   <script type="module" src="support.js" defer></script>
   <script type="module" src="admin.js" defer></script>
   <script type="module" src="propertyForms.js"></script>
-
-v20
 </body>
 </html>
