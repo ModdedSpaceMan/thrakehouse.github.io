@@ -1,8 +1,10 @@
 import { showToast } from './ui.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 const propertiesContainer = document.getElementById('properties');
-const currentUserRole = localStorage.getItem('role') || 'user';
+
 let wishlistIds = [];
+const token = localStorage.getItem('token'); // JWT from login/signup
+const currentUserRole = localStorage.getItem('role') || 'user';
 
 // --- Edit Modal Elements ---
 const editModal = document.getElementById('editModal');
@@ -19,13 +21,15 @@ closeEditModal.addEventListener('click', () => editModal.setAttribute('aria-hidd
 
 // --- Wishlist helper ---
 async function loadWishlist() {
-  const username = localStorage.getItem('username');
-  if (!username) {
+  if (!token) {
     wishlistIds = [];
     return;
   }
   try {
-    const res = await fetch(`${API_URL}/wishlists/${username}`);
+    const username = JSON.parse(atob(token.split('.')[0])).username; // decode payload
+    const res = await fetch(`${API_URL}/wishlists/${username}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
     const data = await res.json();
     wishlistIds = data.items || [];
   } catch (err) {
@@ -35,19 +39,23 @@ async function loadWishlist() {
 }
 
 async function toggleWishlist(propId) {
-  const username = localStorage.getItem('username');
-  if (!username) { 
+  if (!token) { 
     showToast('Влезте, за да използвате списъка');
     return;
   }
 
+  const username = JSON.parse(atob(token.split('.')[0])).username;
   const inWishlist = wishlistIds.includes(propId);
   const endpoint = inWishlist ? 'remove' : 'add';
+
   try {
     const res = await fetch(`${API_URL}/wishlists/${username}/${endpoint}`, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ username, propertyId: propId })
+      headers: {
+        'Content-Type':'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ propertyId: propId })
     });
     const data = await res.json();
     if (data.success) {
@@ -130,10 +138,13 @@ export async function loadProperties() {
       // DELETE
       deleteBtn?.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (!prop.id) return;
+        if (!prop.id || !token) return;
         if (!confirm(`Сигурни ли сте, че искате да изтриете "${prop.name}"?`)) return;
         try {
-          await fetch(`${API_URL}/properties/${prop.id}`, { method: 'DELETE', body: JSON.stringify({ role: currentUserRole }) });
+          await fetch(`${API_URL}/properties/${prop.id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
           div.remove();
           showToast('Имотът е изтрит');
         } catch (err) {
@@ -151,17 +162,17 @@ export async function loadProperties() {
       // TOGGLE STATUS
       toggleBtn?.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (!prop.id) return;
+        if (!prop.id || !token) return;
 
         const newStatus = prop.status==='free'?'taken':'free';
         try {
           const res = await fetch(`${API_URL}/properties/${prop.id}`, {
             method:'PUT',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({
-              property: {...prop, status:newStatus},
-              role: currentUserRole
-            })
+            headers: {
+              'Content-Type':'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ property: {...prop, status:newStatus} })
           });
           if(!res.ok) throw new Error('Неуспешно обновяване');
 
@@ -208,7 +219,7 @@ export function openEditModal(property) {
 
 editForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  if(!editingPropertyId) return;
+  if(!editingPropertyId || !token) return;
 
   const updatedProperty = {
     name: editForm.name.value,
@@ -222,8 +233,11 @@ editForm.addEventListener('submit', async (e) => {
   try {
     const res = await fetch(`${API_URL}/properties/${editingPropertyId}`, {
       method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ property: updatedProperty, role: currentUserRole })
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ property: updatedProperty })
     });
     if(!res.ok) throw new Error('Неуспешно обновяване');
 
