@@ -1,8 +1,9 @@
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 const propertiesContainer = document.getElementById('properties');
 
-// Change this if the current user is admin
-const currentUserRole = 'admin'; // You should get this dynamically after login
+// Get role & username dynamically (saved at login)
+const currentUserRole = localStorage.getItem('role') || 'user';
+const currentUsername = localStorage.getItem('username') || '';
 
 export async function loadProperties() {
   if (!propertiesContainer) return;
@@ -31,15 +32,19 @@ export async function loadProperties() {
           <p>Цена: ${prop.price}</p>
           <p>Тип: ${prop.type}</p>
         </div>
+        ${currentUserRole === 'admin' ? `
         <div class="admin-buttons-right">
           <button class="admin-btn edit-btn">Edit</button>
           <button class="admin-btn delete-btn">Delete</button>
           <button class="admin-btn toggle-btn">${prop.status === 'free' ? 'Свободен' : 'Зает'}</button>
         </div>
+        ` : ''}
         <button class="wishlist-btn">♥</button>
       `;
 
       propertiesContainer.appendChild(div);
+
+      if (currentUserRole !== 'admin') return; // Skip admin buttons for normal users
 
       const deleteBtn = div.querySelector('.delete-btn');
       const editBtn = div.querySelector('.edit-btn');
@@ -51,7 +56,12 @@ export async function loadProperties() {
         if (!prop.id) return;
         if (confirm(`Сигурни ли сте, че искате да изтриете "${prop.name}"?`)) {
           try {
-            await fetch(`${API_URL}/properties/${prop.id}`, { method: 'DELETE' });
+            const res = await fetch(`${API_URL}/properties/${prop.id}`, {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ role: currentUserRole })
+            });
+            if (!res.ok) throw new Error('Неуспешно изтриване');
             div.remove();
           } catch (err) {
             console.error(err);
@@ -74,7 +84,7 @@ export async function loadProperties() {
           const res = await fetch(`${API_URL}/properties/${prop.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
               property: { ...prop, name: newName, location: newLocation },
               role: currentUserRole
             })
@@ -93,7 +103,7 @@ export async function loadProperties() {
         }
       });
 
-      // TOGGLE STATUS
+      // TOGGLE STATUS (PATCH)
       toggleBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         if (!prop.id) return;
@@ -102,10 +112,10 @@ export async function loadProperties() {
 
         try {
           const res = await fetch(`${API_URL}/properties/${prop.id}`, {
-            method: 'PUT',
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              property: { ...prop, status: newStatus },
+              status: newStatus,
               role: currentUserRole
             })
           });
@@ -139,5 +149,5 @@ export async function loadProperties() {
   }
 }
 
-// Call on page load
+// Auto-load
 document.addEventListener('DOMContentLoaded', loadProperties);
