@@ -1,4 +1,3 @@
-// auth.js
 export let role = localStorage.getItem('role') || '';
 export let username = localStorage.getItem('username') || '';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
@@ -9,7 +8,7 @@ const loginForm = document.getElementById('loginForm');
 const logoutBtn = document.getElementById('logoutBtn');
 const loginModal = document.getElementById('loginModal');
 
-// ✅ Toast system (matches signup.js style)
+// ✅ Toast notification
 function showToast(message, duration = 3000) {
   const t = document.createElement('div');
   t.textContent = message;
@@ -31,7 +30,7 @@ function showToast(message, duration = 3000) {
   }, duration);
 }
 
-// ✅ Opens / closes login modal
+// ✅ Open / close login modal
 loginBtn.addEventListener('click', () => {
   document.activeElement.blur();
   loginModal.removeAttribute('inert');
@@ -42,28 +41,6 @@ closeLogin.addEventListener('click', () => {
   loginModal.setAttribute('aria-hidden', 'true');
   loginModal.setAttribute('inert', '');
 });
-
-// ✅ Update UI function (login/logout buttons + username display)
-function updateUI() {
-  const loggedIn = !!localStorage.getItem('username');
-  const userDisplay = document.getElementById('userDisplay');
-
-  if (loggedIn) {
-    const name = localStorage.getItem('username');
-    loginBtn.style.display = 'none';
-    logoutBtn.style.display = 'inline-block';
-    if (userDisplay) {
-      userDisplay.textContent = `Влязъл като: ${name}`;
-      userDisplay.style.display = 'inline-block';
-    }
-  } else {
-    loginBtn.style.display = 'inline-block';
-    logoutBtn.style.display = 'none';
-    if (userDisplay) {
-      userDisplay.style.display = 'none';
-    }
-  }
-}
 
 // ✅ Login form submit
 loginForm.addEventListener('submit', async e => {
@@ -91,21 +68,14 @@ loginForm.addEventListener('submit', async e => {
 
     const data = await res.json();
     if (data.success) {
-      role = data.role;
-      username = data.username;
-      localStorage.setItem('role', role);
-      localStorage.setItem('username', username);
+      localStorage.setItem('role', data.role);
+      localStorage.setItem('username', data.username);
 
       showToast('Успешен вход!');
       loginModal.setAttribute('aria-hidden', 'true');
-      loginModal.setAttribute('inert', '');
-      updateUI(); // Update buttons and username display immediately
 
-      // Refresh dynamic content if the function exists
-      if (typeof loadProperties === 'function') {
-        await loadProperties();
-      }
-
+      // ✅ Reload page to update all content
+      window.location.reload();
     } else {
       showToast('Грешно потребителско име или парола');
     }
@@ -115,20 +85,37 @@ loginForm.addEventListener('submit', async e => {
   }
 });
 
-// ✅ Logout handler
-logoutBtn.addEventListener('click', async () => {
+// ✅ Logout button
+logoutBtn.addEventListener('click', () => {
   localStorage.removeItem('role');
   localStorage.removeItem('username');
-  role = '';
-  username = '';
 
   showToast('Успешен изход!');
-  updateUI(); // Update buttons and username display immediately
 
-  if (typeof loadProperties === 'function') {
-    await loadProperties();
-  }
+  // ✅ Reload page to update content
+  window.location.reload();
 });
 
-// ✅ Initialize UI on page load
+// ✅ Update header UI on page load
+function updateUI() {
+  const loggedIn = !!localStorage.getItem('username');
+  const userDisplay = document.getElementById('userDisplay');
+
+  if (loggedIn) {
+    const name = localStorage.getItem('username');
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-block';
+    if (userDisplay) {
+      userDisplay.textContent = `Влязъл като: ${name}`;
+      userDisplay.style.display = 'inline-block';
+    }
+  } else {
+    loginBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+    if (userDisplay) {
+      userDisplay.style.display = 'none';
+    }
+  }
+}
+
 document.addEventListener('DOMContentLoaded', updateUI);
