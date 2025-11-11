@@ -3,6 +3,9 @@ import { showToast } from './ui.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 export let wishlistIds = [];
 
+// Get the container where properties will be shown
+const propertyContainer = document.getElementById('property'); // <-- make sure your HTML has this div
+
 // Load all properties
 export async function loadProperties() {
   try {
@@ -13,11 +16,42 @@ export async function loadProperties() {
     });
     const data = await res.json();
     if (!Array.isArray(data)) return [];
+    renderProperties(data); // render as soon as we fetch
     return data;
   } catch (err) {
     console.error('Грешка при зареждане на имоти:', err);
     return [];
   }
+}
+
+// Render properties into the container
+export function renderProperties(properties) {
+  if (!propertyContainer) return;
+
+  propertyContainer.innerHTML = properties.map(p => {
+    const takenClass = p.status === 'Taken' ? 'taken' : '';
+    const inWishlist = wishlistIds.includes(p.id) ? '❤️' : '🤍';
+
+    return `
+      <div class="property ${takenClass}">
+        ${p.image ? `<img src="${p.image}" alt="${p.name}">` : ''}
+        <div class="property-content">
+          <h3>${p.name}</h3>
+          <p>Локация: ${p.location}</p>
+          <p>Цена: ${p.price}</p>
+          <p>Тип: ${p.type}</p>
+          <p>Статус: ${p.status}</p>
+        </div>
+        <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
+        <div class="property-id">${p.id}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Add wishlist button event listeners
+  propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
+    btn.addEventListener('click', () => toggleWishlist(btn.dataset.id).then(() => loadProperties()));
+  });
 }
 
 // Load wishlist for logged-in user
