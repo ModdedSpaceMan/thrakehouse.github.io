@@ -48,6 +48,7 @@ export async function loadProperties() {
 });
 
 
+
   } catch (err) {
     console.error(err);
     propertiesContainer.innerHTML = '<p>Грешка при зареждане на имотите</p>';
