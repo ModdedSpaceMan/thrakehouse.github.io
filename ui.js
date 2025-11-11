@@ -18,6 +18,7 @@ export function uiInit() {
   const loginBtn = document.getElementById('loginBtn');
   const logoutBtn = document.getElementById('logoutBtn');
   const wishlistBtn = document.getElementById('wishlistBtn');
+  const userDisplay = document.getElementById('userDisplay');
   const sidebarToggle = document.getElementById('sidebarToggle');
   const adminSidebar = document.getElementById('adminSidebar');
   const openAddBtn = document.getElementById('addPropertySidebarBtn');
@@ -25,18 +26,22 @@ export function uiInit() {
   loginBtn.style.display = role ? 'none' : 'inline-block';
   logoutBtn.style.display = role ? 'inline-block' : 'none';
   wishlistBtn.style.display = role ? 'inline-block' : 'none';
+
+  if (userDisplay) {
+    userDisplay.textContent = role ? `Влязъл като: ${username}` : '';
+    userDisplay.style.display = role ? 'inline-block' : 'none';
+  }
+
   sidebarToggle.style.display = role === 'admin' ? 'inline-block' : 'none';
   openAddBtn.style.display = role === 'admin' ? 'block' : 'none';
-
   if (role !== 'admin') adminSidebar.classList.remove('show');
 
   sidebarToggle.addEventListener('click', () => adminSidebar.classList.toggle('show'));
 }
 
-// Global click for closing modals
+// Close modals by clicking outside
 window.addEventListener('click', e => {
-  const modals = ['loginModal', 'addPropertyModal', 'wishlistModal', 'resetModal'];
-  modals.forEach(id => {
+  ['loginModal', 'addPropertyModal', 'wishlistModal', 'resetModal'].forEach(id => {
     const modal = document.getElementById(id);
     if (e.target === modal) closeModal(modal);
   });
