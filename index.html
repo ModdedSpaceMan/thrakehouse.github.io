@@ -28,40 +28,41 @@
       <p class="hero-sub">Апартаменти, Къщи, земеделски земи и вили — лесно и бързо</p>
     </div>
   </section>
+
   <!-- Ticket Manager Modal -->
-<div id="ticketModal" class="modal" aria-hidden="true">
-  <div class="modal-content ticket-manager">
-    <button class="close" id="closeTicketModal">&times;</button>
-    <h2>Управление на тикети</h2>
+  <div id="ticketModal" class="modal" aria-hidden="true">
+    <div class="modal-content ticket-manager">
+      <button class="close" id="closeTicketModal">&times;</button>
+      <h2>Управление на тикети</h2>
 
-    <div class="ticket-manager-inner">
-      <!-- Left: Ticket List -->
-      <div class="ticket-list">
-        <input type="text" id="ticketSearch" placeholder="Търси по потребител или имейл..." />
-        <div id="ticketsLeftPanel"></div>
-      </div>
+      <div class="ticket-manager-inner">
+        <!-- Left: Ticket List -->
+        <div class="ticket-list">
+          <input type="text" id="ticketSearch" placeholder="Търси по потребител или имейл..." />
+          <div id="ticketsLeftPanel"></div>
+        </div>
 
-      <!-- Middle: Ticket Content -->
-      <div class="ticket-details">
-        <h3 id="ticketTitle">Изберете тикет</h3>
-        <p id="ticketMessage"></p>
-      </div>
+        <!-- Middle: Ticket Content -->
+        <div class="ticket-details">
+          <h3 id="ticketTitle">Изберете тикет</h3>
+          <p id="ticketMessage"></p>
+        </div>
 
-      <!-- Right: Actions -->
-      <div class="ticket-actions">
-        <label>
-          Статус:
-          <select id="ticketStatus">
-            <option value="pending">В очакване</option>
-            <option value="ongoing">В процес</option>
-            <option value="finished">Завършен</option>
-          </select>
-        </label>
-        <button id="deleteTicketBtn">Изтрий тикет</button>
+        <!-- Right: Actions -->
+        <div class="ticket-actions">
+          <label>
+            Статус:
+            <select id="ticketStatus">
+              <option value="pending">В очакване</option>
+              <option value="ongoing">В процес</option>
+              <option value="finished">Завършен</option>
+            </select>
+          </label>
+          <button id="deleteTicketBtn">Изтрий тикет</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
   <main>
     <!-- Property Filters -->
@@ -199,7 +200,6 @@
         </label>
         <label>
           Снимка:
-
           <input type="text" name="image" id="editImage" accept="image/*" />
           <img id="editImagePreview" src="" alt="preview" style="max-width:100px;margin-top:5px;" />
         </label>
@@ -244,7 +244,6 @@
   <script type="module" src="properties.js" defer></script>
   <script type="module" src="tickets.js" defer></script>
 
-
   <script>
     // Hide/show status select depending on category
     const categorySelect = document.getElementById('propertyCategory');
@@ -263,6 +262,40 @@
         editStatusContainer.style.display = editCategory.value === 'rental' ? 'block' : 'none';
       });
     }
+  </script>
+
+  <script type="module">
+    const API_URL = 'https://my-backend.martinmiskata.workers.dev';
+
+    const supportForm = document.getElementById('supportForm');
+    supportForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('supportName').value.trim();
+      const email = document.getElementById('supportEmail').value.trim();
+      const message = document.getElementById('supportMessage').value.trim();
+
+      if (!name || !email || !message) return alert('Моля, попълнете всички полета.');
+
+      try {
+        const res = await fetch(`${API_URL}/tickets`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, message })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert('Съобщението е изпратено успешно!');
+          supportForm.reset();
+        } else {
+          alert('Грешка при изпращане: ' + (data.message || ''));
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Грешка при изпращане на съобщението.');
+      }
+    });
   </script>
 </body>
 </html>
