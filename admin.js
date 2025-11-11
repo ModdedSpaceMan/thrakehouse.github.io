@@ -92,25 +92,41 @@ function fileToBase64(file) {
   });
 }
 
-// --- Admin Ticket Search (placeholder) ---
+// --- Admin Property Search by ID ---
 if (adminSearchBtn) {
   adminSearchBtn.addEventListener('click', async () => {
-    const id = adminSearchInput.value.trim();
-    if (!id) return;
+    const searchId = adminSearchInput.value.trim();
+    if (!searchId) return;
+
     try {
-      const res = await fetch(`${API_URL}/support?id=${id}&role=admin`);
-      const data = await res.json();
-      adminFound.textContent = data.length
-        ? `Намерено съобщение: ${JSON.stringify(data[0])}`
-        : 'Няма съобщения с това ID';
+      const res = await fetch(`${API_URL}/properties`);
+      const properties = await res.json();
+
+      const prop = properties.find(p => p.id === searchId);
+
+      if (!prop) {
+        adminFound.textContent = 'Няма намерен имот с това ID';
+        return;
+      }
+
+      adminFound.innerHTML = `
+        <div class="admin-property-found">
+          <h4>${prop.name}</h4>
+          <p>Локация: ${prop.location}</p>
+          <p>Цена: ${prop.price}</p>
+          <p>Тип: ${prop.type}</p>
+          <p>Статус: ${prop.status}</p>
+          ${prop.image ? `<img src="${prop.image}" alt="${prop.name}" style="max-width:100%;margin-top:10px;border-radius:8px;">` : ''}
+        </div>
+      `;
     } catch (err) {
       console.error(err);
-      adminFound.textContent = 'Грешка при търсене';
+      adminFound.textContent = 'Грешка при търсене на имота';
     }
   });
 }
 
-// --- View Support Tickets (placeholder) ---
+// --- View Support Tickets ---
 if (viewSupportBtn) {
   viewSupportBtn.addEventListener('click', async () => {
     try {
