@@ -31,12 +31,22 @@ export async function loadProperties() {
     <div class="admin-buttons-right">
       <button class="admin-btn edit-btn">Edit</button>
       <button class="admin-btn delete-btn">Delete</button>
+      <button class="admin-btn toggle-btn">${prop.status === 'free' ? 'Свободен' : 'Зает'}</button>
     </div>
     <button class="wishlist-btn">♥</button>
   `;
 
   propertiesContainer.appendChild(div);
+
+  // --- EVENT LISTENERS ---
+  const deleteBtn = div.querySelector('.delete-btn');
+  const editBtn = div.querySelector('.edit-btn');
+
+  deleteBtn.addEventListener('click', /* delete code */ );
+  editBtn.addEventListener('click', /* edit code */ );
+
 });
+
 
   } catch (err) {
     console.error(err);
