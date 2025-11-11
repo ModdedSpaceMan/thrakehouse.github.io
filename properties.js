@@ -3,9 +3,7 @@ import { showToast } from './ui.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 export let wishlistIds = [];
 
-// ---------------------------
 // Load all properties
-// ---------------------------
 export async function loadProperties() {
   try {
     const res = await fetch(`${API_URL}/properties`, {
@@ -22,9 +20,7 @@ export async function loadProperties() {
   }
 }
 
-// ---------------------------
 // Load wishlist for logged-in user
-// ---------------------------
 export async function loadWishlist() {
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
@@ -45,9 +41,7 @@ export async function loadWishlist() {
   }
 }
 
-// ---------------------------
 // Toggle property in wishlist
-// ---------------------------
 export async function toggleWishlist(propertyId) {
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
