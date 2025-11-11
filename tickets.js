@@ -157,3 +157,99 @@ function showToast(msg) {
   toast.className = 'toast show';
   setTimeout(() => { toast.className = 'toast'; }, 3000);
 }
+let autoRefreshInterval;
+
+ticketSidebarBtn.addEventListener('click', async () => {
+  if (!ticketModal) createTicketModal();
+  ticketModal.style.display = 'flex';
+  ticketModal.setAttribute('aria-hidden', 'false');
+  await loadTickets();
+
+  // Start auto-refresh when modal is open
+  if (!autoRefreshInterval) {
+    autoRefreshInterval = setInterval(async () => {
+      const currentSelectedId = ticketDetailContainer.dataset.ticketId;
+      await loadTickets();
+      if (currentSelectedId) {
+        const ticket = tickets.find(t => t.id === currentSelectedId);
+        if (ticket) showTicketDetail(ticket);
+      }
+    }, 30000); // refresh every 30s
+  }
+});
+
+// Stop auto-refresh when modal is closed
+document.getElementById('closeTicketModal').addEventListener('click', () => {
+  ticketModal.setAttribute('aria-hidden', 'true');
+  ticketModal.style.display = 'none';
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
+  }
+});
+
+function showTicketDetail(ticket) {
+  ticketDetailContainer.dataset.ticketId = ticket.id;
+  ticketDetailContainer.innerHTML = `
+    <h3>${ticket.user} (${ticket.email})</h3>
+    <p><strong>Съобщение:</strong> ${ticket.message}</p>
+    <p><strong>Дата:</strong> ${new Date(ticket.date).toLocaleString()}</p>
+    <label>
+      Статус:
+      <select id="ticketStatusSelect">
+        <option value="pending">В очакване</option>
+        <option value="ongoing">В процес</option>
+        <option value="finished">Приключен</option>
+      </select>
+    </label>
+    <button id="updateTicketStatus" style="margin-top:10px;">Обнови статус</button>
+    <button id="deleteTicket" style="margin-top:10px; background:red;color:white;">Изтрий тикет</button>
+  `;
+
+  const statusSelect = document.getElementById('ticketStatusSelect');
+  statusSelect.value = ticket.status;
+
+  document.getElementById('updateTicketStatus').addEventListener('click', async () => {
+    try {
+      const res = await fetch(`${API_URL}/tickets/${ticket.id}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + localStorage.getItem('token')
+        },
+        body: JSON.stringify({ status: statusSelect.value })
+      });
+      const data = await res.json();
+      if (data.success) {
+        ticket.status = statusSelect.value;
+        renderTicketList(searchInput.value);
+        showToast('Статус обновен');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Грешка при обновяване на статуса');
+    }
+  });
+
+  document.getElementById('deleteTicket').addEventListener('click', async () => {
+    if (!confirm('Сигурни ли сте, че искате да изтриете този тикет?')) return;
+
+    try {
+      const res = await fetch(`${API_URL}/tickets/${ticket.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+      });
+      const data = await res.json();
+      if (data.success) {
+        tickets = tickets.filter(t => t.id !== ticket.id);
+        renderTicketList(searchInput.value);
+        ticketDetailContainer.innerHTML = '';
+        showToast('Тикет изтрит');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Грешка при изтриване на тикета');
+    }
+  });
+}
+
