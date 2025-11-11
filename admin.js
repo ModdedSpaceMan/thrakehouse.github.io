@@ -13,6 +13,14 @@ const adminFound = document.getElementById('adminFound');
 const viewSupportBtn = document.getElementById('viewSupportBtn');
 const supportMessages = document.getElementById('supportMessages');
 
+// Toggle admin class on body based on role
+const role = localStorage.getItem('role');
+if (role === 'admin') {
+  document.body.classList.add('admin');
+} else {
+  document.body.classList.remove('admin');
+}
+
 // --- Add Property Modal ---
 if (openAddBtn && addPropertyModal) {
   openAddBtn.addEventListener('click', () => openModal(addPropertyModal));
