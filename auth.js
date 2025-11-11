@@ -9,37 +9,41 @@ const loginForm = document.getElementById('loginForm');
 const logoutBtn = document.getElementById('logoutBtn');
 const loginModal = document.getElementById('loginModal');
 
-// ✅ Simple toast notification system
-function showToast(message) {
-  let toast = document.getElementById('toast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'toast';
-    toast.style.position = 'fixed';
-    toast.style.bottom = '30px';
-    toast.style.left = '50%';
-    toast.style.transform = 'translateX(-50%)';
-    toast.style.background = '#333';
-    toast.style.color = '#fff';
-    toast.style.padding = '10px 20px';
-    toast.style.borderRadius = '5px';
-    toast.style.fontSize = '16px';
-    toast.style.zIndex = '9999';
-    toast.style.opacity = '0';
-    toast.style.transition = 'opacity 0.5s ease';
-    document.body.appendChild(toast);
-  }
+// ✅ Toast system (matches signup.js style)
+function showToast(message, duration = 3000) {
+  const t = document.createElement('div');
+  t.textContent = message;
+  t.style.position = 'fixed';
+  t.style.right = '28px';
+  t.style.bottom = '28px';
+  t.style.padding = '12px 16px';
+  t.style.background = '#111827';
+  t.style.color = '#fff';
+  t.style.borderRadius = '10px';
+  t.style.boxShadow = '0 8px 30px rgba(2,6,23,0.4)';
+  t.style.transition = 'opacity 0.5s ease';
+  t.style.opacity = '1';
+  document.body.appendChild(t);
 
-  toast.textContent = message;
-  toast.style.opacity = '1';
   setTimeout(() => {
-    toast.style.opacity = '0';
-  }, 3000); // Hide after 3s
+    t.style.opacity = '0';
+    setTimeout(() => document.body.removeChild(t), 500);
+  }, duration);
 }
 
-loginBtn.addEventListener('click', () => loginModal.setAttribute('aria-hidden', 'false'));
-closeLogin.addEventListener('click', () => loginModal.setAttribute('aria-hidden', 'true'));
+// ✅ Opens / closes login modal
+loginBtn.addEventListener('click', () => {
+  document.activeElement.blur();
+  loginModal.removeAttribute('inert');
+  loginModal.setAttribute('aria-hidden', 'false');
+});
+closeLogin.addEventListener('click', () => {
+  document.activeElement.blur();
+  loginModal.setAttribute('aria-hidden', 'true');
+  loginModal.setAttribute('inert', '');
+});
 
+// ✅ Login form submit
 loginForm.addEventListener('submit', async e => {
   e.preventDefault();
   const u = document.getElementById('username').value.trim();
@@ -72,8 +76,12 @@ loginForm.addEventListener('submit', async e => {
 
       showToast('Успешен вход!');
       loginModal.setAttribute('aria-hidden', 'true');
-      uiInit();
-      await loadProperties();
+      loginModal.setAttribute('inert', '');
+
+      // Refresh your page data if loadProperties exists
+      if (typeof loadProperties === 'function') {
+        await loadProperties();
+      }
     } else {
       showToast('Грешно потребителско име или парола');
     }
@@ -83,12 +91,15 @@ loginForm.addEventListener('submit', async e => {
   }
 });
 
+// ✅ Logout handler
 logoutBtn.addEventListener('click', async () => {
   localStorage.removeItem('role');
   localStorage.removeItem('username');
   role = '';
   username = '';
-  uiInit();
+
   showToast('Успешен изход!');
-  await loadProperties();
+  if (typeof loadProperties === 'function') {
+    await loadProperties();
+  }
 });
