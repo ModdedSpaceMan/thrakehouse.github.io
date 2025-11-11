@@ -1,6 +1,7 @@
 // ui.js
 export function showToast(message, duration = 3000) {
   const toast = document.getElementById('toast');
+  if (!toast) return;
   toast.textContent = message;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), duration);
@@ -26,18 +27,18 @@ export function uiInit() {
   const openAddBtn = document.getElementById('addPropertySidebarBtn');
   const userDisplay = document.getElementById('userDisplay');
 
-  // Show/hide buttons
-  loginBtn.style.display = username ? 'none' : 'inline-block';
-  logoutBtn.style.display = username ? 'inline-block' : 'none';
-  wishlistBtn.style.display = username ? 'inline-block' : 'none';
-  userDisplay.style.display = username ? 'inline-block' : 'none';
-  if (username) userDisplay.textContent = `Влязъл като: ${username}`;
+  if (loginBtn) loginBtn.style.display = username ? 'none' : 'inline-block';
+  if (logoutBtn) logoutBtn.style.display = username ? 'inline-block' : 'none';
+  if (wishlistBtn) wishlistBtn.style.display = username ? 'inline-block' : 'none';
+  if (userDisplay) {
+    userDisplay.style.display = username ? 'inline-block' : 'none';
+    if (username) userDisplay.textContent = `Влязъл като: ${username}`;
+  }
 
-  sidebarToggle.style.display = role === 'admin' ? 'inline-block' : 'none';
-  openAddBtn.style.display = role === 'admin' ? 'block' : 'none';
+  if (sidebarToggle) sidebarToggle.style.display = role === 'admin' ? 'inline-block' : 'none';
+  if (openAddBtn) openAddBtn.style.display = role === 'admin' ? 'block' : 'none';
 
-  // Hide admin sidebar for non-admins
-  if (role !== 'admin') adminSidebar.classList.remove('show');
+  if (adminSidebar && role !== 'admin') adminSidebar.classList.remove('show');
 }
 
 // Attach event listeners once
@@ -46,12 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminSidebar = document.getElementById('adminSidebar');
   const logoutBtn = document.getElementById('logoutBtn');
 
-  // Admin sidebar toggle
   if (sidebarToggle && adminSidebar) {
     sidebarToggle.addEventListener('click', () => adminSidebar.classList.toggle('show'));
   }
 
-  // Logout button
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
       localStorage.removeItem('username');
@@ -61,14 +60,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Global modal click-to-close
+  const modals = ['loginModal', 'addPropertyModal', 'wishlistModal', 'resetModal'];
   window.addEventListener('click', (e) => {
-    const modals = ['loginModal', 'addPropertyModal', 'wishlistModal', 'resetModal'];
     modals.forEach((id) => {
       const modal = document.getElementById(id);
-      if (e.target === modal) closeModal(modal);
+      if (modal && e.target === modal) closeModal(modal);
     });
   });
 
-  // Initialize UI
   uiInit();
 });
