@@ -1,5 +1,6 @@
+// signup.js
 const signupForm = document.getElementById('signupForm');
-const API_URL = 'https://my-backend.martinmiskata.workers.dev'; // <-- Worker URL
+const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
 function showToastLocal(msg, duration = 3000) {
   const t = document.createElement('div');
@@ -12,8 +13,14 @@ function showToastLocal(msg, duration = 3000) {
   t.style.color = '#fff';
   t.style.borderRadius = '10px';
   t.style.boxShadow = '0 8px 30px rgba(2,6,23,0.4)';
+  t.style.transition = 'opacity 0.5s ease';
+  t.style.opacity = '1';
   document.body.appendChild(t);
-  setTimeout(() => document.body.removeChild(t), duration);
+
+  setTimeout(() => {
+    t.style.opacity = '0';
+    setTimeout(() => document.body.removeChild(t), 500);
+  }, duration);
 }
 
 signupForm.addEventListener('submit', async (e) => {
@@ -43,35 +50,23 @@ signupForm.addEventListener('submit', async (e) => {
   }
 
   try {
-    // Check availability
-    const checkRes = await fetch(`${API_URL}/check-availability`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: usernameInput, email: emailInput })
-    });
-    const checkData = await checkRes.json();
-
-    if (checkData.usernameTaken) {
-      showToastLocal('Потребителското име вече е заето!');
-      return;
-    }
-    if (checkData.emailTaken) {
-      showToastLocal('Имейлът вече е регистриран!');
-      return;
-    }
-
-    // Signup
     const res = await fetch(`${API_URL}/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: usernameInput, email: emailInput, password })
     });
+
+    if (!res.ok) throw new Error('Signup request failed');
     const data = await res.json();
 
     if (data.success) {
       showToastLocal('Успешна регистрация! Можете да влезете с акаунта си.');
       signupForm.reset();
       setTimeout(() => window.location.href = 'index.html', 900);
+    } else if (data.message === 'Username taken') {
+      showToastLocal('Потребителското име вече е заето!');
+    } else if (data.message === 'Email taken') {
+      showToastLocal('Имейлът вече е регистриран!');
     } else {
       showToastLocal(data.message || 'Грешка при регистрация');
     }
