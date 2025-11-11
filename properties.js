@@ -16,18 +16,27 @@ export async function loadProperties() {
     }
 
     properties.forEach(prop => {
-      const div = document.createElement('div');
-      div.className = 'property-card';
-      div.innerHTML = `
-        <h3>${prop.name}</h3>
-        <p>${prop.location}</p>
-        <p>Цена: ${prop.price}</p>
-        <p>Тип: ${prop.type}</p>
-        <p>Статус: ${prop.status}</p>
-        ${prop.image ? `<img src="${prop.image}" alt="${prop.name}" />` : ''}
-      `;
-      propertiesContainer.appendChild(div);
-    });
+  const div = document.createElement('div');
+  div.className = 'property';
+
+  div.innerHTML = `
+    ${prop.status ? `<div class="status-badge">${prop.status}</div>` : ''}
+    ${prop.image ? `<img src="${prop.image}" alt="${prop.name}" />` : ''}
+    <div class="property-content">
+      <h3>${prop.name}</h3>
+      <p>${prop.location}</p>
+      <p>Цена: ${prop.price}</p>
+      <p>Тип: ${prop.type}</p>
+    </div>
+    <div class="admin-buttons-right">
+      <button class="admin-btn edit-btn">Edit</button>
+      <button class="admin-btn delete-btn">Delete</button>
+    </div>
+    <button class="wishlist-btn">♥</button>
+  `;
+
+  propertiesContainer.appendChild(div);
+});
 
   } catch (err) {
     console.error(err);
