@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="signup-hero">
+    <div class="hero-inner">
+      <h2>Влез в акаунта си</h2>
+      <p class="hero-sub">Въведете потребителско име и парола</p>
+    </div>
+  </div>
+
+  <div class="centered-card signup-container">
+    <h2>Вход</h2>
+    <form id="loginForm" class="modal-form">
+      <input type="text" id="username" placeholder="Потребителско име" required>
+      <input type="password" id="password" placeholder="Парола" required>
+      <button type="submit">Влез</button>
+    </form>
+    <p class="muted" style="margin-top:12px;">Нямате акаунт? <a href="signup.html" class="accent">Регистрация</a></p>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toastContainer"></div>
+
+  <script type="module">
+    import { showToast, uiInit } from './ui.js';
+
+    const loginForm = document.getElementById('loginForm');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        showToast('Попълнете всички полета');
+        return;
+      }
+
+      try {
+        const res = await fetch('https://my-backend.martinmiskata.workers.dev/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+        if (data.success && data.token) {
+          localStorage.setItem('jwt', data.token);
+          uiInit();
+          showToast('Влязохте успешно!');
+          window.location.href = 'index.html';
+        } else {
+          showToast(data.message || 'Невалидно потребителско име или парола');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Грешка при опит за вход');
+      }
+    });
+  </script>
+</body>
+</html>
