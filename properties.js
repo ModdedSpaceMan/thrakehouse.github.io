@@ -1,7 +1,8 @@
 import { showToast } from './ui.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 const propertiesContainer = document.getElementById('properties');
-const currentUserRole = localStorage.getItem('role') || 'user'; // dynamic role after login
+const currentUserRole = localStorage.getItem('role') || 'user';
+let wishlistIds = [];
 
 // --- Edit Modal Elements ---
 const editModal = document.getElementById('editModal');
@@ -16,8 +17,76 @@ editImageInput.addEventListener('input', () => {
 });
 closeEditModal.addEventListener('click', () => editModal.setAttribute('aria-hidden','true'));
 
+// --- Wishlist helper ---
+async function loadWishlist() {
+  const username = localStorage.getItem('username');
+  if (!username) {
+    wishlistIds = [];
+    return;
+  }
+  try {
+    const res = await fetch(`${API_URL}/wishlists/${username}`);
+    const data = await res.json();
+    wishlistIds = data.items || [];
+  } catch (err) {
+    console.error('Грешка при зареждане на списъка:', err);
+    wishlistIds = [];
+  }
+}
+
+async function toggleWishlist(propId) {
+  const username = localStorage.getItem('username');
+  if (!username) { 
+    showToast('Влезте, за да използвате списъка');
+    return;
+  }
+
+  const inWishlist = wishlistIds.includes(propId);
+  const endpoint = inWishlist ? 'remove' : 'add';
+  try {
+    const res = await fetch(`${API_URL}/wishlists/${username}/${endpoint}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, propertyId: propId })
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (inWishlist) {
+        wishlistIds = wishlistIds.filter(id => id !== propId);
+        showToast('Премахнато от списъка');
+      } else {
+        wishlistIds.push(propId);
+        showToast('Добавено в списъка');
+      }
+      updateWishlistButtons();
+    } else {
+      showToast(data.message || 'Грешка при обновяване на списъка');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Грешка при обновяване на списъка');
+  }
+}
+
+function updateWishlistButtons() {
+  document.querySelectorAll('.property').forEach(div => {
+    const propId = div.dataset.id;
+    const btn = div.querySelector('.wishlist-btn');
+    if (!btn) return;
+    if (wishlistIds.includes(propId)) {
+      btn.classList.add('added');
+      btn.style.color = '#ff6b6b';
+    } else {
+      btn.classList.remove('added');
+      btn.style.color = '#fff';
+    }
+  });
+}
+
+// --- Load Properties ---
 export async function loadProperties() {
   if (!propertiesContainer) return;
+  await loadWishlist();
 
   try {
     const res = await fetch(`${API_URL}/properties`);
@@ -35,26 +104,28 @@ export async function loadProperties() {
       div.dataset.id = prop.id;
 
       div.innerHTML = `
-        ${prop.status ? `<div class="status-badge">${prop.status === 'free' ? 'Свободен' : 'Зает'}</div>` : ''}
+        ${prop.status ? `<div class="status-badge">${prop.status==='free'?'Свободен':'Зает'}</div>` : ''}
         ${prop.image ? `<img src="${prop.image}" alt="${prop.name}" />` : ''}
         <div class="property-content">
           <h3>${prop.name}</h3>
           <p>${prop.location}</p>
-          <p>Цена: ${prop.price}</p>
+          <p>Цена: ${prop.price} лв/месец</p>
           <p>Тип: ${prop.type}</p>
         </div>
         <div class="admin-buttons-right" style="display:${currentUserRole==='admin'?'flex':'none'};">
-          <button class="admin-btn edit-btn">Edit</button>
-          <button class="admin-btn delete-btn">Delete</button>
+          <button class="admin-btn edit-btn">Редактирай</button>
+          <button class="admin-btn delete-btn">Изтрий</button>
           <button class="admin-btn toggle-btn">${prop.status==='free'?'Свободен':'Зает'}</button>
         </div>
         <button class="wishlist-btn">♥</button>
       `;
+
       propertiesContainer.appendChild(div);
 
       const deleteBtn = div.querySelector('.delete-btn');
       const editBtn = div.querySelector('.edit-btn');
       const toggleBtn = div.querySelector('.toggle-btn');
+      const wishlistBtn = div.querySelector('.wishlist-btn');
 
       // DELETE
       deleteBtn?.addEventListener('click', async (e) => {
@@ -62,7 +133,7 @@ export async function loadProperties() {
         if (!prop.id) return;
         if (!confirm(`Сигурни ли сте, че искате да изтриете "${prop.name}"?`)) return;
         try {
-          await fetch(`${API_URL}/properties/${prop.id}`, { method: 'DELETE' });
+          await fetch(`${API_URL}/properties/${prop.id}`, { method: 'DELETE', body: JSON.stringify({ role: currentUserRole }) });
           div.remove();
           showToast('Имотът е изтрит');
         } catch (err) {
@@ -105,7 +176,14 @@ export async function loadProperties() {
         }
       });
 
+      // WISHLIST
+      wishlistBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleWishlist(prop.id);
+      });
     });
+
+    updateWishlistButtons();
   } catch(err) {
     console.error(err);
     propertiesContainer.innerHTML = '<p>Грешка при зареждане на имотите</p>';
