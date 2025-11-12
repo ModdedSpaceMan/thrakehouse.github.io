@@ -84,7 +84,7 @@ if (adminSearchBtn) {
 if (viewSupportBtn) {
   viewSupportBtn.addEventListener('click', async () => {
     try {
-      const res = await fetch(`${API_URL}/support`, {
+      const res = await fetch(`${API_URL}/tickets`, {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
       });
       const data = await res.json();
