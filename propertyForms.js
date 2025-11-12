@@ -75,4 +75,11 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("editModal").setAttribute("aria-hidden", "true");
     window.dispatchEvent(new Event("propertiesUpdated"));
   });
+  const editModal = document.getElementById('editModal');
+  const closeEditModal = document.getElementById('closeEditModal');
+  
+  closeEditModal.addEventListener('click', () => {
+    editModal.setAttribute('aria-hidden', 'true');
+});
+
 });
