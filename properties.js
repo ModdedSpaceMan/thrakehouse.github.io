@@ -142,7 +142,7 @@ function togglePropertyStatus(id) {
 }
 
 // Edit modal opener
-ffunction openEditModal(id) {
+function openEditModal(id) {
   const properties = JSON.parse(localStorage.getItem("properties") || "[]");
   const prop = properties.find(p => p.id === id);
   if (!prop) return;
