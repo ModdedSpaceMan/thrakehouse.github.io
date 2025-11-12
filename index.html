@@ -15,22 +15,15 @@
         <button id="loginBtn" class="top-btn">Вход</button>
         <a href="signup.html" class="top-btn">Регистрация</a>
         <span id="userDisplay" class="top-btn" style="display:none;"></span>
+        <button id="wishlistBtn" class="top-btn" style="display:none;">Списък ♥</button>
         <button id="logoutBtn" class="top-btn" style="display:none;">Изход</button>
         <button id="sidebarToggle" class="top-btn" style="display:none;">☰</button>
       </nav>
     </div>
   </header>
 
-  <section class="hero">
-    <div class="hero-inner">
-      <h2>Намерете своя дом в Гърция</h2>
-      <p class="hero-sub">Апартаменти, Къщи, земеделски земи и вили — лесно и бързо</p>
-    </div>
-  </section>
-
   <main>
-    <!-- Property Filters -->
-    <div id="propertyFilters">
+    <section class="filters">
       <input type="text" id="filterLocation" placeholder="Локация" />
       <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
       <input type="number" id="filterMaxPrice" placeholder="Макс. цена" />
@@ -52,59 +45,51 @@
         <option value="taken">Зает</option>
       </select>
       <button id="applyFilters">Филтрирай</button>
-    </div>
+    </section>
 
     <section id="properties" class="properties"></section>
   </main>
 
-  <!-- Admin Sidebar -->
-  <aside id="adminSidebar" class="sidebar" aria-hidden="true">
-    <div class="sidebar-inner">
-      <h3>Админ панел</h3>
-      <div class="sidebar-section">
-        <input id="adminSearchInput" placeholder="Търсене по ID..." />
-        <button id="adminSearchBtn" class="sidebar-btn">Търси ID</button>
-        <div id="adminFound"></div>
-      </div>
-      <button id="viewSupportBtn" class="sidebar-btn">Потребителски съобщения</button>
-      <button id="addPropertySidebarBtn" class="sidebar-btn">Добави имот</button>
-    </div>
-  </aside>
-
   <!-- Property Modal -->
-  <!-- Property Modal -->
-<div id="propertyModal" class="modal" aria-hidden="true">
-  <div class="modal-content">
-    <button class="close" id="closePropertyModal">&times;</button>
-    <div class="property-modal-inner" style="display:flex; gap:16px; flex-wrap: wrap;">
-      <!-- Left: Property Info -->
-      <div class="property-info" style="flex:2; min-width:250px;">
-        <img id="modalImage" src="" style="width:100%; border-radius:12px; margin-bottom:12px;">
-        <h3 id="modalName"></h3>
-        <p><strong>Локация:</strong> <span id="modalLocation"></span></p>
-        <p><strong>Цена:</strong> <span id="modalPrice"></span></p>
-        <p><strong>Категория:</strong> <span id="modalCategory"></span></p>
-        <p><strong>Тип:</strong> <span id="modalType"></span></p>
-        <p><strong>Статус:</strong> <span id="modalStatus"></span></p>
-        <p><strong>ID:</strong> <span id="modalId"></span></p>
-        <!-- Wishlist inside modal -->
-        <button id="modalWishlistBtn" class="wishlist-btn" style="margin-top:10px; width:auto; padding:8px 14px;">Добави/Премахни ♥</button>
-      </div>
-
-      <!-- Right: Admin Buttons -->
-      <div id="adminModalBar" style="flex:1; min-width:120px; display:none; flex-direction:column; gap:8px;">
-        <button id="modalEditBtn" class="admin-btn edit-btn">Редактирай</button>
-        <button id="modalDeleteBtn" class="admin-btn delete-btn">Изтрий</button>
-        <button id="modalToggleBtn" class="admin-btn toggle-btn">Промени статус</button>
-      </div>
+  <div id="propertyModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <span id="closePropertyModal" class="close">&times;</span>
+      <h2 id="modalTitle">Имот</h2>
+      <p id="modalLocation"></p>
+      <p id="modalPrice"></p>
+      <p id="modalType"></p>
+      <p id="modalCategory"></p>
+      <img id="modalImage" src="" alt="Имот снимка" style="max-width:100%;" />
     </div>
   </div>
-</div>
 
+  <!-- Tickets Admin Modal -->
+  <div id="ticketModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button id="closeTicketModal" class="close">&times;</button>
+      <h2>Управление на тикети</h2>
+      <input type="text" id="ticketSearchInput" placeholder="Търси по потребител или имейл..." />
+      <div id="ticketListContainer"></div>
+      <div id="ticketDetailContainer"></div>
+    </div>
   </div>
+
+  <!-- Support Form -->
+  <footer>
+    <div class="support-card">
+      <h4>Изпратете съобщение до нас</h4>
+      <form id="supportForm" class="support-form">
+        <input type="text" id="supportName" placeholder="Вашето име" required />
+        <input type="email" id="supportEmail" placeholder="Вашият имейл" required />
+        <textarea id="supportMessage" placeholder="Съобщение" required></textarea>
+        <button type="submit" class="support-submit">Изпрати</button>
+      </form>
+    </div>
+  </footer>
 
   <div id="toast" class="toast"></div>
 
+  <!-- Scripts -->
   <script type="module" src="auth.js" defer></script>
   <script type="module" src="ui.js" defer></script>
   <script type="module" src="wishlist.js" defer></script>
