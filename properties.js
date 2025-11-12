@@ -1,37 +1,73 @@
 import { showToast } from './ui.js';
-import { loadWishlist, toggleWishlist, wishlistIds } from './wishlist.js';
 
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
+let wishlistIds = [];
 const propertyContainer = document.getElementById('properties');
 
-// Init properties
+// --------------------
+// Initialize
+// --------------------
 export async function initProperties() {
   await loadWishlist();
   await loadProperties();
   setupFilterListeners();
-  window.addEventListener('propertiesUpdated', loadProperties);
+  window.addEventListener("propertiesUpdated", loadProperties);
 }
 
-// Fetch properties
+// --------------------
+// Wishlist
+// --------------------
+export async function loadWishlist() {
+  const stored = localStorage.getItem('wishlist');
+  wishlistIds = stored ? JSON.parse(stored) : [];
+}
+
+// Toggle wishlist
+export function toggleWishlist(id) {
+  if (wishlistIds.includes(id)) {
+    wishlistIds = wishlistIds.filter(x => x !== id);
+    showToast('Премахнато от списъка');
+  } else {
+    wishlistIds.push(id);
+    showToast('Добавено в списъка');
+  }
+  localStorage.setItem('wishlist', JSON.stringify(wishlistIds));
+  updateModalWishlistBtn(id);
+}
+
+// Update modal wishlist button text
+function updateModalWishlistBtn(id) {
+  const btn = document.getElementById('modalWishlistBtn');
+  if (!btn) return;
+  btn.textContent = wishlistIds.includes(id) ? 'Премахни от списъка ♥' : 'Добави в списъка ♥';
+}
+
+// --------------------
+// Load Properties
+// --------------------
 export async function loadProperties() {
   if (!propertyContainer) return;
+
   try {
     const token = localStorage.getItem('token');
     const res = await fetch(`${API_URL}/properties`, {
       headers: token ? { 'Authorization': 'Bearer ' + token } : {}
     });
-    if (!res.ok) throw new Error(res.statusText);
+
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
     const data = await res.json();
     renderProperties(data);
     return data;
   } catch (err) {
-    console.error(err);
+    console.error('Грешка при зареждане на имоти:', err);
     propertyContainer.innerHTML = '<p>Грешка при зареждане на имоти.</p>';
     return [];
   }
 }
 
-// Render properties
+// --------------------
+// Render Properties
+// --------------------
 export function renderProperties(properties) {
   if (!propertyContainer) return;
   if (!properties.length) {
@@ -40,8 +76,9 @@ export function renderProperties(properties) {
   }
 
   propertyContainer.innerHTML = properties.map(p => {
-    const isRental = p.category === 'rental';
+    const isRental = p.category === "rental";
     const takenClass = isRental && p.status?.toLowerCase() === 'taken' ? 'taken' : '';
+
     return `
       <div class="property ${takenClass}" data-id="${p.id}">
         ${p.image ? `<img src="${p.image}" alt="${p.name}">` : ''}
@@ -49,7 +86,7 @@ export function renderProperties(properties) {
           <h3>${p.name}</h3>
           <p>Локация: ${p.location}</p>
           <p>Цена: ${p.price}</p>
-          <p>Категория: ${isRental ? 'Наем' : 'Продажба'}</p>
+          <p>Категория: ${isRental ? "Наем" : "Продажба"}</p>
           <p>Тип: ${p.type}</p>
           ${isRental ? `<p>Статус: ${p.status}</p>` : ''}
         </div>
@@ -57,18 +94,24 @@ export function renderProperties(properties) {
     `;
   }).join('');
 
+  // Click to open modal
   propertyContainer.querySelectorAll('.property').forEach(el => {
-    el.addEventListener('click', () => openPropertyModal(el.dataset.id, localStorage.getItem('role')==='admin'));
+    el.addEventListener('click', () => {
+      const isAdmin = localStorage.getItem('role') === 'admin';
+      openPropertyModal(el.dataset.id, isAdmin);
+    });
   });
 }
 
-// Property modal
+// --------------------
+// Property Modal
+// --------------------
 export async function openPropertyModal(id, isAdmin) {
+  const token = localStorage.getItem('token');
   const modal = document.getElementById('propertyModal');
-  modal.setAttribute('aria-hidden','false');
+  modal.setAttribute('aria-hidden', 'false');
 
   try {
-    const token = localStorage.getItem('token');
     const res = await fetch(`${API_URL}/properties/${id}`, {
       headers: token ? { 'Authorization': 'Bearer ' + token } : {}
     });
@@ -84,29 +127,27 @@ export async function openPropertyModal(id, isAdmin) {
     document.getElementById('modalStatus').textContent = p.status || '-';
     document.getElementById('modalId').textContent = p.id;
 
+    // Wishlist button
     const wishlistBtn = document.getElementById('modalWishlistBtn');
-    wishlistBtn.textContent = wishlistIds.includes(p.id) ? '❤️ В списък' : '🤍 Добави в списък';
-    wishlistBtn.onclick = async () => {
-      await toggleWishlist(p.id);
-      wishlistBtn.textContent = wishlistIds.includes(p.id) ? '❤️ В списък' : '🤍 Добави в списък';
-    };
+    wishlistBtn.onclick = () => toggleWishlist(p.id);
+    updateModalWishlistBtn(p.id);
 
+    // Admin bar
     const adminBar = document.getElementById('adminModalBar');
     adminBar.style.display = isAdmin ? 'flex' : 'none';
-
-    if(isAdmin) {
-      document.getElementById('modalEditBtn').onclick = () => window.openEditModal(p.id);
+    if (isAdmin) {
+      document.getElementById('modalEditBtn').onclick = () => openEditModal(p.id);
       document.getElementById('modalDeleteBtn').onclick = async () => {
-        await window.deleteProperty(p.id);
-        modal.setAttribute('aria-hidden','true');
+        await deleteProperty(p.id);
+        modal.setAttribute('aria-hidden', 'true');
       };
       document.getElementById('modalToggleBtn').onclick = async () => {
-        await window.togglePropertyStatus(p.id);
-        await openPropertyModal(p.id,true);
+        await togglePropertyStatus(p.id);
+        await openPropertyModal(p.id, true);
       };
     }
 
-  } catch(err) {
+  } catch (err) {
     console.error(err);
     showToast('Грешка при зареждане на имота');
   }
@@ -114,38 +155,5 @@ export async function openPropertyModal(id, isAdmin) {
 
 // Close modal
 document.getElementById('closePropertyModal').addEventListener('click', () => {
-  document.getElementById('propertyModal').setAttribute('aria-hidden','true');
+  document.getElementById('propertyModal').setAttribute('aria-hidden', 'true');
 });
-
-// Expose global for admin sidebar
-window.openEditModal = window.openEditModal || function(id){};
-window.deleteProperty = window.deleteProperty || function(id){};
-window.togglePropertyStatus = window.togglePropertyStatus || function(id){};
-
-// Init filters
-function setupFilterListeners(){
-  const applyBtn = document.getElementById('applyFilters');
-  applyBtn?.addEventListener('click', async ()=>{
-    const location = document.getElementById('filterLocation').value;
-    const minPrice = document.getElementById('filterMinPrice').value;
-    const maxPrice = document.getElementById('filterMaxPrice').value;
-    const type = document.getElementById('filterType').value;
-    const category = document.getElementById('filterCategory').value;
-    const status = document.getElementById('filterStatus').value;
-
-    const props = await loadProperties();
-    const filtered = props.filter(p=>{
-      if(location && !p.location.toLowerCase().includes(location.toLowerCase())) return false;
-      if(minPrice && +p.price < +minPrice) return false;
-      if(maxPrice && +p.price > +maxPrice) return false;
-      if(type && p.type!==type) return false;
-      if(category && p.category!==category) return false;
-      if(status && p.status!==status) return false;
-      return true;
-    });
-    renderProperties(filtered);
-  });
-}
-
-// Auto init
-document.addEventListener('DOMContentLoaded', ()=>initProperties());
