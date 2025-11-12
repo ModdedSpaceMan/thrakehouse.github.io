@@ -1,87 +1,89 @@
-import { uiInit, showToast } from './ui.js';
-
-const API_URL = 'https://my-backend.martinmiskata.workers.dev';
+// auth.js
+import { showToast } from './ui.js';
+import { initProperties } from './properties.js';
 
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
+const userDisplay = document.getElementById('userDisplay');
+const wishlistBtn = document.getElementById('wishlistBtn');
 const loginModal = document.getElementById('loginModal');
 const closeLogin = document.getElementById('closeLogin');
 const loginForm = document.getElementById('loginForm');
-const userDisplay = document.getElementById('userDisplay');
-const sidebarToggle = document.getElementById('sidebarToggle');
-const openAddBtn = document.getElementById('addPropertySidebarBtn');
-const viewSupportBtn = document.getElementById('viewSupportBtn');
 
-// --- Open/close login modal ---
-loginBtn.addEventListener('click', () => loginModal.setAttribute('aria-hidden', 'false'));
-closeLogin.addEventListener('click', () => loginModal.setAttribute('aria-hidden', 'true'));
+const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
-// --- Helper: decode role from JWT ---
-function getRoleFromToken(token) {
-  if (!token) return null;
-  try {
-    const payload = JSON.parse(atob(token.split('.')[0]));
-    return payload.role;
-  } catch (e) {
-    console.error("Invalid token", e);
-    return null;
-  }
+function safeAddListener(el, evt, fn) {
+  if (el) el.addEventListener(evt, fn);
 }
 
-// --- Login form submit ---
-loginForm.addEventListener('submit', async (e) => {
+// Show login modal
+safeAddListener(loginBtn, 'click', () => {
+  if (loginModal) loginModal.setAttribute('aria-hidden', 'false');
+});
+
+// Close login modal
+safeAddListener(closeLogin, 'click', () => {
+  if (loginModal) loginModal.setAttribute('aria-hidden', 'true');
+});
+
+// Logout
+safeAddListener(logoutBtn, 'click', () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('username');
+  localStorage.removeItem('role');
+  updateUI();
+  showToast('Успешен изход');
+});
+
+// Update top-nav buttons based on login state
+export function updateUI() {
+  const token = localStorage.getItem('token');
+  const username = localStorage.getItem('username');
+  const role = localStorage.getItem('role');
+
+  if (loginBtn) loginBtn.style.display = token ? 'none' : 'inline-block';
+  if (logoutBtn) logoutBtn.style.display = token ? 'inline-block' : 'none';
+  if (userDisplay) {
+    userDisplay.style.display = token ? 'inline-block' : 'none';
+    userDisplay.textContent = username || '';
+  }
+  if (wishlistBtn) wishlistBtn.style.display = token ? 'inline-block' : 'none';
+}
+
+// Handle login form submission
+safeAddListener(loginForm, 'submit', async (e) => {
   e.preventDefault();
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value;
+  if (!loginForm) return;
+
+  const username = loginForm.querySelector('#username')?.value.trim();
+  const password = loginForm.querySelector('#password')?.value.trim();
 
   if (!username || !password) return showToast('Попълнете всички полета');
 
   try {
-    const res = await fetch(`${API_URL}/login`, {
+    const res = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
+
     const data = await res.json();
-
-    if (data.success) {
-      localStorage.setItem('username', username);
+    if (res.ok && data.token) {
       localStorage.setItem('token', data.token);
-      showToast('Влязохте успешно!');
-      loginModal.setAttribute('aria-hidden', 'true');
-
-      // --- Update UI ---
-      uiInit();
-      userDisplay.textContent = username;
-      userDisplay.style.display = 'inline-block';
-
-      // --- Show admin buttons if role is admin ---
-      const role = getRoleFromToken(data.token);
-      if (role === 'admin') {
-        document.body.classList.add('admin');
-        sidebarToggle?.style.setProperty('display', 'inline-block');
-        openAddBtn?.style.setProperty('display', 'inline-block');
-        viewSupportBtn?.style.setProperty('display', 'inline-block');
-      }
+      localStorage.setItem('username', data.username);
+      localStorage.setItem('role', data.role || 'user');
+      updateUI();
+      if (loginModal) loginModal.setAttribute('aria-hidden', 'true');
+      showToast('Успешен вход');
+      initProperties(); // re-init properties to show admin buttons if needed
     } else {
-      showToast('Невалидно потребителско име или парола');
+      showToast(data.message || 'Грешка при вход');
     }
   } catch (err) {
     console.error(err);
-    showToast('Грешка при опит за вход');
+    showToast('Грешка при връзка със сървъра');
   }
 });
 
-// --- Logout ---
-logoutBtn.addEventListener('click', () => {
-  localStorage.removeItem('username');
-  localStorage.removeItem('token');
-  userDisplay.textContent = '';
-  userDisplay.style.display = 'none';
-  document.body.classList.remove('admin');
-  sidebarToggle?.style.setProperty('display', 'none');
-  openAddBtn?.style.setProperty('display', 'none');
-  viewSupportBtn?.style.setProperty('display', 'none');
-  showToast('Излязохте успешно!');
-  uiInit();
-});
+// Initialize UI on page load
+document.addEventListener('DOMContentLoaded', () => updateUI());
