@@ -155,7 +155,6 @@ function openEditModal(id) {
     editModal.setAttribute('aria-hidden', 'true');
   });
 
-
   document.getElementById("editName").value = prop.name;
   document.getElementById("editLocation").value = prop.location;
   document.getElementById("editPrice").value = prop.price;
@@ -163,10 +162,12 @@ function openEditModal(id) {
   document.getElementById("editType").value = prop.type;
   document.getElementById("editStatus").value = prop.status || "";
   document.getElementById("editImage").value = prop.image || "";
-  document.getElementById("editStatusLabel").style.display = prop.category === "rental" ? "block" : "none";
+  document.getElementById("editStatusContainer").style.display = prop.category === "rental" ? "block" : "none";
 }
 
+// --------------------
 // Filters
+// --------------------
 function setupFilterListeners() {
   const applyBtn = document.getElementById('applyFilters');
   if (!applyBtn) return;
@@ -178,8 +179,7 @@ function setupFilterListeners() {
     const minPrice = Number(document.getElementById('filterMinPrice').value);
     const maxPrice = Number(document.getElementById('filterMaxPrice').value);
     const typeFilter = document.getElementById('filterType').value;
-    const freeChecked = document.getElementById('filterFree').checked;
-    const takenChecked = document.getElementById('filterTaken').checked;
+    const statusFilter = document.getElementById('filterStatus').value; // "" | "free" | "taken"
 
     properties = properties.filter(p => {
       const price = Number(p.price);
@@ -188,9 +188,8 @@ function setupFilterListeners() {
       if (!isNaN(maxPrice) && price > maxPrice) return false;
       if (typeFilter && p.type !== typeFilter) return false;
 
-      if (p.category === "rental") {
-        if (freeChecked && p.status !== 'free') return false;
-        if (takenChecked && p.status !== 'taken') return false;
+      if (p.category === "rental" && statusFilter) {
+        if (p.status !== statusFilter) return false;
       }
 
       return true;
@@ -199,6 +198,7 @@ function setupFilterListeners() {
     renderProperties(properties);
   });
 }
+
 document.addEventListener('DOMContentLoaded', () => {
   initProperties();
 });
