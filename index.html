@@ -72,28 +72,35 @@
   </aside>
 
   <!-- Property Modal -->
-  <div id="propertyModal" class="modal" aria-hidden="true">
-    <div class="modal-content">
-      <button class="close" id="closePropertyModal">&times;</button>
-      <div style="display:flex; gap:16px;">
-        <div class="property-info" style="flex:2;">
-          <img id="modalImage" src="" style="width:100%; border-radius:12px; margin-bottom:12px;">
-          <h3 id="modalName"></h3>
-          <p><strong>Локация:</strong> <span id="modalLocation"></span></p>
-          <p><strong>Цена:</strong> <span id="modalPrice"></span></p>
-          <p><strong>Категория:</strong> <span id="modalCategory"></span></p>
-          <p><strong>Тип:</strong> <span id="modalType"></span></p>
-          <p><strong>Статус:</strong> <span id="modalStatus"></span></p>
-          <p><strong>ID:</strong> <span id="modalId"></span></p>
-          <button id="modalWishlistBtn" class="wishlist-btn">🤍 Добави в списък</button>
-        </div>
-        <div id="adminModalBar" style="flex:1; display:none; flex-direction:column; gap:8px;">
-          <button id="modalEditBtn" class="admin-btn edit-btn">Редактирай</button>
-          <button id="modalDeleteBtn" class="admin-btn delete-btn">Изтрий</button>
-          <button id="modalToggleBtn" class="admin-btn toggle-btn">Промени статус</button>
-        </div>
+  <!-- Property Modal -->
+<div id="propertyModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <button class="close" id="closePropertyModal">&times;</button>
+    <div class="property-modal-inner" style="display:flex; gap:16px; flex-wrap: wrap;">
+      <!-- Left: Property Info -->
+      <div class="property-info" style="flex:2; min-width:250px;">
+        <img id="modalImage" src="" style="width:100%; border-radius:12px; margin-bottom:12px;">
+        <h3 id="modalName"></h3>
+        <p><strong>Локация:</strong> <span id="modalLocation"></span></p>
+        <p><strong>Цена:</strong> <span id="modalPrice"></span></p>
+        <p><strong>Категория:</strong> <span id="modalCategory"></span></p>
+        <p><strong>Тип:</strong> <span id="modalType"></span></p>
+        <p><strong>Статус:</strong> <span id="modalStatus"></span></p>
+        <p><strong>ID:</strong> <span id="modalId"></span></p>
+        <!-- Wishlist inside modal -->
+        <button id="modalWishlistBtn" class="wishlist-btn" style="margin-top:10px; width:auto; padding:8px 14px;">Добави/Премахни ♥</button>
+      </div>
+
+      <!-- Right: Admin Buttons -->
+      <div id="adminModalBar" style="flex:1; min-width:120px; display:none; flex-direction:column; gap:8px;">
+        <button id="modalEditBtn" class="admin-btn edit-btn">Редактирай</button>
+        <button id="modalDeleteBtn" class="admin-btn delete-btn">Изтрий</button>
+        <button id="modalToggleBtn" class="admin-btn toggle-btn">Промени статус</button>
       </div>
     </div>
+  </div>
+</div>
+
   </div>
 
   <div id="toast" class="toast"></div>
