@@ -24,16 +24,20 @@
   <main>
     <!-- Login Modal -->
     <div id="loginModal" class="modal" aria-hidden="true">
-      <div class="modal-content">
-        <button id="closeLogin" class="close">&times;</button>
-        <h2>Вход</h2>
-        <form id="loginForm">
-          <input type="text" id="username" placeholder="Потребител" required />
-          <input type="password" id="password" placeholder="Парола" required />
-          <button type="submit">Вход</button>
-        </form>
-      </div>
-    </div>
+  <div class="centered-card signup-container modal-form">
+    <button id="closeLogin" class="close">&times;</button>
+    <h2>Вход</h2>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Потребителско име" required>
+      <input type="password" id="password" placeholder="Парола" required>
+      <button type="submit">Вход</button>
+      <p class="muted" style="margin-top:10px;">
+        Нямате акаунт? <a href="#" id="openSignup" class="accent">Регистрация</a>
+      </p>
+    </form>
+  </div>
+</div>
+
 
     <section class="filters">
       <input type="text" id="filterLocation" placeholder="Локация" />
