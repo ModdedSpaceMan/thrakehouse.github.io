@@ -1,50 +1,261 @@
-const propertiesContainer = document.getElementById('properties');
-let properties = [];
+import { showToast } from './ui.js';
 
-async function loadProperties() {
+const API_URL = 'https://my-backend.martinmiskata.workers.dev';
+let wishlistIds = [];
+const propertyContainer = document.getElementById('properties');
+
+// Initialize everything
+export async function initProperties() {
+  await loadWishlist();
+  await loadProperties();
+  setupFilterListeners();
+
+  // Re-render when properties updated via forms
+  window.addEventListener("propertiesUpdated", loadProperties);
+}
+
+// Fetch all properties and render
+export async function loadProperties() {
+  if (!propertyContainer) return;
+
   try {
-    const res = await fetch('/properties');
-    properties = await res.json();
-    renderProperties(properties);
+    // Here we read from localStorage for demo; replace with fetch if needed
+    const data = JSON.parse(localStorage.getItem("properties") || "[]");
+    renderProperties(data);
+    return data;
+
   } catch (err) {
-    console.error('Error loading properties:', err);
+    console.error('Грешка при зареждане на имоти:', err);
+    propertyContainer.innerHTML = '<p>Грешка при зареждане на имоти.</p>';
+    return [];
   }
 }
 
-function renderProperties(list) {
-  propertiesContainer.innerHTML = '';
-  list.forEach(p => {
-    const div = document.createElement('div');
-    div.className = 'property-card';
-    div.innerHTML = `
-      <h3>${p.name}</h3>
-      <p>${p.location}</p>
-      <p>${p.price} лв</p>
-      <button class="viewPropertyBtn" data-id="${p.id}">Виж</button>
+// Render property cards
+export function renderProperties(properties) {
+  if (!propertyContainer) return;
+
+  if (!properties.length) {
+    propertyContainer.innerHTML = '<p>Няма налични имоти.</p>';
+    return;
+  }
+
+  propertyContainer.innerHTML = properties.map(p => {
+    const isRental = p.category === "rental";
+    const inWishlist = wishlistIds.includes(p.id) ? '❤️' : '🤍';
+    const takenClass = isRental && p.status?.toLowerCase() === 'taken' ? 'taken' : '';
+
+    return `
+      <div class="property ${takenClass}" data-id="${p.id}">
+        ${p.image ? `<img src="${p.image}" alt="${p.name}">` : ''}
+        <div class="property-content">
+          <h3>${p.name}</h3>
+          <p>Локация: ${p.location}</p>
+          <p>Цена: ${p.price}</p>
+          <p>Категория: ${isRental ? "Наем" : "Продажба"}</p>
+          <p>Тип: ${p.type}</p>
+          ${isRental ? `<p>Статус: ${p.status}</p>` : ''}
+        </div>
+        <div class="property-actions">
+          <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
+          <button class="edit-btn" data-id="${p.id}">Редактирай</button>
+          <button class="delete-btn" data-id="${p.id}">Изтрий</button>
+          ${isRental ? `<button class="toggle-status-btn" data-id="${p.id}">${p.status === "free" ? "Зает" : "Свободен"}</button>` : ''}
+        </div>
+      </div>
     `;
-    propertiesContainer.appendChild(div);
+  }).join('');
+
+  // Add click listeners
+  propertyContainer.querySelectorAll('.property').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target.closest('.property-actions')) return;
+      const isAdmin = localStorage.getItem('role') === 'admin';
+      openPropertyModal(el.dataset.id, isAdmin);
+    });
   });
 
-  document.querySelectorAll('.viewPropertyBtn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const id = e.target.dataset.id;
-      const prop = properties.find(p => p.id === id);
-      if (!prop) return;
+  propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      await toggleWishlist(btn.dataset.id);
+      await loadProperties();
+    });
+  });
 
-      document.getElementById('modalTitle').textContent = prop.name;
-      document.getElementById('modalLocation').textContent = prop.location;
-      document.getElementById('modalPrice').textContent = prop.price + ' лв';
-      document.getElementById('modalType').textContent = prop.type;
-      document.getElementById('modalCategory').textContent = prop.category;
-      document.getElementById('modalImage').src = prop.image || '';
+  propertyContainer.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openEditModal(btn.dataset.id);
+    });
+  });
 
-      document.getElementById('propertyModal').style.display = 'block';
+  propertyContainer.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      deleteProperty(btn.dataset.id);
+    });
+  });
+
+  propertyContainer.querySelectorAll('.toggle-status-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      togglePropertyStatus(btn.dataset.id);
     });
   });
 }
 
-document.getElementById('closePropertyModal').addEventListener('click', () => {
-  document.getElementById('propertyModal').style.display = 'none';
-});
+// Wishlist
+export async function loadWishlist() {
+  const username = localStorage.getItem('username');
+  const token = localStorage.getItem('token');
+  if (!username || !token) {
+    wishlistIds = [];
+    return;
+  }
+  try {
+    const res = await fetch(`${API_URL}/wishlists/${username}`, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    wishlistIds = data.items || [];
+  } catch {
+    wishlistIds = [];
+  }
+}
 
-loadProperties();
+export async function toggleWishlist(propertyId) {
+  const username = localStorage.getItem('username');
+  const token = localStorage.getItem('token');
+  if (!username || !token) {
+    showToast('Трябва да сте влезли!');
+    return;
+  }
+  const properties = JSON.parse(localStorage.getItem("properties") || "[]");
+  const prop = properties.find(p => p.id === propertyId);
+  if (!prop) return;
+
+  if (wishlistIds.includes(propertyId)) {
+    wishlistIds = wishlistIds.filter(id => id !== propertyId);
+  } else {
+    wishlistIds.push(propertyId);
+  }
+
+  localStorage.setItem("wishlist", JSON.stringify(wishlistIds));
+  showToast(wishlistIds.includes(propertyId) ? 'Добавено в wishlist!' : 'Премахнато от wishlist');
+}
+
+// Delete property
+function deleteProperty(id) {
+  let properties = JSON.parse(localStorage.getItem("properties") || "[]");
+  properties = properties.filter(p => p.id !== id);
+  localStorage.setItem("properties", JSON.stringify(properties));
+  window.dispatchEvent(new Event("propertiesUpdated"));
+}
+
+// Toggle rental status
+function togglePropertyStatus(id) {
+  let properties = JSON.parse(localStorage.getItem("properties") || "[]");
+  properties = properties.map(p => {
+    if (p.id === id && p.category === "rental") {
+      p.status = p.status === "free" ? "taken" : "free";
+    }
+    return p;
+  });
+  localStorage.setItem("properties", JSON.stringify(properties));
+  window.dispatchEvent(new Event("propertiesUpdated"));
+}
+
+// Edit modal opener
+function openEditModal(id) {
+  const properties = JSON.parse(localStorage.getItem("properties") || "[]");
+  const prop = properties.find(p => p.id === id);
+  if (!prop) return;
+
+  const modal = document.getElementById("editModal");
+  modal.setAttribute("aria-hidden", "false");
+
+  const form = document.getElementById("editForm");
+  form.dataset.propertyId = id;
+
+  const closeBtn = document.getElementById('closeEditModal');
+  closeBtn.addEventListener('click', () => modal.setAttribute('aria-hidden', 'true'));
+
+  // Populate form fields
+  document.getElementById("editName").value = prop.name;
+  document.getElementById("editLocation").value = prop.location;
+  document.getElementById("editPrice").value = prop.price;
+  document.getElementById("editCategory").value = prop.category;
+  document.getElementById("editType").value = prop.type;
+  document.getElementById("editStatus").value = prop.status || "";
+
+  // Image handling
+  const editImageInput = document.getElementById("editImage");
+  const editImagePreview = document.getElementById("editImagePreview");
+  editImagePreview.src = prop.image || "";
+
+  editImageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      prop.image = reader.result;
+      editImagePreview.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Show/hide rental status
+  document.getElementById("editStatusContainer").style.display = prop.category === "rental" ? "block" : "none";
+
+  // Handle save
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    prop.name = document.getElementById("editName").value;
+    prop.location = document.getElementById("editLocation").value;
+    prop.price = document.getElementById("editPrice").value;
+    prop.category = document.getElementById("editCategory").value;
+    prop.type = document.getElementById("editType").value;
+    prop.status = document.getElementById("editStatus").value;
+
+    localStorage.setItem("properties", JSON.stringify(properties));
+    modal.setAttribute("aria-hidden", "true");
+    renderProperties(properties);
+  };
+}
+
+// --------------------
+// Filters
+// --------------------
+function setupFilterListeners() {
+  const applyBtn = document.getElementById('applyFilters');
+  if (!applyBtn) return;
+
+  applyBtn.addEventListener('click', async () => {
+    let properties = JSON.parse(localStorage.getItem("properties") || "[]");
+
+    const locationFilter = document.getElementById('filterLocation').value.toLowerCase();
+    const minPrice = Number(document.getElementById('filterMinPrice').value);
+    const maxPrice = Number(document.getElementById('filterMaxPrice').value);
+    const typeFilter = document.getElementById('filterType').value;
+    const statusFilter = document.getElementById('filterStatus').value;
+
+    properties = properties.filter(p => {
+      const price = Number(p.price);
+      if (locationFilter && !p.location.toLowerCase().includes(locationFilter)) return false;
+      if (!isNaN(minPrice) && price < minPrice) return false;
+      if (!isNaN(maxPrice) && price > maxPrice) return false;
+      if (typeFilter && p.type !== typeFilter) return false;
+      if (p.category === "rental" && statusFilter) {
+        if (p.status !== statusFilter) return false;
+      }
+      return true;
+    });
+
+    renderProperties(properties);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initProperties();
+});
