@@ -109,20 +109,27 @@ export function renderProperties(properties) {
 export async function loadWishlist() {
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
+
   if (!username || !token) {
-    wishlistIds = [];
+    console.warn("User not logged in — skipping wishlist fetch.");
+    wishlistIds = JSON.parse(localStorage.getItem("wishlist") || "[]");
     return;
   }
+
   try {
     const res = await fetch(`${API_URL}/wishlists/${username}`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     wishlistIds = data.items || [];
-  } catch {
+  } catch (err) {
+    console.error("Failed to load wishlist:", err);
     wishlistIds = [];
   }
 }
+
 
 export async function toggleWishlist(propertyId) {
   const username = localStorage.getItem('username');
