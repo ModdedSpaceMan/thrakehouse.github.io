@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- Header -->
   <header>
     <div class="header-inner">
       <h1>Имоти в Гърция</h1>
@@ -15,7 +14,7 @@
         <a href="#properties" class="top-btn">Имоти</a>
         <button id="loginBtn" class="top-btn">Вход</button>
         <a href="signup.html" class="top-btn">Регистрация</a>
-        <span id="userDisplay" class="top-btn" style="display:none;"></span>
+        <span id="userDisplay" class="top-btn" style="display:none; margin-left:10px;"></span>
         <button id="wishlistBtn" class="top-btn" style="display:none;">Списък ♥</button>
         <button id="logoutBtn" class="top-btn" style="display:none;">Изход</button>
         <button id="sidebarToggle" class="top-btn" style="display:none;">☰</button>
@@ -23,7 +22,6 @@
     </div>
   </header>
 
-  <!-- Hero -->
   <section class="hero">
     <div class="hero-inner">
       <h2>Намерете своя дом в Гърция</h2>
@@ -31,12 +29,48 @@
     </div>
   </section>
 
-  <!-- Main / Filters & Properties -->
+  <!-- Ticket Manager Modal -->
+  <div id="ticketModal" class="modal" aria-hidden="true">
+    <div class="modal-content ticket-manager">
+      <button class="close" id="closeTicketModal">&times;</button>
+      <h2>Управление на тикети</h2>
+
+      <div class="ticket-manager-inner">
+        <!-- Left: Ticket List -->
+        <div class="ticket-list">
+          <input type="text" id="ticketSearch" placeholder="Търси по потребител или имейл..." />
+          <div id="ticketsLeftPanel"></div>
+        </div>
+
+        <!-- Middle: Ticket Content -->
+        <div class="ticket-details">
+          <h3 id="ticketTitle">Изберете тикет</h3>
+          <p id="ticketMessage"></p>
+        </div>
+
+        <!-- Right: Actions -->
+        <div class="ticket-actions">
+          <label>
+            Статус:
+            <select id="ticketStatus">
+              <option value="pending">В очакване</option>
+              <option value="ongoing">В процес</option>
+              <option value="finished">Завършен</option>
+            </select>
+          </label>
+          <button id="deleteTicketBtn">Изтрий тикет</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <main>
+    <!-- Property Filters -->
     <div class="propertyFilters">
       <input type="text" id="filterLocation" placeholder="Локация" />
       <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
       <input type="number" id="filterMaxPrice" placeholder="Макс. цена" />
+
       <select id="filterType">
         <option value="">Всички типове</option>
         <option value="apartment">Апартамент</option>
@@ -44,16 +78,19 @@
         <option value="villa">Вила</option>
         <option value="farm">Земеделски имот</option>
       </select>
+
       <select id="filterCategory">
         <option value="">Всички категории</option>
         <option value="sale">Продажба</option>
         <option value="rental">Наем</option>
       </select>
+
       <select id="filterStatus">
         <option value="">Всички статуси</option>
         <option value="free">Свободен</option>
         <option value="taken">Зает</option>
       </select>
+
       <button id="applyFilters">Филтрирай</button>
     </div>
 
@@ -61,16 +98,22 @@
   </main>
 
   <!-- Admin Sidebar -->
-  <aside id="adminSidebar" class="sidebar">
-    <h3>Админ панел</h3>
-    <input id="adminSearchInput" placeholder="Търсене по ID..." />
-    <button id="adminSearchBtn" class="sidebar-btn">Търси ID</button>
-    <div id="adminFound"></div>
-    <button id="viewSupportBtn" class="sidebar-btn">Потребителски съобщения</button>
-    <button id="addPropertySidebarBtn" class="sidebar-btn">Добави имот</button>
-  </aside>
+  <aside id="adminSidebar" class="sidebar" aria-hidden="true">
+    <div class="sidebar-inner">
+      <h3>Админ панел</h3>
 
-  <!-- Modals -->
+      <div class="sidebar-section">
+        <input id="adminSearchInput" placeholder="Търсене по ID..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef6;margin-bottom:8px;">
+        <button id="adminSearchBtn" class="sidebar-btn">Търси ID</button>
+        <div id="adminFound"></div>
+      </div>
+
+      <button id="viewSupportBtn" class="sidebar-btn">Потребителски съобщения</button>
+      <button id="addPropertySidebarBtn" class="sidebar-btn">Добави имот</button>
+
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:12px 0;">
+    </div>
+  </aside>
 
   <!-- Login Modal -->
   <div id="loginModal" class="modal" aria-hidden="true">
@@ -82,6 +125,7 @@
         <input type="password" id="password" placeholder="Парола" required />
         <button type="submit" class="modal-submit">Вход</button>
       </form>
+      <p class="modal-note"><a href="#" id="forgotPasswordLink">Забравена парола?</a></p>
     </div>
   </div>
 
@@ -93,23 +137,26 @@
       <form id="propertyForm" class="modal-form">
         <input type="text" id="propertyName" placeholder="Име на имота" required />
         <input type="text" id="propertyLocation" placeholder="Местоположение" required />
-        <input type="number" id="propertyPrice" placeholder="Цена (лв)" required />
+        <input type="text" id="propertyPrice" placeholder="Цена (лв)" required />
+
         <select id="propertyType">
           <option value="apartment">Апартамент</option>
           <option value="house">Къща</option>
           <option value="villa">Вила</option>
           <option value="farm">Земеделски имот</option>
         </select>
+
         <select id="propertyCategory">
           <option value="sale">Продажба</option>
           <option value="rental">Наем</option>
         </select>
+
         <select id="propertyStatus" style="display:none;">
           <option value="free">Свободен</option>
           <option value="taken">Зает</option>
         </select>
+
         <input type="file" id="propertyImage" accept="image/*" required />
-        <img id="addImagePreview" src="" alt="preview" style="max-width:120px;margin-top:5px;" />
         <button type="submit" class="modal-submit">Добави имот</button>
       </form>
     </div>
@@ -118,28 +165,43 @@
   <!-- Edit Property Modal -->
   <div id="editModal" class="modal" aria-hidden="true">
     <div class="modal-content">
-      <button class="close" id="closeEditModal">&times;</button>
+      <span id="closeEditModal" class="close">&times;</span>
       <h2>Редактиране на имота</h2>
       <form id="editForm" class="modal-form">
-        <label>Име: <input type="text" name="name" id="editName" required /></label>
-        <label>Локация: <input type="text" name="location" id="editLocation" required /></label>
-        <label>Цена: <input type="number" name="price" id="editPrice" required /></label>
-        <label>Тип: <input type="text" name="type" id="editType" required /></label>
-        <label>Категория:
+        <label>
+          Име:
+          <input type="text" name="name" id="editName" required />
+        </label>
+        <label>
+          Локация:
+          <input type="text" name="location" id="editLocation" required />
+        </label>
+        <label>
+          Цена:
+          <input type="number" name="price" id="editPrice" required />
+        </label>
+        <label>
+          Тип:
+          <input type="text" name="type" id="editType" required />
+        </label>
+        <label>
+          Категория:
           <select name="category" id="editCategory">
             <option value="sale">Продажба</option>
             <option value="rental">Наем</option>
           </select>
         </label>
-        <label id="editStatusContainer" style="display:none;">Статус:
+        <label id="editStatusContainer" style="display:none;">
+          Статус:
           <select name="status" id="editStatus">
             <option value="free">Свободен</option>
             <option value="taken">Зает</option>
           </select>
         </label>
-        <label>Снимка:
+        <label>
+          Снимка:
           <input type="file" name="image" id="editImage" accept="image/*" />
-          <img id="editImagePreview" src="" alt="preview" style="max-width:120px;margin-top:5px;" />
+          <img id="editImagePreview" src="" alt="preview" style="max-width:100px;margin-top:5px;" />
         </label>
         <button type="submit" class="modal-submit">Запази</button>
       </form>
@@ -155,25 +217,8 @@
     </div>
   </div>
 
-  <!-- Ticket Modal -->
-  <div id="ticketModal" class="modal" aria-hidden="true">
-    <div class="modal-content ticket-manager">
-      <button class="close" id="closeTicketModal">&times;</button>
-      <h2>Управление на тикети</h2>
-      <div class="ticket-manager-inner">
-        <div class="ticket-list">
-          <input type="text" id="ticketSearchInput" placeholder="Търси..." />
-          <div id="ticketsLeftPanel"></div>
-        </div>
-        <div id="ticketDetailContainer"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast -->
   <div id="toast" class="toast"></div>
 
-  <!-- Footer -->
   <footer>
     <div class="footer-inner">
       <div class="support-card">
@@ -185,10 +230,11 @@
           <button type="submit" class="support-submit">Изпрати</button>
         </form>
       </div>
+      <p class="copyright">&copy; 2025 Имоти под наем в Гърция. Всички права запазени.</p>
     </div>
   </footer>
 
-  <!-- Scripts -->
+  <!-- Load scripts -->
   <script type="module" src="auth.js" defer></script>
   <script type="module" src="ui.js" defer></script>
   <script type="module" src="wishlist.js" defer></script>
@@ -199,47 +245,54 @@
   <script type="module" src="tickets.js" defer></script>
 
   <script>
-    // Close buttons for modals
-    const modals = document.querySelectorAll('.modal');
-    modals.forEach(modal => {
-      const closeBtn = modal.querySelector('.close');
-      if (closeBtn) closeBtn.addEventListener('click', () => modal.setAttribute('aria-hidden','true'));
-    });
-
-    // Image preview for Add modal
-    const addImageInput = document.getElementById('propertyImage');
-    const addImagePreview = document.getElementById('addImagePreview');
-    addImageInput.addEventListener('change', () => {
-      const file = addImageInput.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => { addImagePreview.src = reader.result; addImageInput.dataset.base64 = reader.result; };
-      reader.readAsDataURL(file);
-    });
-
-    // Image preview for Edit modal
-    const editImageInput = document.getElementById('editImage');
-    const editImagePreview = document.getElementById('editImagePreview');
-    editImageInput.addEventListener('change', () => {
-      const file = editImageInput.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => { editImagePreview.src = reader.result; editImageInput.dataset.base64 = reader.result; };
-      reader.readAsDataURL(file);
-    });
-
-    // Show/hide status depending on category (Add)
     const categorySelect = document.getElementById('propertyCategory');
     const statusSelect = document.getElementById('propertyStatus');
-    categorySelect.addEventListener('change', () => {
-      statusSelect.style.display = categorySelect.value === 'rental' ? 'block' : 'none';
-    });
+    if (categorySelect && statusSelect) {
+      categorySelect.addEventListener('change', () => {
+        statusSelect.style.display = categorySelect.value === 'rental' ? 'block' : 'none';
+      });
+    }
 
-    // Show/hide status depending on category (Edit)
     const editCategory = document.getElementById('editCategory');
     const editStatusContainer = document.getElementById('editStatusContainer');
-    editCategory.addEventListener('change', () => {
-      editStatusContainer.style.display = editCategory.value === 'rental' ? 'block' : 'none';
+    if (editCategory && editStatusContainer) {
+      editCategory.addEventListener('change', () => {
+        editStatusContainer.style.display = editCategory.value === 'rental' ? 'block' : 'none';
+      });
+    }
+  </script>
+
+  <script type="module">
+    const API_URL = 'https://my-backend.martinmiskata.workers.dev';
+
+    const supportForm = document.getElementById('supportForm');
+    supportForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('supportName').value.trim();
+      const email = document.getElementById('supportEmail').value.trim();
+      const message = document.getElementById('supportMessage').value.trim();
+
+      if (!name || !email || !message) return alert('Моля, попълнете всички полета.');
+
+      try {
+        const res = await fetch(`${API_URL}/tickets`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, message })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert('Съобщението е изпратено успешно!');
+          supportForm.reset();
+        } else {
+          alert('Грешка при изпращане: ' + (data.message || ''));
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Грешка при изпращане на съобщението.');
+      }
     });
   </script>
 </body>
