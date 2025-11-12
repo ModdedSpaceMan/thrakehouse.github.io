@@ -29,36 +29,62 @@
     </div>
   </section>
 
-  <main>
-    <!-- Property Filters -->
-    <div class="propertyFilters">
-      <input type="text" id="filterLocation" placeholder="Локация" />
-      <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
-      <input type="number" id="filterMaxPrice" placeholder="Макс. цена" />
-      <select id="filterType">
-        <option value="">Всички типове</option>
-        <option value="apartment">Апартамент</option>
-        <option value="house">Къща</option>
-        <option value="villa">Вила</option>
-        <option value="farm">Земеделски имот</option>
-      </select>
-      <select id="filterCategory">
-        <option value="">Всички категории</option>
-        <option value="sale">Продажба</option>
-        <option value="rental">Наем</option>
-      </select>
-      <select id="filterStatus">
-        <option value="">Всички статуси</option>
-        <option value="free">Свободен</option>
-        <option value="taken">Зает</option>
-      </select>
-      <button id="applyFilters">Филтрирай</button>
-    </div>
+  <!-- Property Filters -->
+  <div id="propertyFilters">
+    <input type="text" id="filterLocation" placeholder="Локация" />
+    <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
+    <input type="number" id="filterMaxPrice" placeholder="Макс. цена" />
 
+    <select id="filterType">
+      <option value="">Всички типове</option>
+      <option value="apartment">Апартамент</option>
+      <option value="house">Къща</option>
+      <option value="villa">Вила</option>
+      <option value="farm">Земеделски имот</option>
+    </select>
+
+    <select id="filterCategory">
+      <option value="">Всички категории</option>
+      <option value="sale">Продажба</option>
+      <option value="rental">Наем</option>
+    </select>
+
+    <select id="filterStatus">
+      <option value="">Всички статуси</option>
+      <option value="free">Свободен</option>
+      <option value="taken">Зает</option>
+    </select>
+
+    <button id="applyFilters">Филтрирай</button>
+  </div>
+
+  <main>
     <section id="properties" class="properties"></section>
   </main>
 
-  <!-- Property Modal -->
+  <!-- Admin Sidebar -->
+  <aside id="adminSidebar" class="sidebar" aria-hidden="true">
+    <h3>Админ панел</h3>
+    <input id="adminSearchInput" placeholder="Търсене по ID..." />
+    <button id="adminSearchBtn" class="sidebar-btn">Търси ID</button>
+    <div id="adminFound"></div>
+    <button id="viewSupportBtn" class="sidebar-btn">Потребителски съобщения</button>
+    <button id="addPropertySidebarBtn" class="sidebar-btn">Добави имот</button>
+  </aside>
+
+  <!-- Modals -->
+  <div id="loginModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="close" id="closeLogin">&times;</button>
+      <h2>Вход</h2>
+      <form id="loginForm" class="modal-form">
+        <input type="text" id="username" placeholder="Потребителско име" required />
+        <input type="password" id="password" placeholder="Парола" required />
+        <button type="submit" class="modal-submit">Вход</button>
+      </form>
+    </div>
+  </div>
+
   <div id="propertyModal" class="modal" aria-hidden="true">
     <div class="modal-content">
       <button class="close" id="closePropertyModal">&times;</button>
@@ -72,18 +98,17 @@
           <p><strong>Тип:</strong> <span id="modalType"></span></p>
           <p><strong>Статус:</strong> <span id="modalStatus"></span></p>
           <p><strong>ID:</strong> <span id="modalId"></span></p>
-          <button id="modalWishlistBtn" class="modal-submit" style="margin-top:10px;">🤍</button>
         </div>
         <div id="adminModalBar" style="flex:1; display:none; flex-direction:column; gap:8px;">
           <button id="modalEditBtn" class="admin-btn edit-btn">Редактирай</button>
           <button id="modalDeleteBtn" class="admin-btn delete-btn">Изтрий</button>
-          <button id="modalToggleBtn" class="admin-btn toggle-btn">Промени статус</button>
+          <button id="modalToggleBtn" class="admin-btn toggle-btn">Toggle Status</button>
         </div>
       </div>
+      <button id="wishlistBtnModal" class="wishlist-btn">❤️ Добави в списъка</button>
     </div>
   </div>
 
-  <!-- Wishlist Modal -->
   <div id="wishlistModal" class="modal" aria-hidden="true">
     <div class="modal-content">
       <button class="close" id="closeWishlist">&times;</button>
@@ -105,25 +130,18 @@
           <button type="submit" class="support-submit">Изпрати</button>
         </form>
       </div>
-      <p class="copyright">&copy; 2025 Имоти под наем в Гърция. Всички права запазени.</p>
     </div>
   </footer>
-v1
+
   <!-- Scripts -->
   <script type="module" src="auth.js" defer></script>
   <script type="module" src="ui.js" defer></script>
   <script type="module" src="wishlist.js" defer></script>
   <script type="module" src="support.js" defer></script>
   <script type="module" src="admin.js" defer></script>
-  <script type="module" src="propertyForms.js"></script>
+  <script type="module" src="propertyForms.js" defer></script>
   <script type="module" src="properties.js" defer></script>
   <script type="module" src="tickets.js" defer></script>
 
-  <script>
-    // Close property modal
-    document.getElementById('closePropertyModal').addEventListener('click', () => {
-      document.getElementById('propertyModal').setAttribute('aria-hidden', 'true');
-    });
-  </script>
 </body>
 </html>
