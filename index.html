@@ -67,9 +67,28 @@
     <div class="modal-content">
       <button id="closeTicketModal" class="close">&times;</button>
       <h2>Управление на тикети</h2>
-      <input type="text" id="ticketSearchInput" placeholder="Търси по потребител или имейл..." />
-      <div id="ticketListContainer"></div>
-      <div id="ticketDetailContainer"></div>
+
+      <!-- Ticket search -->
+      <input type="text" id="ticketSearch" placeholder="Търси по потребител или имейл..." />
+
+      <!-- Ticket list -->
+      <div id="ticketsLeftPanel"></div>
+
+      <!-- Ticket details -->
+      <div id="ticketDetailContainer">
+        <h3 id="ticketTitle">Изберете тикет</h3>
+        <p id="ticketMessage"></p>
+        <label for="ticketStatus">Статус:</label>
+        <select id="ticketStatus">
+          <option value="pending">Pending</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="resolved">Resolved</option>
+        </select>
+        <button id="deleteTicketBtn">Изтрий тикет</button>
+      </div>
+
+      <!-- Button to open tickets modal (if needed elsewhere) -->
+      <button id="viewSupportBtn">Преглед на тикети</button>
     </div>
   </div>
 
@@ -87,7 +106,7 @@
   </footer>
 
   <div id="toast" class="toast"></div>
-v4
+
   <!-- Scripts -->
   <script type="module" src="auth.js" defer></script>
   <script type="module" src="ui.js" defer></script>
