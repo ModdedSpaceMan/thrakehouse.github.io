@@ -194,3 +194,6 @@ function setupFilterListeners() {
     renderProperties(properties);
   });
 }
+document.addEventListener('DOMContentLoaded', () => {
+  initProperties();
+});
