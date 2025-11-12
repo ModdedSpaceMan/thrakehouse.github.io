@@ -16,30 +16,59 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Add property
   form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const newProperty = {
-      id: Date.now().toString(),
-      name: document.getElementById("propertyName").value,
-      location: document.getElementById("propertyLocation").value,
-      price: document.getElementById("propertyPrice").value,
-      category: categorySelect.value,
-      type: document.getElementById("propertyType").value,
-      status: categorySelect.value === "rental" ? statusSelect.value : "",
-      image: document.getElementById("propertyImage").value
-    };
+  // Convert image file to Base64
+  const fileInput = document.getElementById("propertyImage");
+  let imageBase64 = "";
+  if (fileInput.files && fileInput.files[0]) {
+    const reader = new FileReader();
+    imageBase64 = await new Promise((resolve, reject) => {
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(fileInput.files[0]);
+    });
+  }
 
-    const properties = JSON.parse(localStorage.getItem("properties") || "[]");
-    properties.push(newProperty);
-    localStorage.setItem("properties", JSON.stringify(properties));
+  const newProperty = {
+    id: Date.now().toString(),
+    name: document.getElementById("propertyName").value,
+    location: document.getElementById("propertyLocation").value,
+    price: document.getElementById("propertyPrice").value,
+    category: categorySelect.value,
+    type: document.getElementById("propertyType").value,
+    status: categorySelect.value === "rental" ? statusSelect.value : "",
+    image: imageBase64
+  };
 
-    form.reset();
-    statusSelect.style.display = "none";
-    addModal.setAttribute("aria-hidden", "true");
+  // Save locally
+  const properties = JSON.parse(localStorage.getItem("properties") || "[]");
+  properties.push(newProperty);
+  localStorage.setItem("properties", JSON.stringify(properties));
 
-    alert("Имотът беше добавен успешно!");
-    window.dispatchEvent(new Event("propertiesUpdated"));
-  });
+  // Save to backend
+  try {
+    const token = localStorage.getItem('token');
+    await fetch('https://my-backend.martinmiskata.workers.dev/properties', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify(newProperty)
+    });
+  } catch (err) {
+    console.error("Error saving property to backend:", err);
+    alert("Грешка при запазване на имота на сървъра");
+  }
+
+  form.reset();
+  statusSelect.style.display = "none";
+  addModal.setAttribute("aria-hidden", "true");
+  alert("Имотът беше добавен успешно!");
+  window.dispatchEvent(new Event("propertiesUpdated"));
+});
+
 
   // Edit modal logic
   const editForm = document.getElementById("editForm");
