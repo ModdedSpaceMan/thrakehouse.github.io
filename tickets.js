@@ -1,14 +1,6 @@
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
 // Create modal structure
-const ticketListContainer = document.createElement('div');
-ticketListContainer.id = 'ticketListContainer';
-ticketListContainer.style.cssText = 'overflow-y:auto; max-height:400px; margin-bottom:10px;';
-
-const ticketDetailContainer = document.createElement('div');
-ticketDetailContainer.id = 'ticketDetailContainer';
-ticketDetailContainer.style.cssText = 'border-left:1px solid #ccc; padding-left:10px; flex:1;';
-
 const ticketModal = document.createElement('div');
 ticketModal.id = 'ticketModal';
 ticketModal.classList.add('modal');
@@ -19,8 +11,8 @@ ticketModal.innerHTML = `
       <input type="text" id="ticketSearchInput" placeholder="Търси потребител/имейл..." style="width:100%;margin-bottom:10px;padding:5px;">
     </div>
     <div id="ticketListWrapper" style="flex:2; display:flex;">
-      <div id="ticketListContainer" style="flex:1;"></div>
-      <div id="ticketDetailContainer" style="flex:2;"></div>
+      <div id="ticketListContainer" style="flex:1; overflow-y:auto; max-height:400px; margin-bottom:10px;"></div>
+      <div id="ticketDetailContainer" style="flex:2; border-left:1px solid #ccc; padding-left:10px;"></div>
     </div>
     <button id="closeTicketModal" style="position:absolute; top:10px; right:10px;">&times;</button>
   </div>
@@ -36,35 +28,29 @@ async function loadTickets() {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
     const data = await res.json();
 
-    // Remove tickets older than 30 days
+    // Keep tickets from last 30 days
     const now = new Date();
-    tickets = data.filter(t => {
-      const ticketDate = new Date(t.date);
-      return (now - ticketDate) / (1000 * 60 * 60 * 24) <= 30;
-    });
+    tickets = data.filter(t => (now - new Date(t.date)) / (1000*60*60*24) <= 30);
 
     renderTicketList();
   } catch (err) {
     console.error('Error fetching tickets:', err);
-    const listContainer = document.getElementById('ticketListContainer');
-    listContainer.innerHTML = `<p style="color:red;">Грешка при зареждане на съобщения: ${err.message}</p>`;
+    document.getElementById('ticketListContainer').innerHTML = 
+      `<p style="color:red;">Грешка при зареждане на съобщения: ${err.message}</p>`;
   }
 }
 
-// Render ticket list
+// Render tickets
 function renderTicketList(searchTerm = '') {
   const listContainer = document.getElementById('ticketListContainer');
   listContainer.innerHTML = '';
 
   const filtered = tickets
-    .filter(t => 
-      t.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a,b) => new Date(b.date) - new Date(a.date)); // newest first
+    .filter(t => t.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 t.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a,b) => new Date(b.date) - new Date(a.date));
 
   filtered.forEach(ticket => {
     const item = document.createElement('div');
@@ -73,18 +59,16 @@ function renderTicketList(searchTerm = '') {
     item.style.cursor = 'pointer';
     item.style.padding = '5px';
     item.style.borderBottom = '1px solid #ccc';
-
-    if(ticket.status === 'pending') item.style.backgroundColor = '#fff3b0';
-    else if(ticket.status === 'ongoing') item.style.backgroundColor = '#a0d2eb';
-    else if(ticket.status === 'finished') item.style.backgroundColor = '#a8e6cf';
-
+    item.style.backgroundColor = ticket.status === 'pending' ? '#fff3b0' :
+                                ticket.status === 'ongoing' ? '#a0d2eb' :
+                                '#a8e6cf';
     item.innerHTML = `<strong>${ticket.user}</strong> - ${new Date(ticket.date).toLocaleDateString()} <span style="float:right">${ticket.status}</span>`;
     item.addEventListener('click', () => showTicketDetail(ticket));
     listContainer.appendChild(item);
   });
 }
 
-// Show selected ticket in detail pane
+// Show ticket details
 function showTicketDetail(ticket) {
   const detail = document.getElementById('ticketDetailContainer');
   detail.innerHTML = `
@@ -117,15 +101,12 @@ function showTicketDetail(ticket) {
   });
 }
 
-// Update ticket status
+// Update ticket
 async function updateTicketStatus(ticketId, status) {
   try {
     const res = await fetch(`${API_URL}/tickets/${ticketId}/status`, {
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':'Bearer '+localStorage.getItem('token')
-      },
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + localStorage.getItem('token') },
       body: JSON.stringify({status})
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -136,19 +117,21 @@ async function updateTicketStatus(ticketId, status) {
 async function deleteTicket(ticketId) {
   try {
     const res = await fetch(`${API_URL}/tickets/${ticketId}`, {
-      method:'DELETE',
-      headers:{'Authorization':'Bearer '+localStorage.getItem('token')}
+      method: 'DELETE',
+      headers: { 'Authorization':'Bearer ' + localStorage.getItem('token') }
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
   } catch(err) { console.error(err); }
 }
 
 // Search
-document.getElementById('ticketSearchInput').addEventListener('input', (e)=>{
-  renderTicketList(e.target.value);
+document.addEventListener('input', e => {
+  if (e.target.id === 'ticketSearchInput') {
+    renderTicketList(e.target.value);
+  }
 });
 
-// Open/Close modal
+// Open/close modal
 document.getElementById('viewSupportBtn').addEventListener('click', () => {
   ticketModal.style.display = 'block';
   loadTickets();
