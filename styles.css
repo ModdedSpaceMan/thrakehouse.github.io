@@ -909,4 +909,39 @@ footer {
   from { opacity: 0; transform: scale(0.96);}
   to { opacity: 1; transform: scale(1);}
 }
+/* Property Modal Animations */
+#propertyModal .modal-content {
+  transform: scale(0.96);
+  opacity: 0;
+  animation: propertyFadeIn 0.3s forwards;
+}
+
+#propertyModal[aria-hidden="false"] .modal-content {
+  animation: propertyFadeIn 0.3s forwards;
+}
+
+@keyframes propertyFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(-10px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.02) translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Smooth hover for admin buttons inside modal */
+#adminModalBar button {
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+
+#adminModalBar button:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
 
