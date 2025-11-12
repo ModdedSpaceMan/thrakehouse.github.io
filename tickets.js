@@ -1,3 +1,6 @@
+const API_URL = 'https://my-backend.martinmiskata.workers.dev';
+
+// Create modal structure
 const ticketListContainer = document.createElement('div');
 ticketListContainer.id = 'ticketListContainer';
 ticketListContainer.style.cssText = 'overflow-y:auto; max-height:400px; margin-bottom:10px;';
@@ -11,7 +14,7 @@ ticketModal.id = 'ticketModal';
 ticketModal.classList.add('modal');
 ticketModal.style.display = 'none';
 ticketModal.innerHTML = `
-  <div class="modal-content" style="display:flex; gap:10px;">
+  <div class="modal-content" style="display:flex; gap:10px; position: relative;">
     <div style="flex:1;">
       <input type="text" id="ticketSearchInput" placeholder="Търси потребител/имейл..." style="width:100%;margin-bottom:10px;padding:5px;">
     </div>
@@ -29,9 +32,11 @@ let tickets = [];
 // Fetch tickets from backend
 async function loadTickets() {
   try {
-    const res = await fetch('/tickets', {
+    const res = await fetch(`${API_URL}/tickets`, {
       headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
     const data = await res.json();
 
     // Remove tickets older than 30 days
@@ -44,6 +49,8 @@ async function loadTickets() {
     renderTicketList();
   } catch (err) {
     console.error('Error fetching tickets:', err);
+    const listContainer = document.getElementById('ticketListContainer');
+    listContainer.innerHTML = `<p style="color:red;">Грешка при зареждане на съобщения: ${err.message}</p>`;
   }
 }
 
@@ -106,28 +113,33 @@ function showTicketDetail(ticket) {
     await deleteTicket(ticket.id);
     tickets = tickets.filter(t => t.id !== ticket.id);
     renderTicketList(document.getElementById('ticketSearchInput').value);
-    detail.innerHTML = '<p>Избран имот изтрит.</p>';
+    detail.innerHTML = '<p>Избраното съобщение е изтрито.</p>';
   });
 }
 
 // Update ticket status
 async function updateTicketStatus(ticketId, status) {
   try {
-    await fetch(`/tickets/${ticketId}/status`, {
+    const res = await fetch(`${API_URL}/tickets/${ticketId}/status`, {
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('token')},
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+localStorage.getItem('token')
+      },
       body: JSON.stringify({status})
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
   } catch(err) { console.error(err); }
 }
 
 // Delete ticket
 async function deleteTicket(ticketId) {
   try {
-    await fetch(`/tickets/${ticketId}`, {
+    const res = await fetch(`${API_URL}/tickets/${ticketId}`, {
       method:'DELETE',
       headers:{'Authorization':'Bearer '+localStorage.getItem('token')}
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
   } catch(err) { console.error(err); }
 }
 
