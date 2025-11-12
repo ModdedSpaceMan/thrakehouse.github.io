@@ -55,27 +55,42 @@ safeAddListener(loginForm, 'submit', async (e) => {
   e.preventDefault();
   if (!loginForm) return;
 
-  const username = loginForm.querySelector('#username')?.value.trim();
+  const usernameInput = loginForm.querySelector('#username')?.value.trim();
   const password = loginForm.querySelector('#password')?.value.trim();
 
-  if (!username || !password) return showToast('Попълнете всички полета');
+  if (!usernameInput || !password) return showToast('Попълнете всички полета');
 
   try {
     const res = await fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username: usernameInput, password })
     });
 
     const data = await res.json();
+
     if (res.ok && data.token) {
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('username', data.username);
-      localStorage.setItem('role', data.role || 'user');
+      const token = data.token;
+      localStorage.setItem('token', token);
+
+      // Decode JWT payload to get username and role
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const username = payload.username || payload.user || payload.name;
+        const role = payload.role || 'user';
+
+        localStorage.setItem('username', username || '');
+        localStorage.setItem('role', role);
+      } catch (err) {
+        console.error("Failed to decode JWT:", err);
+        localStorage.setItem('username', '');
+        localStorage.setItem('role', 'user');
+      }
+
       updateUI();
       if (loginModal) loginModal.setAttribute('aria-hidden', 'true');
       showToast('Успешен вход');
-      initProperties(); // re-init properties to show admin buttons if needed
+      initProperties();
     } else {
       showToast(data.message || 'Грешка при вход');
     }
