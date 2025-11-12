@@ -15,7 +15,6 @@
         <button id="loginBtn" class="top-btn">Вход</button>
         <a href="signup.html" class="top-btn">Регистрация</a>
         <span id="userDisplay" class="top-btn" style="display:none;"></span>
-        <button id="wishlistBtn" class="top-btn" style="display:none;">Списък ♥</button>
         <button id="logoutBtn" class="top-btn" style="display:none;">Изход</button>
         <button id="sidebarToggle" class="top-btn" style="display:none;">☰</button>
       </nav>
@@ -54,7 +53,7 @@
   <div id="propertyModal" class="modal" aria-hidden="true">
     <div class="modal-content">
       <span id="closePropertyModal" class="close">&times;</span>
-      <h2 id="modalTitle">Имот</h2>
+      <h2 id="modalTitle"></h2>
       <p id="modalLocation"></p>
       <p id="modalPrice"></p>
       <p id="modalType"></p>
@@ -63,7 +62,7 @@
     </div>
   </div>
 
-  <!-- Tickets Admin Modal -->
+  <!-- Tickets/Admin Modal -->
   <div id="ticketModal" class="modal" aria-hidden="true">
     <div class="modal-content">
       <button id="closeTicketModal" class="close">&times;</button>
@@ -92,7 +91,6 @@
   <!-- Scripts -->
   <script type="module" src="auth.js" defer></script>
   <script type="module" src="ui.js" defer></script>
-  <script type="module" src="wishlist.js" defer></script>
   <script type="module" src="support.js" defer></script>
   <script type="module" src="admin.js" defer></script>
   <script type="module" src="propertyForms.js" defer></script>
