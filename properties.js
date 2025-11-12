@@ -1,67 +1,47 @@
-// properties.js
 import { showToast } from './ui.js';
-import { getWishlistIds, toggleWishlist } from './wishlist.js';
+import { loadWishlist, toggleWishlist, wishlistIds } from './wishlist.js';
 
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 const propertyContainer = document.getElementById('properties');
-const propertyModal = document.getElementById('propertyModal');
-const modalWishlistBtn = document.createElement('button');
 
-modalWishlistBtn.classList.add('wishlist-btn');
-modalWishlistBtn.textContent = '🤍';
-modalWishlistBtn.style.marginTop = '10px';
-
-// --------------------
-// Initialize everything
-// --------------------
+// Init properties
 export async function initProperties() {
+  await loadWishlist();
   await loadProperties();
   setupFilterListeners();
-
   window.addEventListener('propertiesUpdated', loadProperties);
 }
 
-// --------------------
-// Load properties
-// --------------------
+// Fetch properties
 export async function loadProperties() {
   if (!propertyContainer) return;
-
   try {
     const token = localStorage.getItem('token');
     const res = await fetch(`${API_URL}/properties`, {
       headers: token ? { 'Authorization': 'Bearer ' + token } : {}
     });
-
-    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    if (!res.ok) throw new Error(res.statusText);
     const data = await res.json();
     renderProperties(data);
     return data;
-
   } catch (err) {
-    console.error('Error loading properties:', err);
+    console.error(err);
     propertyContainer.innerHTML = '<p>Грешка при зареждане на имоти.</p>';
     return [];
   }
 }
 
-// --------------------
-// Render property cards
-// --------------------
+// Render properties
 export function renderProperties(properties) {
   if (!propertyContainer) return;
-
   if (!properties.length) {
     propertyContainer.innerHTML = '<p>Няма налични имоти.</p>';
     return;
   }
 
-  const wishlistIds = getWishlistIds();
-
   propertyContainer.innerHTML = properties.map(p => {
     const isRental = p.category === 'rental';
     const takenClass = isRental && p.status?.toLowerCase() === 'taken' ? 'taken' : '';
-
     return `
       <div class="property ${takenClass}" data-id="${p.id}">
         ${p.image ? `<img src="${p.image}" alt="${p.name}">` : ''}
@@ -69,36 +49,23 @@ export function renderProperties(properties) {
           <h3>${p.name}</h3>
           <p>Локация: ${p.location}</p>
           <p>Цена: ${p.price}</p>
-          <p>Категория: ${isRental ? "Наем" : "Продажба"}</p>
+          <p>Категория: ${isRental ? 'Наем' : 'Продажба'}</p>
           <p>Тип: ${p.type}</p>
           ${isRental ? `<p>Статус: ${p.status}</p>` : ''}
         </div>
-        <div class="property-id">${p.id}</div>
       </div>
     `;
   }).join('');
 
-  // --------------------
-  // Click on property card
-  // --------------------
   propertyContainer.querySelectorAll('.property').forEach(el => {
-    el.addEventListener('click', async (e) => {
-      // Prevent multiple modal triggers
-      if (e.target.closest('.property-actions')) return;
-
-      const isAdmin = localStorage.getItem('role') === 'admin';
-      await openPropertyModal(el.dataset.id, isAdmin);
-    });
+    el.addEventListener('click', () => openPropertyModal(el.dataset.id, localStorage.getItem('role')==='admin'));
   });
 }
 
-// --------------------
-// Open Property Modal
-// --------------------
+// Property modal
 export async function openPropertyModal(id, isAdmin) {
-  if (!propertyModal) return;
-
-  propertyModal.setAttribute('aria-hidden', 'false');
+  const modal = document.getElementById('propertyModal');
+  modal.setAttribute('aria-hidden','false');
 
   try {
     const token = localStorage.getItem('token');
@@ -117,79 +84,68 @@ export async function openPropertyModal(id, isAdmin) {
     document.getElementById('modalStatus').textContent = p.status || '-';
     document.getElementById('modalId').textContent = p.id;
 
-    // --------------------
-    // Wishlist button inside modal
-    // --------------------
-    const wishlistIds = getWishlistIds();
-    modalWishlistBtn.textContent = wishlistIds.includes(p.id) ? '❤️' : '🤍';
-    modalWishlistBtn.onclick = () => {
-      toggleWishlist(p.id);
-      modalWishlistBtn.textContent = wishlistIds.includes(p.id) ? '🤍' : '❤️';
+    const wishlistBtn = document.getElementById('modalWishlistBtn');
+    wishlistBtn.textContent = wishlistIds.includes(p.id) ? '❤️ В списък' : '🤍 Добави в списък';
+    wishlistBtn.onclick = async () => {
+      await toggleWishlist(p.id);
+      wishlistBtn.textContent = wishlistIds.includes(p.id) ? '❤️ В списък' : '🤍 Добави в списък';
     };
 
-    // Append button if not already in modal
-    if (!document.getElementById('modalWishlistBtn')) {
-      modalWishlistBtn.id = 'modalWishlistBtn';
-      const modalContent = propertyModal.querySelector('.property-modal-inner .property-info');
-      modalContent.appendChild(modalWishlistBtn);
-    }
-
-    // --------------------
-    // Admin bar
-    // --------------------
     const adminBar = document.getElementById('adminModalBar');
-    if (adminBar) {
-      adminBar.style.display = isAdmin ? 'flex' : 'none';
-      if (isAdmin) {
-        document.getElementById('modalEditBtn').onclick = () => window.openEditModal(p.id);
-        document.getElementById('modalDeleteBtn').onclick = async () => {
-          await window.deleteProperty(p.id);
-          propertyModal.setAttribute('aria-hidden', 'true');
-        };
-        document.getElementById('modalToggleBtn').onclick = async () => {
-          await window.togglePropertyStatus(p.id);
-          await openPropertyModal(p.id, true);
-        };
-      }
+    adminBar.style.display = isAdmin ? 'flex' : 'none';
+
+    if(isAdmin) {
+      document.getElementById('modalEditBtn').onclick = () => window.openEditModal(p.id);
+      document.getElementById('modalDeleteBtn').onclick = async () => {
+        await window.deleteProperty(p.id);
+        modal.setAttribute('aria-hidden','true');
+      };
+      document.getElementById('modalToggleBtn').onclick = async () => {
+        await window.togglePropertyStatus(p.id);
+        await openPropertyModal(p.id,true);
+      };
     }
 
-  } catch (err) {
+  } catch(err) {
     console.error(err);
     showToast('Грешка при зареждане на имота');
   }
 }
 
-// Close modal safely
-document.getElementById('closePropertyModal')?.addEventListener('click', () => {
-  if (propertyModal) propertyModal.setAttribute('aria-hidden', 'true');
+// Close modal
+document.getElementById('closePropertyModal').addEventListener('click', () => {
+  document.getElementById('propertyModal').setAttribute('aria-hidden','true');
 });
 
-// --------------------
-// Filter listeners (simplified example)
-// --------------------
-function setupFilterListeners() {
+// Expose global for admin sidebar
+window.openEditModal = window.openEditModal || function(id){};
+window.deleteProperty = window.deleteProperty || function(id){};
+window.togglePropertyStatus = window.togglePropertyStatus || function(id){};
+
+// Init filters
+function setupFilterListeners(){
   const applyBtn = document.getElementById('applyFilters');
-  if (!applyBtn) return;
+  applyBtn?.addEventListener('click', async ()=>{
+    const location = document.getElementById('filterLocation').value;
+    const minPrice = document.getElementById('filterMinPrice').value;
+    const maxPrice = document.getElementById('filterMaxPrice').value;
+    const type = document.getElementById('filterType').value;
+    const category = document.getElementById('filterCategory').value;
+    const status = document.getElementById('filterStatus').value;
 
-  applyBtn.addEventListener('click', async () => {
-    const location = document.getElementById('filterLocation')?.value || '';
-    const minPrice = document.getElementById('filterMinPrice')?.value || '';
-    const maxPrice = document.getElementById('filterMaxPrice')?.value || '';
-    const type = document.getElementById('filterType')?.value || '';
-    const category = document.getElementById('filterCategory')?.value || '';
-    const status = document.getElementById('filterStatus')?.value || '';
-
-    let data = await loadProperties();
-    data = data.filter(p => {
-      if (location && !p.location.toLowerCase().includes(location.toLowerCase())) return false;
-      if (minPrice && Number(p.price) < Number(minPrice)) return false;
-      if (maxPrice && Number(p.price) > Number(maxPrice)) return false;
-      if (type && p.type !== type) return false;
-      if (category && p.category !== category) return false;
-      if (status && p.status !== status) return false;
+    const props = await loadProperties();
+    const filtered = props.filter(p=>{
+      if(location && !p.location.toLowerCase().includes(location.toLowerCase())) return false;
+      if(minPrice && +p.price < +minPrice) return false;
+      if(maxPrice && +p.price > +maxPrice) return false;
+      if(type && p.type!==type) return false;
+      if(category && p.category!==category) return false;
+      if(status && p.status!==status) return false;
       return true;
     });
-
-    renderProperties(data);
+    renderProperties(filtered);
   });
 }
+
+// Auto init
+document.addEventListener('DOMContentLoaded', ()=>initProperties());
