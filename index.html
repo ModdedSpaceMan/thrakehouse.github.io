@@ -49,18 +49,37 @@
     <section id="properties" class="properties"></section>
   </main>
 
-  <!-- Property Modal -->
-  <div id="propertyModal" class="modal" aria-hidden="true">
-    <div class="modal-content">
-      <span id="closePropertyModal" class="close">&times;</span>
-      <h2 id="modalTitle"></h2>
-      <p id="modalLocation"></p>
-      <p id="modalPrice"></p>
-      <p id="modalType"></p>
-      <p id="modalCategory"></p>
-      <img id="modalImage" src="" alt="Имот снимка" style="max-width:100%;" />
-    </div>
+  <!-- Add Property Modal -->
+<div id="addPropertyModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <button class="close" onclick="document.getElementById('addPropertyModal').setAttribute('aria-hidden','true')">&times;</button>
+    <h2>Добави имот</h2>
+    <form id="propertyForm">
+      <input type="text" id="propertyName" placeholder="Име" required />
+      <input type="text" id="propertyLocation" placeholder="Локация" required />
+      <input type="number" id="propertyPrice" placeholder="Цена" required />
+      <select id="propertyType" required>
+        <option value="">Изберете тип</option>
+        <option value="apartment">Апартамент</option>
+        <option value="house">Къща</option>
+        <option value="villa">Вила</option>
+        <option value="farm">Земеделски имот</option>
+      </select>
+      <select id="propertyCategory" required>
+        <option value="">Изберете категория</option>
+        <option value="sale">Продажба</option>
+        <option value="rental">Наем</option>
+      </select>
+      <select id="propertyStatus" style="display:none;">
+        <option value="free">Свободен</option>
+        <option value="taken">Зает</option>
+      </select>
+      <input type="file" id="propertyImage" />
+      <button type="submit">Добави имот</button>
+    </form>
   </div>
+</div>
+
 
   <!-- Tickets/Admin Modal -->
   <div id="ticketModal" class="modal" aria-hidden="true">
