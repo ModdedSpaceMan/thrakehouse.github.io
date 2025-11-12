@@ -1,27 +1,20 @@
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
-// Create modal structure
-const ticketModal = document.createElement('div');
-ticketModal.id = 'ticketModal';
-ticketModal.classList.add('modal');
-ticketModal.style.display = 'none';
-ticketModal.innerHTML = `
-  <div class="modal-content" style="display:flex; gap:10px; position: relative;">
-    <div style="flex:1;">
-      <input type="text" id="ticketSearchInput" placeholder="Търси потребител/имейл..." style="width:100%;margin-bottom:10px;padding:5px;">
-    </div>
-    <div id="ticketListWrapper" style="flex:2; display:flex;">
-      <div id="ticketListContainer" style="flex:1; overflow-y:auto; max-height:400px; margin-bottom:10px;"></div>
-      <div id="ticketDetailContainer" style="flex:2; border-left:1px solid #ccc; padding-left:10px;"></div>
-    </div>
-    <button id="closeTicketModal" style="position:absolute; top:10px; right:10px;">&times;</button>
-  </div>
-`;
-document.body.appendChild(ticketModal);
+// DOM Elements
+const ticketModal = document.getElementById('ticketModal');
+const ticketsLeftPanel = document.getElementById('ticketsLeftPanel');
+const ticketSearch = document.getElementById('ticketSearch');
+const ticketTitle = document.getElementById('ticketTitle');
+const ticketMessage = document.getElementById('ticketMessage');
+const ticketStatus = document.getElementById('ticketStatus');
+const deleteTicketBtn = document.getElementById('deleteTicketBtn');
+const viewSupportBtn = document.getElementById('viewSupportBtn');
+const closeTicketModal = document.getElementById('closeTicketModal');
 
 let tickets = [];
+let selectedTicket = null;
 
-// Fetch tickets from backend
+// --- Load tickets from backend ---
 async function loadTickets() {
   try {
     const res = await fetch(`${API_URL}/tickets`, {
@@ -30,112 +23,106 @@ async function loadTickets() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    // Keep tickets from last 30 days
     const now = new Date();
     tickets = data.filter(t => (now - new Date(t.date)) / (1000*60*60*24) <= 30);
 
     renderTicketList();
   } catch (err) {
     console.error('Error fetching tickets:', err);
-    document.getElementById('ticketListContainer').innerHTML = 
-      `<p style="color:red;">Грешка при зареждане на съобщения: ${err.message}</p>`;
+    ticketsLeftPanel.innerHTML = `<p style="color:red;">Грешка при зареждане на съобщения: ${err.message}</p>`;
   }
 }
 
-// Render tickets
+// --- Render ticket list ---
 function renderTicketList(searchTerm = '') {
-  const listContainer = document.getElementById('ticketListContainer');
-  listContainer.innerHTML = '';
+  ticketsLeftPanel.innerHTML = '';
 
   const filtered = tickets
-    .filter(t => t.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                 t.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(t =>
+      t.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.email.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     .sort((a,b) => new Date(b.date) - new Date(a.date));
 
   filtered.forEach(ticket => {
     const item = document.createElement('div');
     item.classList.add('ticket-item');
-    item.dataset.id = ticket.id;
     item.style.cursor = 'pointer';
     item.style.padding = '5px';
     item.style.borderBottom = '1px solid #ccc';
     item.style.backgroundColor = ticket.status === 'pending' ? '#fff3b0' :
-                                ticket.status === 'ongoing' ? '#a0d2eb' :
-                                '#a8e6cf';
-    item.innerHTML = `<strong>${ticket.user}</strong> - ${new Date(ticket.date).toLocaleDateString()} <span style="float:right">${ticket.status}</span>`;
-    item.addEventListener('click', () => showTicketDetail(ticket));
-    listContainer.appendChild(item);
+                                 ticket.status === 'ongoing' ? '#a0d2eb' :
+                                 '#a8e6cf';
+
+    item.textContent = `${ticket.user} - ${new Date(ticket.date).toLocaleDateString()} [${ticket.status}]`;
+    item.addEventListener('click', () => selectTicket(ticket));
+    ticketsLeftPanel.appendChild(item);
   });
 }
 
-// Show ticket details
-function showTicketDetail(ticket) {
-  const detail = document.getElementById('ticketDetailContainer');
-  detail.innerHTML = `
-    <h3>${ticket.user} (${ticket.email})</h3>
-    <p>Съобщение: ${ticket.message}</p>
-    <p>Създадено: ${new Date(ticket.date).toLocaleString()}</p>
-    <p>
-      Статус:
-      <select id="ticketStatusSelect">
-        <option value="pending" ${ticket.status==='pending'?'selected':''}>Pending</option>
-        <option value="ongoing" ${ticket.status==='ongoing'?'selected':''}>Ongoing</option>
-        <option value="finished" ${ticket.status==='finished'?'selected':''}>Finished</option>
-      </select>
-    </p>
-    <button id="deleteTicketBtn" style="margin-top:5px;">Изтрий</button>
-  `;
-
-  document.getElementById('ticketStatusSelect').addEventListener('change', async (e) => {
-    const newStatus = e.target.value;
-    await updateTicketStatus(ticket.id, newStatus);
-    ticket.status = newStatus;
-    renderTicketList(document.getElementById('ticketSearchInput').value);
-  });
-
-  document.getElementById('deleteTicketBtn').addEventListener('click', async () => {
-    await deleteTicket(ticket.id);
-    tickets = tickets.filter(t => t.id !== ticket.id);
-    renderTicketList(document.getElementById('ticketSearchInput').value);
-    detail.innerHTML = '<p>Избраното съобщение е изтрито.</p>';
-  });
+// --- Select a ticket to view details ---
+function selectTicket(ticket) {
+  selectedTicket = ticket;
+  ticketTitle.textContent = `${ticket.user} (${ticket.email})`;
+  ticketMessage.textContent = ticket.message;
+  ticketStatus.value = ticket.status;
 }
 
-// Update ticket
-async function updateTicketStatus(ticketId, status) {
+// --- Update ticket status ---
+ticketStatus.addEventListener('change', async () => {
+  if (!selectedTicket) return;
+  const newStatus = ticketStatus.value;
   try {
-    const res = await fetch(`${API_URL}/tickets/${ticketId}/status`, {
+    const res = await fetch(`${API_URL}/tickets/${selectedTicket.id}/status`, {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + localStorage.getItem('token') },
-      body: JSON.stringify({status})
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      },
+      body: JSON.stringify({ status: newStatus })
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  } catch(err) { console.error(err); }
-}
-
-// Delete ticket
-async function deleteTicket(ticketId) {
-  try {
-    const res = await fetch(`${API_URL}/tickets/${ticketId}`, {
-      method: 'DELETE',
-      headers: { 'Authorization':'Bearer ' + localStorage.getItem('token') }
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  } catch(err) { console.error(err); }
-}
-
-// Search
-document.addEventListener('input', e => {
-  if (e.target.id === 'ticketSearchInput') {
-    renderTicketList(e.target.value);
+    selectedTicket.status = newStatus;
+    renderTicketList(ticketSearch.value);
+  } catch (err) {
+    console.error(err);
+    alert('Грешка при обновяване на статуса');
   }
 });
 
-// Open/close modal
-document.getElementById('viewSupportBtn').addEventListener('click', () => {
+// --- Delete ticket ---
+deleteTicketBtn.addEventListener('click', async () => {
+  if (!selectedTicket) return;
+  if (!confirm('Наистина ли искате да изтриете този тикет?')) return;
+
+  try {
+    const res = await fetch(`${API_URL}/tickets/${selectedTicket.id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    tickets = tickets.filter(t => t.id !== selectedTicket.id);
+    selectedTicket = null;
+    ticketTitle.textContent = 'Изберете тикет';
+    ticketMessage.textContent = '';
+    renderTicketList(ticketSearch.value);
+  } catch (err) {
+    console.error(err);
+    alert('Грешка при изтриване на тикета');
+  }
+});
+
+// --- Search tickets ---
+ticketSearch.addEventListener('input', (e) => {
+  renderTicketList(e.target.value);
+});
+
+// --- Open/Close modal ---
+viewSupportBtn.addEventListener('click', () => {
   ticketModal.style.display = 'block';
   loadTickets();
 });
-document.getElementById('closeTicketModal').addEventListener('click', () => {
+
+closeTicketModal.addEventListener('click', () => {
   ticketModal.style.display = 'none';
 });
