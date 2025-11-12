@@ -218,6 +218,27 @@
   </div>
 
   <div id="toast" class="toast"></div>
+  <!-- Property Modal -->
+<div id="propertyModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <button class="close" id="closePropertyModal">&times;</button>
+    <img id="modalImage" src="" alt="property image" style="width:100%; border-radius:12px; margin-bottom:15px;">
+    <h2 id="modalName"></h2>
+    <p><strong>Локация:</strong> <span id="modalLocation"></span></p>
+    <p><strong>Цена:</strong> <span id="modalPrice"></span></p>
+    <p><strong>Категория:</strong> <span id="modalCategory"></span></p>
+    <p><strong>Тип:</strong> <span id="modalType"></span></p>
+    <p><strong>Статус:</strong> <span id="modalStatus"></span></p>
+    <p><strong>ID:</strong> <span id="modalId"></span></p>
+
+    <!-- Admin Bar -->
+    <div id="adminModalBar" style="display:none; margin-top:15px; gap:8px; justify-content:center; align-items:center; display:flex;">
+      <button id="modalEditBtn" class="modal-submit" style="background:#a6a89c;">Редактирай</button>
+      <button id="modalDeleteBtn" class="modal-submit" style="background:#c86a3c;">Изтрий</button>
+      <button id="modalToggleBtn" class="modal-submit" style="background:#cfcc8f;">Промени статус</button>
+    </div>
+  </div>
+</div>
 
   <footer>
     <div class="footer-inner">
