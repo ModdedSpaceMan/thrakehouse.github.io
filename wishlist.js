@@ -1,112 +1,76 @@
-// wishlist.js
 import { showToast } from './ui.js';
-import { loadProperties } from './properties.js';
+import { loadProperties, openPropertyModal } from './properties.js';
+
+const API_URL = 'https://my-backend.martinmiskata.workers.dev';
+export let wishlistIds = [];
 
 const wishlistBtn = document.getElementById('wishlistBtn');
 const wishlistModal = document.getElementById('wishlistModal');
 const closeWishlist = document.getElementById('closeWishlist');
 const wishlistContent = document.getElementById('wishlistContent');
 
-let wishlistIds = [];
-
-// Safe addEventListener
-function safeAddListener(el, evt, fn) {
-  if (el) el.addEventListener(evt, fn);
-}
-
 // Load wishlist from localStorage
 export async function loadWishlist() {
-  const stored = localStorage.getItem('wishlist');
-  wishlistIds = stored ? JSON.parse(stored) : [];
-  return wishlistIds;
+  const saved = JSON.parse(localStorage.getItem('wishlist')) || [];
+  wishlistIds = saved;
+  updateTopWishlistBtn();
 }
 
-// Save wishlist to localStorage
-function saveWishlist() {
+// Toggle wishlist
+export async function toggleWishlist(id) {
+  if (!wishlistIds.includes(id)) wishlistIds.push(id);
+  else wishlistIds = wishlistIds.filter(wid => wid !== id);
+
   localStorage.setItem('wishlist', JSON.stringify(wishlistIds));
+  updateTopWishlistBtn();
+  await renderWishlist();
 }
 
-// Toggle wishlist for a property
-export function toggleWishlist(id) {
-  const index = wishlistIds.indexOf(id);
-  if (index >= 0) {
-    wishlistIds.splice(index, 1);
-    showToast('Премахнато от списъка');
-  } else {
-    wishlistIds.push(id);
-    showToast('Добавено в списъка');
-  }
-  saveWishlist();
-  awaitRefreshProperties();
+// Update main menu wishlist button
+function updateTopWishlistBtn() {
+  if (!wishlistBtn) return;
+  wishlistBtn.style.display = wishlistIds.length ? 'inline-block' : 'none';
+  wishlistBtn.textContent = `Списък ♥ (${wishlistIds.length})`;
 }
 
-// Refresh property cards to update heart buttons
-async function awaitRefreshProperties() {
-  await loadProperties();
-}
-
-// Render wishlist modal content
+// Render wishlist modal
 export async function renderWishlist() {
-  await loadWishlist();
-
   if (!wishlistContent) return;
 
-  if (!wishlistIds.length) {
-    wishlistContent.innerHTML = '<p>Нямате запазени имоти.</p>';
+  const allProperties = await loadProperties();
+  const savedProps = allProperties.filter(p => wishlistIds.includes(p.id));
+
+  if (!savedProps.length) {
+    wishlistContent.innerHTML = '<p>Вашият списък е празен.</p>';
     return;
   }
 
-  const token = localStorage.getItem('token');
-  let html = '';
+  wishlistContent.innerHTML = savedProps.map(p => `
+    <div class="wishlist-item" data-id="${p.id}" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span>${p.name} (${p.category}) - ${p.price}лв</span>
+      <button class="openBtn">Преглед</button>
+    </div>
+  `).join('');
 
-  for (let id of wishlistIds) {
-    try {
-      const res = await fetch(`https://my-backend.martinmiskata.workers.dev/properties/${id}`, {
-        headers: token ? { 'Authorization': 'Bearer ' + token } : {}
-      });
-      if (!res.ok) continue;
-      const p = await res.json();
-      html += `
-        <div class="wishlist-item" data-id="${p.id}">
-          <h4>${p.name}</h4>
-          <p>${p.location}</p>
-          <p>${p.price} | ${p.category}</p>
-          <button class="removeWishlistBtn" data-id="${p.id}">Премахни</button>
-        </div>
-      `;
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  wishlistContent.innerHTML = html;
-
-  // Add remove listeners
-  wishlistContent.querySelectorAll('.removeWishlistBtn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = btn.dataset.id;
-      wishlistIds = wishlistIds.filter(w => w !== id);
-      saveWishlist();
-      renderWishlist();
-      awaitRefreshProperties();
+  wishlistContent.querySelectorAll('.openBtn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const id = e.target.closest('.wishlist-item').dataset.id;
+      wishlistModal.setAttribute('aria-hidden','true');
+      openPropertyModal(id, localStorage.getItem('role')==='admin');
     });
   });
 }
 
-// Top-nav wishlist button
-safeAddListener(wishlistBtn, 'click', async () => {
-  if (!wishlistModal) return;
-  wishlistModal.setAttribute('aria-hidden', 'false');
+// Open wishlist modal
+wishlistBtn?.addEventListener('click', async () => {
+  wishlistModal.setAttribute('aria-hidden','false');
   await renderWishlist();
 });
 
-// Close wishlist modal
-safeAddListener(closeWishlist, 'click', () => {
-  if (wishlistModal) wishlistModal.setAttribute('aria-hidden', 'true');
+// Close modal
+closeWishlist?.addEventListener('click', () => {
+  wishlistModal.setAttribute('aria-hidden','true');
 });
 
-// Return list of IDs
-export function getWishlistIds() {
-  return wishlistIds;
-}
+// Auto-load on page load
+document.addEventListener('DOMContentLoaded', loadWishlist);
