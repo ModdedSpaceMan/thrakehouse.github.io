@@ -51,7 +51,7 @@ export function renderProperties(properties) {
     const takenClass = isRental && p.status?.toLowerCase() === 'taken' ? 'taken' : '';
 
     return `
-      <div class="property ${takenClass}">
+      <div class="property ${takenClass}" data-id="${p.id}">
         ${p.image ? `<img src="${p.image}" alt="${p.name}">` : ''}
         <div class="property-content">
           <h3>${p.name}</h3>
@@ -69,219 +69,94 @@ export function renderProperties(properties) {
         </div>
       </div>
     `;
+
   }).join('');
 
   // Click listeners
+  propertyContainer.querySelectorAll('.property').forEach(el => {
+    el.addEventListener('click', e => {
+      // prevent clicks on action buttons from opening modal
+      if (e.target.closest('.property-actions')) return;
+      const isAdmin = localStorage.getItem('role') === 'admin';
+      openPropertyModal(el.dataset.id, isAdmin);
+    });
+  });
+
   propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
-    btn.addEventListener('click', () => toggleWishlist(btn.dataset.id));
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      toggleWishlist(btn.dataset.id);
+    });
   });
 
   propertyContainer.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openEditModal(btn.dataset.id);
+    });
   });
 
   propertyContainer.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', () => deleteProperty(btn.dataset.id));
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      deleteProperty(btn.dataset.id);
+    });
   });
 
   propertyContainer.querySelectorAll('.toggle-status-btn').forEach(btn => {
-    btn.addEventListener('click', () => togglePropertyStatus(btn.dataset.id));
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      togglePropertyStatus(btn.dataset.id);
+    });
   });
 }
 
-// Wishlist
-export async function loadWishlist() {
-  const username = localStorage.getItem('username');
+// --------------------
+// Property Modal Logic
+// --------------------
+export async function openPropertyModal(id, isAdmin) {
   const token = localStorage.getItem('token');
-  if (!username || !token) { wishlistIds = []; return; }
-
-  try {
-    const res = await fetch(`${API_URL}/wishlists/${username}`, {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
-    const data = await res.json();
-    wishlistIds = data.items || [];
-  } catch {
-    wishlistIds = [];
-  }
-}
-
-export async function toggleWishlist(propertyId) {
-  const username = localStorage.getItem('username');
-  const token = localStorage.getItem('token');
-  if (!username || !token) { showToast('Трябва да сте влезли!'); return; }
-
-  try {
-    if (wishlistIds.includes(propertyId)) {
-      await fetch(`${API_URL}/wishlists/${username}/${propertyId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': 'Bearer ' + token }
-      });
-      wishlistIds = wishlistIds.filter(id => id !== propertyId);
-      showToast('Премахнато от wishlist');
-    } else {
-      await fetch(`${API_URL}/wishlists/${username}/${propertyId}`, {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token }
-      });
-      wishlistIds.push(propertyId);
-      showToast('Добавено в wishlist!');
-    }
-
-    await loadProperties();
-  } catch (err) {
-    console.error(err);
-    showToast('Грешка при актуализиране на wishlist');
-  }
-}
-
-// Delete property
-async function deleteProperty(id) {
-  const token = localStorage.getItem('token');
-  if (!token) return showToast('Нямате права!');
-
-  try {
-    await fetch(`${API_URL}/properties/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
-    showToast('Имотът е изтрит');
-    await loadProperties();
-  } catch (err) {
-    console.error(err);
-    showToast('Грешка при изтриване на имота');
-  }
-}
-
-// Toggle rental status
-async function togglePropertyStatus(id) {
-  const token = localStorage.getItem('token');
-  if (!token) return showToast('Нямате права!');
+  const modal = document.getElementById('propertyModal');
+  modal.setAttribute('aria-hidden', 'false');
 
   try {
     const res = await fetch(`${API_URL}/properties/${id}`, {
-      method: 'PATCH',
-      headers: { 
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ toggleStatus: true })
+      headers: token ? { 'Authorization': 'Bearer ' + token } : {}
     });
-    if (!res.ok) throw new Error('Failed');
-    await loadProperties();
+    if (!res.ok) throw new Error('Failed to fetch property');
+    const p = await res.json();
+
+    document.getElementById('modalImage').src = p.image || '';
+    document.getElementById('modalName').textContent = p.name;
+    document.getElementById('modalLocation').textContent = p.location;
+    document.getElementById('modalPrice').textContent = p.price;
+    document.getElementById('modalCategory').textContent = p.category;
+    document.getElementById('modalType').textContent = p.type;
+    document.getElementById('modalStatus').textContent = p.status || '-';
+    document.getElementById('modalId').textContent = p.id;
+
+    const adminBar = document.getElementById('adminModalBar');
+    adminBar.style.display = isAdmin ? 'flex' : 'none';
+
+    if (isAdmin) {
+      document.getElementById('modalEditBtn').onclick = () => openEditModal(id);
+      document.getElementById('modalDeleteBtn').onclick = async () => {
+        await deleteProperty(id);
+        modal.setAttribute('aria-hidden', 'true');
+      };
+      document.getElementById('modalToggleBtn').onclick = async () => {
+        await togglePropertyStatus(id);
+        await openPropertyModal(id, true);
+      };
+    }
+
   } catch (err) {
     console.error(err);
-    showToast('Грешка при промяна на статуса');
+    showToast('Грешка при зареждане на имота');
   }
 }
 
-// Edit modal opener
-function openEditModal(id) {
-  const modal = document.getElementById("editModal");
-  modal.setAttribute("aria-hidden", "false");
-
-  // Fetch property data from backend
-  const token = localStorage.getItem('token');
-  fetch(`${API_URL}/properties/${id}`, {
-    headers: { 'Authorization': 'Bearer ' + token }
-  })
-    .then(res => res.json())
-    .then(prop => {
-      const form = document.getElementById("editForm");
-      form.dataset.propertyId = id;
-
-      const closeBtn = document.getElementById('closeEditModal');
-      closeBtn.onclick = () => modal.setAttribute('aria-hidden', 'true');
-
-      document.getElementById("editName").value = prop.name;
-      document.getElementById("editLocation").value = prop.location;
-      document.getElementById("editPrice").value = prop.price;
-      document.getElementById("editCategory").value = prop.category;
-      document.getElementById("editType").value = prop.type;
-      document.getElementById("editStatus").value = prop.status || "";
-      document.getElementById("editStatusContainer").style.display = prop.category === "rental" ? "block" : "none";
-
-      const editImagePreview = document.getElementById("editImagePreview");
-      editImagePreview.src = prop.image || "";
-
-      const editImageInput = document.getElementById("editImage");
-      editImageInput.onchange = e => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => { editImagePreview.src = reader.result; };
-        reader.readAsDataURL(file);
-      };
-
-      form.onsubmit = async e => {
-        e.preventDefault();
-        try {
-          const body = {
-            name: document.getElementById("editName").value,
-            location: document.getElementById("editLocation").value,
-            price: document.getElementById("editPrice").value,
-            category: document.getElementById("editCategory").value,
-            type: document.getElementById("editType").value,
-            status: document.getElementById("editStatus").value,
-          };
-          if (editImagePreview.src) body.image = editImagePreview.src;
-
-          await fetch(`${API_URL}/properties/${id}`, {
-            method: 'PATCH',
-            headers: { 
-              'Authorization': 'Bearer ' + token,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-          });
-
-          modal.setAttribute('aria-hidden', 'true');
-          await loadProperties();
-          showToast('Имотът е актуализиран');
-        } catch (err) {
-          console.error(err);
-          showToast('Грешка при редактиране на имота');
-        }
-      };
-    })
-    .catch(err => {
-      console.error(err);
-      showToast('Грешка при зареждане на имота');
-    });
-}
-
-// --------------------
-// Filters
-// --------------------
-function setupFilterListeners() {
-  const applyBtn = document.getElementById('applyFilters');
-  if (!applyBtn) return;
-
-  applyBtn.addEventListener('click', async () => {
-    let properties = await loadProperties();
-
-    const locationFilter = document.getElementById('filterLocation').value.toLowerCase();
-    const minPrice = Number(document.getElementById('filterMinPrice').value);
-    const maxPrice = Number(document.getElementById('filterMaxPrice').value);
-    const typeFilter = document.getElementById('filterType').value;
-    const statusFilter = document.getElementById('filterStatus').value;
-
-    properties = properties.filter(p => {
-      const price = Number(p.price);
-      if (locationFilter && !p.location.toLowerCase().includes(locationFilter)) return false;
-      if (!isNaN(minPrice) && price < minPrice) return false;
-      if (!isNaN(maxPrice) && price > maxPrice) return false;
-      if (typeFilter && p.type !== typeFilter) return false;
-      if (p.category === "rental" && statusFilter) {
-        if (p.status !== statusFilter) return false;
-      }
-      return true;
-    });
-
-    renderProperties(properties);
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  initProperties();
+// Close modal
+document.getElementById('closePropertyModal')?.addEventListener('click', () => {
+  document.getElementById('propertyModal').setAttribute('aria-hidden', 'true');
 });
