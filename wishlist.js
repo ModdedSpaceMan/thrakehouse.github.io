@@ -1,91 +1,112 @@
+// wishlist.js
 import { showToast } from './ui.js';
-const API_URL = 'https://my-backend.martinmiskata.workers.dev';
+import { loadProperties } from './properties.js';
+
+const wishlistBtn = document.getElementById('wishlistBtn');
+const wishlistModal = document.getElementById('wishlistModal');
+const closeWishlist = document.getElementById('closeWishlist');
+const wishlistContent = document.getElementById('wishlistContent');
 
 let wishlistIds = [];
-const token = localStorage.getItem('token'); // JWT from login/signup
 
-// --- Helper: decode JWT payload ---
-function getUsernameFromToken() {
-  if (!token) return null;
-  try {
-    const payload = JSON.parse(atob(token.split('.')[0]));
-    return payload.username;
-  } catch {
-    return null;
-  }
+// Safe addEventListener
+function safeAddListener(el, evt, fn) {
+  if (el) el.addEventListener(evt, fn);
 }
 
-// --- Load Wishlist ---
+// Load wishlist from localStorage
 export async function loadWishlist() {
-  const username = getUsernameFromToken();
-  if (!username) {
-    wishlistIds = [];
+  const stored = localStorage.getItem('wishlist');
+  wishlistIds = stored ? JSON.parse(stored) : [];
+  return wishlistIds;
+}
+
+// Save wishlist to localStorage
+function saveWishlist() {
+  localStorage.setItem('wishlist', JSON.stringify(wishlistIds));
+}
+
+// Toggle wishlist for a property
+export function toggleWishlist(id) {
+  const index = wishlistIds.indexOf(id);
+  if (index >= 0) {
+    wishlistIds.splice(index, 1);
+    showToast('Премахнато от списъка');
+  } else {
+    wishlistIds.push(id);
+    showToast('Добавено в списъка');
+  }
+  saveWishlist();
+  awaitRefreshProperties();
+}
+
+// Refresh property cards to update heart buttons
+async function awaitRefreshProperties() {
+  await loadProperties();
+}
+
+// Render wishlist modal content
+export async function renderWishlist() {
+  await loadWishlist();
+
+  if (!wishlistContent) return;
+
+  if (!wishlistIds.length) {
+    wishlistContent.innerHTML = '<p>Нямате запазени имоти.</p>';
     return;
   }
 
-  try {
-    const res = await fetch(`${API_URL}/wishlists/${username}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
-    wishlistIds = data.items || [];
-  } catch (err) {
-    console.error('Грешка при зареждане на списъка:', err);
-    wishlistIds = [];
-  }
-}
+  const token = localStorage.getItem('token');
+  let html = '';
 
-// --- Toggle Wishlist Item ---
-export async function toggleWishlist(propId) {
-  const username = getUsernameFromToken();
-  if (!username) { 
-    showToast('Влезте, за да използвате списъка');
-    return;
-  }
-
-  const inWishlist = wishlistIds.includes(propId);
-  const endpoint = inWishlist ? 'remove' : 'add';
-
-  try {
-    const res = await fetch(`${API_URL}/wishlists/${username}/${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ propertyId: propId })
-    });
-    const data = await res.json();
-    if (data.success) {
-      if (inWishlist) {
-        wishlistIds = wishlistIds.filter(id => id !== propId);
-        showToast('Премахнато от списъка');
-      } else {
-        wishlistIds.push(propId);
-        showToast('Добавено в списъка');
-      }
-      updateWishlistButtons();
-    } else {
-      showToast(data.message || 'Грешка при обновяване на списъка');
+  for (let id of wishlistIds) {
+    try {
+      const res = await fetch(`https://my-backend.martinmiskata.workers.dev/properties/${id}`, {
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+      });
+      if (!res.ok) continue;
+      const p = await res.json();
+      html += `
+        <div class="wishlist-item" data-id="${p.id}">
+          <h4>${p.name}</h4>
+          <p>${p.location}</p>
+          <p>${p.price} | ${p.category}</p>
+          <button class="removeWishlistBtn" data-id="${p.id}">Премахни</button>
+        </div>
+      `;
+    } catch (err) {
+      console.error(err);
     }
-  } catch (err) {
-    console.error(err);
-    showToast('Грешка при обновяване на списъка');
   }
-}
 
-// --- Update Buttons UI ---
-export function updateWishlistButtons() {
-  document.querySelectorAll('.property').forEach(div => {
-    const propId = div.dataset.id;
-    const btn = div.querySelector('.wishlist-btn');
-    if (!btn) return;
-    if (wishlistIds.includes(propId)) {
-      btn.classList.add('added');
-      btn.style.color = '#ff6b6b';
-    } else {
-      btn.classList.remove('added');
-      btn.style.color = '#fff';
-    }
+  wishlistContent.innerHTML = html;
+
+  // Add remove listeners
+  wishlistContent.querySelectorAll('.removeWishlistBtn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      wishlistIds = wishlistIds.filter(w => w !== id);
+      saveWishlist();
+      renderWishlist();
+      awaitRefreshProperties();
+    });
   });
+}
+
+// Top-nav wishlist button
+safeAddListener(wishlistBtn, 'click', async () => {
+  if (!wishlistModal) return;
+  wishlistModal.setAttribute('aria-hidden', 'false');
+  await renderWishlist();
+});
+
+// Close wishlist modal
+safeAddListener(closeWishlist, 'click', () => {
+  if (wishlistModal) wishlistModal.setAttribute('aria-hidden', 'true');
+});
+
+// Return list of IDs
+export function getWishlistIds() {
+  return wishlistIds;
 }
