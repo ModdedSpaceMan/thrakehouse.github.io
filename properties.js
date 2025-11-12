@@ -150,6 +150,11 @@ function openEditModal(id) {
   modal.setAttribute("aria-hidden", "false");
   const form = document.getElementById("editForm");
   form.dataset.propertyId = id;
+  const editModal = document.getElementById('editModal');
+  document.getElementById('closeEditModal').addEventListener('click', () => {
+    editModal.setAttribute('aria-hidden', 'true');
+  });
+
 
   document.getElementById("editName").value = prop.name;
   document.getElementById("editLocation").value = prop.location;
