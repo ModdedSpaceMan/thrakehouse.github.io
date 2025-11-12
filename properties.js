@@ -142,27 +142,62 @@ function togglePropertyStatus(id) {
 }
 
 // Edit modal opener
-function openEditModal(id) {
-  const prop = JSON.parse(localStorage.getItem("properties") || "[]").find(p => p.id === id);
+ffunction openEditModal(id) {
+  const properties = JSON.parse(localStorage.getItem("properties") || "[]");
+  const prop = properties.find(p => p.id === id);
   if (!prop) return;
 
   const modal = document.getElementById("editModal");
   modal.setAttribute("aria-hidden", "false");
+
   const form = document.getElementById("editForm");
   form.dataset.propertyId = id;
-  const editModal = document.getElementById('editModal');
-  document.getElementById('closeEditModal').addEventListener('click', () => {
-    editModal.setAttribute('aria-hidden', 'true');
-  });
 
+  const closeBtn = document.getElementById('closeEditModal');
+  closeBtn.addEventListener('click', () => modal.setAttribute('aria-hidden', 'true'));
+
+  // Populate form fields
   document.getElementById("editName").value = prop.name;
   document.getElementById("editLocation").value = prop.location;
   document.getElementById("editPrice").value = prop.price;
   document.getElementById("editCategory").value = prop.category;
   document.getElementById("editType").value = prop.type;
   document.getElementById("editStatus").value = prop.status || "";
-  document.getElementById("editImage").value = prop.image || "";
+  
+  // Image handling
+  const editImageInput = document.getElementById("editImage");
+  const editImagePreview = document.getElementById("editImagePreview");
+  editImagePreview.src = prop.image || "";
+
+  // When user selects a new file, convert to base64
+  editImageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      prop.image = reader.result; // store base64 in property object
+      editImagePreview.src = reader.result; // show preview
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Show/hide rental status
   document.getElementById("editStatusContainer").style.display = prop.category === "rental" ? "block" : "none";
+
+  // Handle save
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    prop.name = document.getElementById("editName").value;
+    prop.location = document.getElementById("editLocation").value;
+    prop.price = document.getElementById("editPrice").value;
+    prop.category = document.getElementById("editCategory").value;
+    prop.type = document.getElementById("editType").value;
+    prop.status = document.getElementById("editStatus").value;
+
+    localStorage.setItem("properties", JSON.stringify(properties));
+    modal.setAttribute("aria-hidden", "true");
+    renderProperties(properties);
+  };
 }
 
 // --------------------
