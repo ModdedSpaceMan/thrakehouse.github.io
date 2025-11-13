@@ -1,160 +1,170 @@
-<!DOCTYPE html> 
-<html lang="bg"> 
-<head> 
-<meta charset="utf-8" /> 
-<meta name="viewport" content="width=device-width,initial-scale=1" /> 
-<title>Имоти в Гърция</title> 
-<link rel="stylesheet" href="styles.css" /> 
-</head> 
-<body> 
-<header> 
-<div class="header-inner"> 
-<h1>Имоти в Гърция</h1> 
-<nav class="top-nav"> 
-<a href="#properties" class="top-btn">Имоти</a> 
-<button id="loginBtn" class="top-btn">Вход</button> 
-<a href="signup.html" class="top-btn">Регистрация</a> 
-<span id="userDisplay" class="top-btn" style="display:none;"></span> 
-<button id="logoutBtn" class="top-btn" style="display:none;">Изход</button> 
-<button id="sidebarToggle" class="top-btn" style="display:none;">☰</button> 
-</nav> 
-</div> 
-</header> 
-<main> 
-<!-- Login Modal --> 
-<div id="loginModal" class="modal" aria-hidden="true"> 
-<div class="centered-card signup-container modal-form"> 
-<button id="closeLogin" class="close">&times;</button> 
-<h2>Вход</h2> 
-<form id="loginForm"> 
-<input type="text" id="username" placeholder="Потребителско име" required> 
-<input type="password" id="password" placeholder="Парола" required> 
-<button type="submit">Вход</button> 
-<p class="muted" style="margin-top:10px;"> 
-Нямате акаунт? <a href="signup.html" id="openSignup" class="accent">Регистрация</a> 
-</p> 
-</form> 
-</div> 
-</div> 
-<section class="filters"> 
-<input type="text" id="filterLocation" placeholder="Локация" /> 
-<input type="number" id="filterMinPrice" placeholder="Мин. цена" /> 
-<input type="number" id="filterMaxPrice" placeholder="Макс. цена" /> 
-<select id="filterType"> 
-<option value="">Всички типове</option> 
-<option value="apartment">Апартамент</option> 
-<option value="house">Къща</option> 
-<option value="villa">Вила</option> 
-<option value="farm">Земеделски имот</option> 
-</select> 
-<select id="filterCategory"> 
-<option value="">Всички категории</option> 
-<option value="sale">Продажба</option> 
-<option value="rental">Наем</option> 
-</select> 
-<select id="filterStatus"> 
-<option value="">Всички статуси</option> 
-<option value="free">Свободен</option> 
-<option value="taken">Зает</option> 
-</select> 
-<button id="applyFilters">Филтрирай</button> 
-</section> 
-<section id="properties" class="properties"></section> 
-</main> 
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Имоти в Гърция</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <h1>Имоти в Гърция</h1>
+    <nav class="top-nav">
+      <a href="#properties" class="top-btn">Имоти</a>
+      <button id="loginBtn" class="top-btn">Вход</button>
+      <a href="signup.html" class="top-btn">Регистрация</a>
+      <span id="userDisplay" class="top-btn" style="display:none;"></span>
+      <button id="logoutBtn" class="top-btn" style="display:none;">Изход</button>
+      <button id="sidebarToggle" class="top-btn" style="display:none;">☰</button>
+    </nav>
+  </div>
+</header>
 
-<!-- Property Modal (view only) --> 
-<div id="propertyModal" class="modal" aria-hidden="true"> 
-<div class="modal-content"> 
-<span id="closePropertyModal" class="close">&times;</span> 
-<h2 id="modalTitle"></h2> 
-<p id="modalLocation"></p> 
-<p id="modalPrice"></p> 
-<p id="modalType"></p> 
-<p id="modalCategory"></p> 
-<img id="modalImage" src="" alt="Имот снимка" style="max-width:100%;" /> 
-</div> 
-</div> 
+<!-- Admin Sidebar -->
+<div id="adminSidebar" class="sidebar" aria-hidden="true">
+  <h3>Admin Panel</h3>
+  <button id="addPropertySidebarBtn" class="sidebar-btn">Добави имот</button>
 
-<!-- Add Property Modal --> 
-<div id="addPropertyModal" class="modal" aria-hidden="true"> 
-<div class="modal-content"> 
-<button class="close" onclick="document.getElementById('addPropertyModal').setAttribute('aria-hidden','true')">&times;</button> 
-<h2>Добави имот</h2> 
-<form id="propertyForm"> 
-<input type="text" id="propertyName" placeholder="Име" required /> 
-<input type="text" id="propertyLocation" placeholder="Локация" required /> 
-<input type="number" id="propertyPrice" placeholder="Цена" required /> 
-<select id="propertyType" required> 
-<option value="">Изберете тип</option> 
-<option value="apartment">Апартамент</option> 
-<option value="house">Къща</option> 
-<option value="villa">Вила</option> 
-<option value="farm">Земеделски имот</option> 
-</select> 
-<select id="propertyCategory" required> 
-<option value="">Изберете категория</option> 
-<option value="sale">Продажба</option> 
-<option value="rental">Наем</option> 
-</select> 
-<select id="propertyStatus" style="display:none;"> 
-<option value="free">Свободен</option> 
-<option value="taken">Зает</option> 
-</select> 
-<input type="file" id="propertyImage" /> 
-<button type="submit">Добави имот</button> 
-</form> 
-</div> 
-</div> 
+  <input type="text" id="adminSearchInput" placeholder="Търси по ID на имот" style="margin-bottom:10px; padding:8px; width:100%; border-radius:6px; border:1px solid #ccc;">
+  <button id="adminSearchBtn" class="sidebar-btn">Търси</button>
 
-<!-- Tickets/Admin Modal --> 
-<div id="ticketModal" class="modal" aria-hidden="true"> 
-<div class="modal-content"> 
-<button id="closeTicketModal" class="close">&times;</button> 
-<h2>Управление на тикети</h2> 
-<!-- Ticket search --> 
-<input type="text" id="ticketSearch" placeholder="Търси по потребител или имейл..." /> 
-<!-- Ticket list --> 
-<div id="ticketsLeftPanel"></div> 
-<!-- Ticket details --> 
-<div id="ticketDetailContainer"> 
-<h3 id="ticketTitle">Изберете тикет</h3> 
-<p id="ticketMessage"></p> 
-<label for="ticketStatus">Статус:</label> 
-<select id="ticketStatus"> 
-<option value="pending">Pending</option> 
-<option value="ongoing">Ongoing</option> 
-<option value="resolved">Resolved</option> 
-</select> 
-<button id="deleteTicketBtn">Изтрий тикет</button> 
-</div> 
-<!-- Button to open tickets modal (optional) --> 
-<button id="viewSupportBtn">Преглед на тикети</button> 
-</div> 
-</div> 
+  <div id="adminFound"></div>
+</div>
 
-<!-- Support Form --> 
-<footer> 
-<div class="support-card"> 
-<h4>Изпратете съобщение до нас</h4> 
-<form id="supportForm" class="support-form"> 
-<input type="text" id="supportName" placeholder="Вашето име" required /> 
-<input type="email" id="supportEmail" placeholder="Вашият имейл" required /> 
-<textarea id="supportMessage" placeholder="Съобщение" required></textarea> 
-<button type="submit" class="support-submit">Изпрати</button> 
-</form> 
-</div> 
-</footer> 
+<main>
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal" aria-hidden="true">
+    <div class="centered-card signup-container modal-form">
+      <button id="closeLogin" class="close">&times;</button>
+      <h2>Вход</h2>
+      <form id="loginForm">
+        <input type="text" id="username" placeholder="Потребителско име" required>
+        <input type="password" id="password" placeholder="Парола" required>
+        <button type="submit">Вход</button>
+        <p class="muted" style="margin-top:10px;">
+          Нямате акаунт? <a href="signup.html" id="openSignup" class="accent">Регистрация</a>
+        </p>
+      </form>
+    </div>
+  </div>
 
-<div id="toast" class="toast"></div> 
+  <section class="filters">
+    <input type="text" id="filterLocation" placeholder="Локация" />
+    <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
+    <input type="number" id="filterMaxPrice" placeholder="Макс. цена" />
+    <select id="filterType">
+      <option value="">Всички типове</option>
+      <option value="apartment">Апартамент</option>
+      <option value="house">Къща</option>
+      <option value="villa">Вила</option>
+      <option value="farm">Земеделски имот</option>
+    </select>
+    <select id="filterCategory">
+      <option value="">Всички категории</option>
+      <option value="sale">Продажба</option>
+      <option value="rental">Наем</option>
+    </select>
+    <select id="filterStatus">
+      <option value="">Всички статуси</option>
+      <option value="free">Свободен</option>
+      <option value="taken">Зает</option>
+    </select>
+    <button id="applyFilters">Филтрирай</button>
+  </section>
 
-<!-- Scripts --> 
-<script type="module" src="auth.js" defer></script> 
-<script type="module" src="ui.js" defer></script> 
-<script type="module" src="support.js" defer></script> 
-<script type="module" src="admin.js" defer></script> 
-<script type="module" src="propertyForms.js" defer></script> 
-<script type="module" src="properties.js" defer></script> 
-<script type="module" src="tickets.js" defer></script> 
+  <section id="properties" class="properties"></section>
+</main>
 
-</body> 
+<!-- Property Modal (view only) -->
+<div id="propertyModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <span id="closePropertyModal" class="close">&times;</span>
+    <h2 id="modalTitle"></h2>
+    <p id="modalLocation"></p>
+    <p id="modalPrice"></p>
+    <p id="modalType"></p>
+    <p id="modalCategory"></p>
+    <img id="modalImage" src="" alt="Имот снимка" style="max-width:100%;" />
+  </div>
+</div>
+
+<!-- Add Property Modal -->
+<div id="addPropertyModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <button class="close" onclick="document.getElementById('addPropertyModal').setAttribute('aria-hidden','true')">&times;</button>
+    <h2>Добави имот</h2>
+    <form id="propertyForm">
+      <input type="text" id="propertyName" placeholder="Име" required />
+      <input type="text" id="propertyLocation" placeholder="Локация" required />
+      <input type="number" id="propertyPrice" placeholder="Цена" required />
+      <select id="propertyType" required>
+        <option value="">Изберете тип</option>
+        <option value="apartment">Апартамент</option>
+        <option value="house">Къща</option>
+        <option value="villa">Вила</option>
+        <option value="farm">Земеделски имот</option>
+      </select>
+      <select id="propertyCategory" required>
+        <option value="">Изберете категория</option>
+        <option value="sale">Продажба</option>
+        <option value="rental">Наем</option>
+      </select>
+      <select id="propertyStatus" style="display:none;">
+        <option value="free">Свободен</option>
+        <option value="taken">Зает</option>
+      </select>
+      <input type="file" id="propertyImage" />
+      <button type="submit">Добави имот</button>
+    </form>
+  </div>
+</div>
+
+<!-- Tickets/Admin Modal -->
+<div id="ticketModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <button id="closeTicketModal" class="close">&times;</button>
+    <h2>Управление на тикети</h2>
+    <input type="text" id="ticketSearch" placeholder="Търси по потребител или имейл..." />
+    <div id="ticketsLeftPanel"></div>
+    <div id="ticketDetailContainer">
+      <h3 id="ticketTitle">Изберете тикет</h3>
+      <p id="ticketMessage"></p>
+      <label for="ticketStatus">Статус:</label>
+      <select id="ticketStatus">
+        <option value="pending">Pending</option>
+        <option value="ongoing">Ongoing</option>
+        <option value="resolved">Resolved</option>
+      </select>
+      <button id="deleteTicketBtn">Изтрий тикет</button>
+    </div>
+    <button id="viewSupportBtn">Преглед на тикети</button>
+  </div>
+</div>
+
+<!-- Support Form -->
+<footer>
+  <div class="support-card">
+    <h4>Изпратете съобщение до нас</h4>
+    <form id="supportForm" class="support-form">
+      <input type="text" id="supportName" placeholder="Вашето име" required />
+      <input type="email" id="supportEmail" placeholder="Вашият имейл" required />
+      <textarea id="supportMessage" placeholder="Съобщение" required></textarea>
+      <button type="submit" class="support-submit">Изпрати</button>
+    </form>
+  </div>
+</footer>
+
+<div id="toast" class="toast"></div>
+
+<!-- Scripts -->
+<script type="module" src="auth.js" defer></script>
+<script type="module" src="ui.js" defer></script>
+<script type="module" src="support.js" defer></script>
+<script type="module" src="admin.js" defer></script>
+<script type="module" src="propertyForms.js" defer></script>
+<script type="module" src="properties.js" defer></script>
+<script type="module" src="tickets.js" defer></script>
+
+</body>
 </html>
