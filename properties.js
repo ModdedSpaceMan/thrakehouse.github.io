@@ -18,7 +18,14 @@ export async function loadProperties() {
   if (!propertyContainer) return;
 
   try {
-    const data = JSON.parse(localStorage.getItem("properties") || "[]");
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_URL}/properties`, {
+      headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
     renderProperties(data);
     return data;
   } catch (err) {
@@ -27,6 +34,7 @@ export async function loadProperties() {
     return [];
   }
 }
+
 
 // Render property cards
 export function renderProperties(properties) {
