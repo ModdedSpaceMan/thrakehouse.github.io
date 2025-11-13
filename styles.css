@@ -628,3 +628,109 @@ footer {
 		padding: 24px 18px;
 	}
 }
+/* --------------------
+      Sidebar (Admin)
+-------------------- */
+#adminSidebar, .sidebar {
+	position: fixed;
+	left: -320px;
+	top: 0;
+	width: 320px;
+	height: 100%;
+	background: #111827;
+	color: #fff;
+	padding: 22px;
+	transition: left 0.28s ease, opacity 0.28s ease;
+	z-index: 150;
+	box-shadow: 6px 0 30px rgba(2, 6, 23, 0.2);
+	opacity: 0;
+	pointer-events: none;
+}
+
+#adminSidebar.show, .sidebar.show {
+	left: 0;
+	opacity: 1;
+	pointer-events: auto;
+}
+
+#adminSidebar h3 {
+	font-size: 1.1rem;
+	margin-bottom: 12px;
+}
+
+.sidebar-btn {
+	display: block;
+	width: 100%;
+	padding: 10px;
+	margin-bottom: 10px;
+	border: none;
+	border-radius: 10px;
+	background: #c86a3c;
+	color: #fff;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.sidebar-btn:hover {
+	background: #8e6a4b;
+}
+
+/* --------------------
+   Admin Buttons on Properties
+-------------------- */
+.property .admin-buttons-right {
+	position: absolute;
+	top: 0;
+	right: -150px;
+	width: 150px;
+	height: 100%;
+	background: rgba(60,50,40,0.85);
+	display: flex;
+	flex-direction: column;
+	padding: 12px;
+	gap: 6px;
+	border-radius: 0 12px 12px 0;
+	transition: right 0.3s ease, opacity 0.3s ease;
+	z-index: 5;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.property:hover .admin-buttons-right {
+	right: 0;
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.property .admin-buttons-right .admin-btn {
+	width: 100%;
+	padding: 8px 10px;
+	font-size: 12px;
+	border-radius: 6px;
+	border: none;
+	cursor: pointer;
+	color: #fff;
+	text-align: center;
+}
+
+.property .admin-buttons-right .delete-btn {
+	background: #c86a3c;
+}
+
+.property .admin-buttons-right .edit-btn {
+	background: #a6a89c;
+}
+
+.property .admin-buttons-right .toggle-btn {
+	background: #cfcc8f;
+}
+
+.property .admin-buttons-right .admin-id {
+	font-size: 12px;
+	background: rgba(255, 255, 255, 0.1);
+	padding: 4px 6px;
+	border-radius: 6px;
+	color: #fff;
+	text-align: center;
+	margin-top: auto;
+}
