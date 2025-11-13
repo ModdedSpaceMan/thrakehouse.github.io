@@ -68,17 +68,15 @@ export function updateUI() {
 // Decode custom token safely
 function decodeCustomToken(token) {
   try {
-    if (!token) return null;
-    const parts = token.split(".");
-    if (parts.length < 2) return null; // must have payload + signature
-    const payloadB64 = parts[0];        // first part only
-    const jsonStr = atob(payloadB64);
-    return JSON.parse(jsonStr);
+    const base64Payload = token.split('.')[0]; // first part = payload
+    const json = atob(base64Payload);
+    return JSON.parse(json);
   } catch (err) {
-    console.error("Failed to decode token payload:", err);
+    console.error('Failed to decode token payload:', err);
     return null;
   }
 }
+
 
 
 
