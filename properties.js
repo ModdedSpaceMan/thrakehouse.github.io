@@ -60,44 +60,53 @@ export async function initProperties() {
   }
 
   // Form submit
-  if(editForm){
-    editForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      const id = editModal.dataset.propertyId;
-      if(!id) return;
+if (editForm) {
+  editForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const id = editModal.dataset.propertyId;
+    if (!id) return;
 
-      const data = {
-        name: editForm.querySelector('#editPropertyName').value,
-        location: editForm.querySelector('#editPropertyLocation').value,
-        price: editForm.querySelector('#editPropertyPrice').value,
-        type: editForm.querySelector('#editPropertyType').value,
-        category: editForm.querySelector('#editPropertyCategory').value,
-        status: editForm.querySelector('#editPropertyStatus')?.value || 'free'
-      };
+    const formData = new FormData(editForm);
 
-      try {
-        const res = await fetch(`${API_URL}/properties/${id}`, {
-          method: 'PUT',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify(data)
-        });
+    const data = {
+      name: formData.get('editPropertyName'),
+      location: formData.get('editPropertyLocation'),
+      price: formData.get('editPropertyPrice'),
+      type: formData.get('editPropertyType'),
+      category: formData.get('editPropertyCategory'),
+      status: formData.get('editPropertyStatus') || 'free'
+    };
 
-        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    // Optional: handle image if provided
+    const imageFile = editForm.querySelector('#editPropertyImage').files[0];
+    if (imageFile) {
+      // You can implement upload logic here or send base64
+      // For now, we'll skip and leave image as-is
+    }
 
-        showToast('Имотът беше редактиран!');
-        editModal.setAttribute('aria-hidden','true');
-        editModal.dataset.propertyId = '';
-        await loadProperties();
-      } catch(err){
-        console.error(err);
-        showToast('Грешка при редактиране на имота');
-      }
-    });
-  }
+    try {
+      const res = await fetch(`${API_URL}/properties/${id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      showToast('Имотът беше редактиран!');
+      editModal.setAttribute('aria-hidden', 'true');
+      editModal.dataset.propertyId = '';
+      await loadProperties();
+    } catch(err) {
+      console.error(err);
+      showToast('Грешка при редактиране на имота');
+    }
+  });
 }
+
 
 // --------------------
 // Load properties
