@@ -23,13 +23,8 @@
 
 <!-- Admin Sidebar -->
 <div id="adminSidebar" class="sidebar" aria-hidden="true">
-  <h3>Admin Panel</h3>
   <button id="addPropertySidebarBtn" class="sidebar-btn">Добави имот</button>
-
-  <input type="text" id="adminSearchInput" placeholder="Търси по ID на имот" style="margin-bottom:10px; padding:8px; width:100%; border-radius:6px; border:1px solid #ccc;">
-  <button id="adminSearchBtn" class="sidebar-btn">Търси</button>
-
-  <div id="adminFound"></div>
+  <button id="viewSupportBtn" class="sidebar-btn">Преглед на тикети</button>
 </div>
 
 <main>
@@ -49,6 +44,7 @@
     </div>
   </div>
 
+  <!-- Filters -->
   <section class="filters">
     <input type="text" id="filterLocation" placeholder="Локация" />
     <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
@@ -138,7 +134,6 @@
       </select>
       <button id="deleteTicketBtn">Изтрий тикет</button>
     </div>
-    <button id="viewSupportBtn">Преглед на тикети</button>
   </div>
 </div>
 
