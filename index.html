@@ -12,7 +12,6 @@
     <h3>Admin Panel</h3>
     <button id="addPropertySidebarBtn">Добави имот</button>
     <button id="viewSupportBtn">Преглед на тикети</button>
-
     <div id="adminSearch" style="margin-top:15px;">
       <input type="text" id="adminSearchInput" placeholder="Търсене по ID" />
       <button id="adminSearchBtn">Търси</button>
@@ -33,39 +32,25 @@
       </nav>
     </div>
   </header>
-  
-  <header>
-    <div class="header-inner">
-      <h1>Имоти в Гърция</h1>
-      <nav class="top-nav">
-        <a href="#properties" class="top-btn">Имоти</a>
-        <button id="loginBtn" class="top-btn">Вход</button>
-        <a href="signup.html" class="top-btn">Регистрация</a>
-        <span id="userDisplay" class="top-btn" style="display:none;"></span>
-        <button id="logoutBtn" class="top-btn" style="display:none;">Изход</button>
-        <button id="sidebarToggle" class="top-btn" style="display:none;">☰</button>
-      </nav>
-    </div>
-  </header>
 
   <main>
     <!-- Login Modal -->
     <div id="loginModal" class="modal" aria-hidden="true">
-  <div class="centered-card signup-container modal-form">
-    <button id="closeLogin" class="close">&times;</button>
-    <h2>Вход</h2>
-    <form id="loginForm">
-      <input type="text" id="username" placeholder="Потребителско име" required>
-      <input type="password" id="password" placeholder="Парола" required>
-      <button type="submit">Вход</button>
-      <p class="muted" style="margin-top:10px;">
-        Нямате акаунт? <a href="signup.html" id="openSignup" class="accent">Регистрация</a>
-      </p>
-    </form>
-  </div>
-</div>
+      <div class="centered-card signup-container modal-form">
+        <button id="closeLogin" class="close">&times;</button>
+        <h2>Вход</h2>
+        <form id="loginForm">
+          <input type="text" id="username" placeholder="Потребителско име" required>
+          <input type="password" id="password" placeholder="Парола" required>
+          <button type="submit">Вход</button>
+          <p class="muted" style="margin-top:10px;">
+            Нямате акаунт? <a href="signup.html" id="openSignup" class="accent">Регистрация</a>
+          </p>
+        </form>
+      </div>
+    </div>
 
-
+    <!-- Filters -->
     <section class="filters">
       <input type="text" id="filterLocation" placeholder="Локация" />
       <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
@@ -142,14 +127,8 @@
     <div class="modal-content">
       <button id="closeTicketModal" class="close">&times;</button>
       <h2>Управление на тикети</h2>
-
-      <!-- Ticket search -->
       <input type="text" id="ticketSearch" placeholder="Търси по потребител или имейл..." />
-
-      <!-- Ticket list -->
       <div id="ticketsLeftPanel"></div>
-
-      <!-- Ticket details -->
       <div id="ticketDetailContainer">
         <h3 id="ticketTitle">Изберете тикет</h3>
         <p id="ticketMessage"></p>
@@ -161,6 +140,7 @@
         </select>
         <button id="deleteTicketBtn">Изтрий тикет</button>
       </div>
+      <button id="viewSupportBtn">Преглед на тикети</button>
     </div>
   </div>
 
