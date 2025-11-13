@@ -1,6 +1,4 @@
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
-const statusMap = { pending: "pending", ongoing: "ongoing", resolved: "finished" };
-const newStatus = statusMap[ticketStatus.value];
 
 // DOM Elements
 const ticketModal = document.getElementById('ticketModal');
@@ -12,6 +10,10 @@ const ticketStatus = document.getElementById('ticketStatus');
 const deleteTicketBtn = document.getElementById('deleteTicketBtn');
 const viewSupportBtn = document.getElementById('viewSupportBtn');
 const closeTicketModal = document.getElementById('closeTicketModal');
+const statusMap = { pending: "pending", ongoing: "ongoing", resolved: "finished" };
+const newStatus = statusMap[ticketStatus.value];
+
+
 
 let tickets = [];
 let selectedTicket = null;
