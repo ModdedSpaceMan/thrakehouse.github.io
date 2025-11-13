@@ -11,6 +11,22 @@ const loginForm = document.getElementById('loginForm');
 
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
+export async function loginUser(username, password) {
+  try {
+    const res = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error(err);
+    return { success: false, message: 'Грешка при връзка със сървъра' };
+  }
+}
+
+
 function safeAddListener(el, evt, fn) {
   if (el) el.addEventListener(evt, fn);
 }
