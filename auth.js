@@ -12,6 +12,17 @@ const loginForm = document.getElementById('loginForm');
 
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
+function decodeCustomToken(token) {
+  try {
+    const payloadB64 = token.split('.')[0];
+    const jsonStr = atob(payloadB64);
+    return JSON.parse(jsonStr);
+  } catch (err) {
+    console.error('Failed to decode token:', err);
+    return null;
+  }
+}
+
 function safeAddListener(el, evt, fn) {
   if (el) el.addEventListener(evt, fn);
 }
@@ -72,20 +83,22 @@ safeAddListener(loginForm, 'submit', async (e) => {
     if (res.ok && data.token) {
       const token = data.token;
       localStorage.setItem('token', token);
+    
+      const payload = decodeCustomToken(token);
+      const username = payload?.username || '';
+      const role = payload?.role || 'user';
+    
+      localStorage.setItem('username', username);
+      localStorage.setItem('role', role);
+    
+      updateUI();
+      if (loginModal) loginModal.setAttribute('aria-hidden', 'true');
+      showToast('Успешен вход');
+      initProperties();
+    } else {
+      showToast(data.message || 'Грешка при вход');
+    }
 
-      // Decode JWT payload to get username and role
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const username = payload.username || payload.user || payload.name;
-        const role = payload.role || 'user';
-
-        localStorage.setItem('username', username || '');
-        localStorage.setItem('role', role);
-      } catch (err) {
-        console.error("Failed to decode JWT:", err);
-        localStorage.setItem('username', '');
-        localStorage.setItem('role', 'user');
-      }
 
       updateUI();
       if (loginModal) loginModal.setAttribute('aria-hidden', 'true');
