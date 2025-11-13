@@ -59,6 +59,7 @@ export function renderProperties(properties) {
     const takenClass = isRental && p.status?.toLowerCase() === 'taken' ? 'taken' : '';
 
     // Only admins get edit/delete buttons
+    // Only admins get edit/delete buttons
     const adminButtons = role === 'admin' ? `
       <div class="admin-buttons-right">
         <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
@@ -69,6 +70,7 @@ export function renderProperties(properties) {
     ` : `
       <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
     `;
+
 
     return `
       <div class="property ${takenClass}" data-id="${p.id}">
@@ -115,12 +117,35 @@ function addEventListeners() {
     });
 
     propertyContainer.querySelectorAll('.edit-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        const id = btn.dataset.id;
-        openEditModal(id);
-      });
-    });
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const id = btn.dataset.id;
+
+    // Directly open the modal and prefill
+    const property = document.querySelector(`.property[data-id="${id}"]`);
+    if (!property) return;
+
+    const modal = document.getElementById('editPropertyModal');
+    modal.querySelector('#editPropertyName').value = property.querySelector('h3').innerText;
+    modal.querySelector('#editPropertyLocation').value = property.querySelector('p:nth-of-type(1)').innerText.replace('Локация: ','');
+    modal.querySelector('#editPropertyPrice').value = property.querySelector('p:nth-of-type(2)').innerText.replace('Цена: ','');
+    modal.querySelector('#editPropertyType').value = property.querySelector('p:nth-of-type(4)').innerText.replace('Тип: ','');
+    modal.querySelector('#editPropertyCategory').value = property.querySelector('p:nth-of-type(3)').innerText.includes('Наем') ? 'rental' : 'sale';
+    
+    const statusSelect = modal.querySelector('#editPropertyStatus');
+    if (statusSelect) {
+      const statusText = property.querySelector('p:nth-of-type(5)') 
+        ? property.querySelector('p:nth-of-type(5)').innerText.replace('Статус: ','') 
+        : 'free';
+      statusSelect.value = statusText;
+    }
+
+    modal.querySelector('#editPropertyImage').value = ''; // clear file input
+    modal.dataset.propertyId = id; // store ID
+    modal.setAttribute('aria-hidden','false'); // open modal
+  });
+});
+
 
     propertyContainer.querySelectorAll('.toggle-status-btn').forEach(btn => {
       btn.addEventListener('click', e => {
