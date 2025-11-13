@@ -12,17 +12,6 @@ const loginForm = document.getElementById('loginForm');
 
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
-function decodeCustomToken(token) {
-  try {
-    const payloadB64 = token.split('.')[0];
-    const jsonStr = atob(payloadB64);
-    return JSON.parse(jsonStr);
-  } catch (err) {
-    console.error('Failed to decode token:', err);
-    return null;
-  }
-}
-
 function safeAddListener(el, evt, fn) {
   if (el) el.addEventListener(evt, fn);
 }
@@ -46,7 +35,7 @@ safeAddListener(logoutBtn, 'click', () => {
   showToast('Успешен изход');
 });
 
-// Update top-nav buttons based on login state
+// Update UI
 export function updateUI() {
   const token = localStorage.getItem('token');
   const username = localStorage.getItem('username');
@@ -61,21 +50,33 @@ export function updateUI() {
   if (wishlistBtn) wishlistBtn.style.display = token ? 'inline-block' : 'none';
 }
 
-// Handle login form submission
+// Decode your custom token payload safely
+function decodeCustomToken(token) {
+  try {
+    const base64Payload = token.split('.')[1] || token.split('.')[0]; // support custom or JWT
+    const json = atob(base64Payload);
+    return JSON.parse(json);
+  } catch (err) {
+    console.error('Failed to decode token payload:', err);
+    return null;
+  }
+}
+
+// Handle login form
 safeAddListener(loginForm, 'submit', async (e) => {
   e.preventDefault();
   if (!loginForm) return;
 
-  const usernameInput = loginForm.querySelector('#username')?.value.trim();
+  const username = loginForm.querySelector('#username')?.value.trim();
   const password = loginForm.querySelector('#password')?.value.trim();
 
-  if (!usernameInput || !password) return showToast('Попълнете всички полета');
+  if (!username || !password) return showToast('Попълнете всички полета');
 
   try {
     const res = await fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: usernameInput, password })
+      body: JSON.stringify({ username, password })
     });
 
     const data = await res.json();
@@ -83,22 +84,15 @@ safeAddListener(loginForm, 'submit', async (e) => {
     if (res.ok && data.token) {
       const token = data.token;
       localStorage.setItem('token', token);
-    
-      const payload = decodeCustomToken(token);
-      const username = payload?.username || '';
-      const role = payload?.role || 'user';
-    
-      localStorage.setItem('username', username);
-      localStorage.setItem('role', role);
-    
-      updateUI();
-      if (loginModal) loginModal.setAttribute('aria-hidden', 'true');
-      showToast('Успешен вход');
-      initProperties();
-    } else {
-      showToast(data.message || 'Грешка при вход');
-    }
 
+      const payload = decodeCustomToken(token);
+      if (payload) {
+        localStorage.setItem('username', payload.username || payload.user || '');
+        localStorage.setItem('role', payload.role || 'user');
+      } else {
+        localStorage.setItem('username', '');
+        localStorage.setItem('role', 'user');
+      }
 
       updateUI();
       if (loginModal) loginModal.setAttribute('aria-hidden', 'true');
@@ -113,5 +107,5 @@ safeAddListener(loginForm, 'submit', async (e) => {
   }
 });
 
-// Initialize UI on page load
+// Init UI
 document.addEventListener('DOMContentLoaded', () => updateUI());
