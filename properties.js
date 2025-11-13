@@ -1,31 +1,38 @@
+// properties.js
 import { showToast } from './ui.js';
 
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 let wishlistIds = [];
 const propertyContainer = document.getElementById('properties');
 
-// Initialize everything
+// Get user info from localStorage
+const username = localStorage.getItem('username');
+const token = localStorage.getItem('token');
+const role = localStorage.getItem('role'); // assume you save 'admin' or 'user'
+
+// --------------------
+// Initialize
+// --------------------
 export async function initProperties() {
   await loadWishlist();
   await loadProperties();
   setupFilterListeners();
 
-  window.addEventListener("propertiesUpdated", loadProperties);
+  window.addEventListener('propertiesUpdated', loadProperties);
 }
 
-// Load properties from backend
+// --------------------
+// Load properties
+// --------------------
 export async function loadProperties() {
   if (!propertyContainer) return;
 
   try {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_URL}/properties`, {
-      headers: token ? { 'Authorization': 'Bearer ' + token } : {}
-    });
-
+    const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+    const res = await fetch(`${API_URL}/properties`, { headers });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
 
+    const data = await res.json();
     renderProperties(data);
     return data;
   } catch (err) {
@@ -35,7 +42,9 @@ export async function loadProperties() {
   }
 }
 
+// --------------------
 // Render property cards
+// --------------------
 export function renderProperties(properties) {
   if (!propertyContainer) return;
 
@@ -45,9 +54,21 @@ export function renderProperties(properties) {
   }
 
   propertyContainer.innerHTML = properties.map(p => {
-    const isRental = p.category === "rental";
+    const isRental = p.category === 'rental';
     const inWishlist = wishlistIds.includes(p.id) ? '❤️' : '🤍';
     const takenClass = isRental && p.status?.toLowerCase() === 'taken' ? 'taken' : '';
+
+    // Only admins get edit/delete buttons
+    const adminButtons = role === 'admin' ? `
+      <div class="admin-buttons-right">
+        <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
+        <button class="edit-btn" data-id="${p.id}">Редактирай</button>
+        <button class="delete-btn" data-id="${p.id}">Изтрий</button>
+        ${isRental ? `<button class="toggle-status-btn" data-id="${p.id}">${p.status === "free" ? "Зает" : "Свободен"}</button>` : ''}
+      </div>
+    ` : `
+      <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
+    `;
 
     return `
       <div class="property ${takenClass}" data-id="${p.id}">
@@ -61,16 +82,19 @@ export function renderProperties(properties) {
           ${isRental ? `<p>Статус: ${p.status}</p>` : ''}
         </div>
         <div class="property-actions">
-          <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
-          <button class="edit-btn" data-id="${p.id}">Редактирай</button>
-          <button class="delete-btn" data-id="${p.id}">Изтрий</button>
-          ${isRental ? `<button class="toggle-status-btn" data-id="${p.id}">${p.status === "free" ? "Зает" : "Свободен"}</button>` : ''}
+          ${adminButtons}
         </div>
       </div>
     `;
   }).join('');
 
-  // Add click listeners
+  addEventListeners();
+}
+
+// --------------------
+// Event listeners for buttons
+// --------------------
+function addEventListeners() {
   propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
     btn.addEventListener('click', async e => {
       e.stopPropagation();
@@ -78,15 +102,41 @@ export function renderProperties(properties) {
       await loadProperties();
     });
   });
+
+  if (role === 'admin') {
+    propertyContainer.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        if (confirm('Наистина ли искате да изтриете този имот?')) {
+          deleteProperty(id);
+        }
+      });
+    });
+
+    propertyContainer.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        openEditModal(id);
+      });
+    });
+
+    propertyContainer.querySelectorAll('.toggle-status-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        toggleRentalStatus(id);
+      });
+    });
+  }
 }
 
-// Load wishlist from backend (if logged in)
+// --------------------
+// Wishlist
+// --------------------
 export async function loadWishlist() {
-  const username = localStorage.getItem('username');
-  const token = localStorage.getItem('token');
-
   if (!username || !token) {
-    console.warn("User not logged in — using local wishlist.");
     wishlistIds = JSON.parse(localStorage.getItem("wishlist") || "[]");
     return;
   }
@@ -95,7 +145,6 @@ export async function loadWishlist() {
     const res = await fetch(`${API_URL}/wishlists/${username}`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
-
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     wishlistIds = data.items || [];
@@ -105,41 +154,66 @@ export async function loadWishlist() {
   }
 }
 
-// Toggle wishlist with backend sync
 export async function toggleWishlist(propertyId) {
-  const username = localStorage.getItem('username');
-  const token = localStorage.getItem('token');
   if (!username || !token) {
     showToast('Трябва да сте влезли!');
     return;
   }
 
-  const action = wishlistIds.includes(propertyId) ? 'remove' : 'add';
+  if (wishlistIds.includes(propertyId)) {
+    wishlistIds = wishlistIds.filter(id => id !== propertyId);
+  } else {
+    wishlistIds.push(propertyId);
+  }
 
+  localStorage.setItem("wishlist", JSON.stringify(wishlistIds));
+  showToast(wishlistIds.includes(propertyId) ? 'Добавено в wishlist!' : 'Премахнато от wishlist');
+}
+
+// --------------------
+// Admin Actions (stub, implement with API)
+// --------------------
+async function deleteProperty(id) {
   try {
-    const res = await fetch(`${API_URL}/wishlists/${username}/${action}`, {
+    const res = await fetch(`${API_URL}/properties/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    showToast('Имотът беше изтрит!');
+    await loadProperties();
+  } catch (err) {
+    console.error(err);
+    showToast('Грешка при изтриване на имота');
+  }
+}
+
+function openEditModal(id) {
+  // Trigger your propertyForms.js modal for editing
+  window.dispatchEvent(new CustomEvent('editProperty', { detail: { id } }));
+}
+
+async function toggleRentalStatus(id) {
+  try {
+    const property = JSON.parse(localStorage.getItem('properties')).find(p => p.id === id);
+    if (!property) return;
+
+    const newStatus = property.status === 'free' ? 'taken' : 'free';
+
+    const res = await fetch(`${API_URL}/properties/${id}/status`, {
       method: 'POST',
-      headers: {
+      headers: { 
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + token
       },
-      body: JSON.stringify({ propertyId })
+      body: JSON.stringify({ status: newStatus })
     });
-
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-
-    if (data.success) {
-      if (action === 'add') wishlistIds.push(propertyId);
-      else wishlistIds = wishlistIds.filter(id => id !== propertyId);
-      localStorage.setItem("wishlist", JSON.stringify(wishlistIds));
-      showToast(action === 'add' ? 'Добавено в wishlist!' : 'Премахнато от wishlist');
-    } else {
-      showToast(data.message || 'Грешка при wishlist');
-    }
+    showToast(`Статусът на имота е променен!`);
+    await loadProperties();
   } catch (err) {
-    console.error("Wishlist update failed:", err);
-    showToast('Грешка при wishlist');
+    console.error(err);
+    showToast('Грешка при промяна на статуса');
   }
 }
 
@@ -151,7 +225,7 @@ function setupFilterListeners() {
   if (!applyBtn) return;
 
   applyBtn.addEventListener('click', () => {
-    let properties = JSON.parse(localStorage.getItem("properties") || "[]");
+    let properties = JSON.parse(localStorage.getItem('properties') || '[]');
 
     const locationFilter = document.getElementById('filterLocation').value.toLowerCase();
     const minPrice = Number(document.getElementById('filterMinPrice').value);
@@ -165,9 +239,7 @@ function setupFilterListeners() {
       if (!isNaN(minPrice) && price < minPrice) return false;
       if (!isNaN(maxPrice) && price > maxPrice) return false;
       if (typeFilter && p.type !== typeFilter) return false;
-      if (p.category === "rental" && statusFilter) {
-        if (p.status !== statusFilter) return false;
-      }
+      if (p.category === 'rental' && statusFilter && p.status !== statusFilter) return false;
       return true;
     });
 
@@ -175,7 +247,9 @@ function setupFilterListeners() {
   });
 }
 
+// --------------------
 // Init
+// --------------------
 document.addEventListener('DOMContentLoaded', () => {
   initProperties();
 });
