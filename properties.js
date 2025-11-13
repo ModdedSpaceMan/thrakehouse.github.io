@@ -13,7 +13,7 @@ export async function initProperties() {
   window.addEventListener("propertiesUpdated", loadProperties);
 }
 
-// Load properties (from localStorage for demo)
+// Load properties from backend
 export async function loadProperties() {
   if (!propertyContainer) return;
 
@@ -34,7 +34,6 @@ export async function loadProperties() {
     return [];
   }
 }
-
 
 // Render property cards
 export function renderProperties(properties) {
@@ -87,7 +86,7 @@ export async function loadWishlist() {
   const token = localStorage.getItem('token');
 
   if (!username || !token) {
-    console.warn("User not logged in — skipping wishlist fetch.");
+    console.warn("User not logged in — using local wishlist.");
     wishlistIds = JSON.parse(localStorage.getItem("wishlist") || "[]");
     return;
   }
@@ -106,7 +105,7 @@ export async function loadWishlist() {
   }
 }
 
-// Toggle wishlist
+// Toggle wishlist with backend sync
 export async function toggleWishlist(propertyId) {
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
@@ -115,14 +114,33 @@ export async function toggleWishlist(propertyId) {
     return;
   }
 
-  if (wishlistIds.includes(propertyId)) {
-    wishlistIds = wishlistIds.filter(id => id !== propertyId);
-  } else {
-    wishlistIds.push(propertyId);
-  }
+  const action = wishlistIds.includes(propertyId) ? 'remove' : 'add';
 
-  localStorage.setItem("wishlist", JSON.stringify(wishlistIds));
-  showToast(wishlistIds.includes(propertyId) ? 'Добавено в wishlist!' : 'Премахнато от wishlist');
+  try {
+    const res = await fetch(`${API_URL}/wishlists/${username}/${action}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({ propertyId })
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    if (data.success) {
+      if (action === 'add') wishlistIds.push(propertyId);
+      else wishlistIds = wishlistIds.filter(id => id !== propertyId);
+      localStorage.setItem("wishlist", JSON.stringify(wishlistIds));
+      showToast(action === 'add' ? 'Добавено в wishlist!' : 'Премахнато от wishlist');
+    } else {
+      showToast(data.message || 'Грешка при wishlist');
+    }
+  } catch (err) {
+    console.error("Wishlist update failed:", err);
+    showToast('Грешка при wishlist');
+  }
 }
 
 // --------------------
