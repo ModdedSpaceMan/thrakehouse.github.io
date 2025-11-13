@@ -756,3 +756,21 @@ wishlist-btn {
   transform: scale(1.2);
   background: rgba(183,65,62,1);
 }
+#adminSearchPanel {
+  margin-bottom: 20px;
+}
+
+#adminSearchPanel input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #f1c0bd;
+  margin-bottom: 10px;
+}
+
+#adminSearchResults {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
