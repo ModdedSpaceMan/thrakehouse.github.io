@@ -35,30 +35,31 @@
     <button class="close" onclick="closeEditModal()">×</button>
     <h2>Редактирай имот</h2>
     <form id="editPropertyForm">
-      <input type="text" id="editPropertyName" placeholder="Име" required>
-      <input type="text" id="editPropertyLocation" placeholder="Локация" required>
-      <input type="number" id="editPropertyPrice" placeholder="Цена" required>
-      <select id="editPropertyType" required>
+      <input type="text" id="editPropertyName" name="editPropertyName" placeholder="Име" required>
+      <input type="text" id="editPropertyLocation" name="editPropertyLocation" placeholder="Локация" required>
+      <input type="number" id="editPropertyPrice" name="editPropertyPrice" placeholder="Цена" required>
+      <select id="editPropertyType" name="editPropertyType" required>
         <option value="">Изберете тип</option>
         <option value="apartment">Апартамент</option>
         <option value="house">Къща</option>
         <option value="villa">Вила</option>
         <option value="farm">Земеделски имот</option>
       </select>
-      <select id="editPropertyCategory" required>
+      <select id="editPropertyCategory" name="editPropertyCategory" required>
         <option value="">Изберете категория</option>
         <option value="sale">Продажба</option>
         <option value="rental">Наем</option>
       </select>
-      <select id="editPropertyStatus">
+      <select id="editPropertyStatus" name="editPropertyStatus">
         <option value="free">Свободен</option>
         <option value="taken">Зает</option>
       </select>
-      <input type="file" id="editPropertyImage">
+      <input type="file" id="editPropertyImage" name="editPropertyImage">
       <button type="submit">Запази промени</button>
     </form>
   </div>
 </div>
+
   
 <main>
   <!-- Login Modal -->
