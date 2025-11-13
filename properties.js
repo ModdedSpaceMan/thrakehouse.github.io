@@ -18,14 +18,25 @@ export async function initProperties() {
   setupFilterListeners();
   window.addEventListener('propertiesUpdated', loadProperties);
 
-  // Edit modal submission
+  // --------------------
+  // Edit Property Modal
+  // --------------------
+  const editModal = document.getElementById('editPropertyModal');
+  const editCloseBtn = editModal?.querySelector('.close');
   const editForm = document.getElementById('editPropertyForm');
-  if(editForm){
+
+  if (editCloseBtn) {
+    editCloseBtn.addEventListener('click', () => {
+      editModal.setAttribute('aria-hidden', 'true');
+      editModal.dataset.propertyId = '';
+    });
+  }
+
+  if (editForm) {
     editForm.addEventListener('submit', async e => {
       e.preventDefault();
-      const modal = document.getElementById('editPropertyModal');
-      const id = modal.dataset.propertyId;
-      if(!id) return;
+      const id = editModal.dataset.propertyId;
+      if (!id) return;
 
       const data = {
         name: editForm.querySelector('#editPropertyName').value,
@@ -46,17 +57,45 @@ export async function initProperties() {
           body: JSON.stringify(data)
         });
 
-        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         showToast('Имотът беше редактиран!');
-        modal.setAttribute('aria-hidden','true'); // close modal
-        await loadProperties(); // reload
-      } catch(err){
+        editModal.setAttribute('aria-hidden','true');
+        editModal.dataset.propertyId = '';
+        await loadProperties();
+      } catch (err) {
         console.error(err);
         showToast('Грешка при редактиране на имота');
       }
     });
   }
+}
+
+// --------------------
+// Open edit modal helper
+// --------------------
+function openEditModal(propertyId) {
+  const propertyCard = document.querySelector(`.property[data-id="${propertyId}"]`);
+  const editModal = document.getElementById('editPropertyModal');
+  if (!propertyCard || !editModal) return;
+
+  editModal.querySelector('#editPropertyName').value = propertyCard.querySelector('h3').innerText;
+  editModal.querySelector('#editPropertyLocation').value = propertyCard.querySelector('p:nth-of-type(1)').innerText.replace('Локация: ','');
+  editModal.querySelector('#editPropertyPrice').value = propertyCard.querySelector('p:nth-of-type(2)').innerText.replace('Цена: ','');
+  editModal.querySelector('#editPropertyType').value = propertyCard.querySelector('p:nth-of-type(4)').innerText.replace('Тип: ','');
+  editModal.querySelector('#editPropertyCategory').value = propertyCard.querySelector('p:nth-of-type(3)').innerText.includes('Наем') ? 'rental' : 'sale';
+
+  const statusSelect = editModal.querySelector('#editPropertyStatus');
+  if (statusSelect) {
+    const statusText = propertyCard.querySelector('p:nth-of-type(5)') 
+      ? propertyCard.querySelector('p:nth-of-type(5)').innerText.replace('Статус: ','') 
+      : 'free';
+    statusSelect.value = statusText;
+  }
+
+  editModal.querySelector('#editPropertyImage').value = '';
+  editModal.dataset.propertyId = propertyId;
+  editModal.setAttribute('aria-hidden','false');
 }
 
 // --------------------
@@ -127,7 +166,7 @@ export function renderProperties(properties) {
 }
 
 // --------------------
-// Event listeners for buttons
+// Event listeners
 // --------------------
 function addEventListeners() {
   propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
@@ -152,34 +191,14 @@ function addEventListeners() {
     propertyContainer.querySelectorAll('.edit-btn').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        const id = btn.dataset.id;
-        const property = document.querySelector(`.property[data-id="${id}"]`);
-        if(!property) return;
-
-        const modal = document.getElementById('editPropertyModal');
-        modal.querySelector('#editPropertyName').value = property.querySelector('h3').innerText;
-        modal.querySelector('#editPropertyLocation').value = property.querySelector('p:nth-of-type(1)').innerText.replace('Локация: ','');
-        modal.querySelector('#editPropertyPrice').value = property.querySelector('p:nth-of-type(2)').innerText.replace('Цена: ','');
-        modal.querySelector('#editPropertyType').value = property.querySelector('p:nth-of-type(4)').innerText.replace('Тип: ','');
-        modal.querySelector('#editPropertyCategory').value = property.querySelector('p:nth-of-type(3)').innerText.includes('Наем') ? 'rental' : 'sale';
-        
-        const statusSelect = modal.querySelector('#editPropertyStatus');
-        if(statusSelect){
-          const statusText = property.querySelector('p:nth-of-type(5)') ? property.querySelector('p:nth-of-type(5)').innerText.replace('Статус: ','') : 'free';
-          statusSelect.value = statusText;
-        }
-
-        modal.querySelector('#editPropertyImage').value = '';
-        modal.dataset.propertyId = id;
-        modal.setAttribute('aria-hidden','false'); // open modal
+        openEditModal(btn.dataset.id);
       });
     });
 
     propertyContainer.querySelectorAll('.toggle-status-btn').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        const id = btn.dataset.id;
-        toggleRentalStatus(id);
+        toggleRentalStatus(btn.dataset.id);
       });
     });
   }
@@ -189,7 +208,7 @@ function addEventListeners() {
 // Wishlist
 // --------------------
 export async function loadWishlist() {
-  if(!username || !token){
+  if (!username || !token) {
     wishlistIds = JSON.parse(localStorage.getItem("wishlist") || "[]");
     return;
   }
@@ -198,22 +217,22 @@ export async function loadWishlist() {
     const res = await fetch(`${API_URL}/wishlists/${username}`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     wishlistIds = data.items || [];
-  } catch(err){
+  } catch (err) {
     console.error("Failed to load wishlist:", err);
     wishlistIds = [];
   }
 }
 
-export async function toggleWishlist(propertyId){
-  if(!username || !token){
+export async function toggleWishlist(propertyId) {
+  if (!username || !token) {
     showToast('Трябва да сте влезли!');
     return;
   }
 
-  if(wishlistIds.includes(propertyId)){
+  if (wishlistIds.includes(propertyId)) {
     wishlistIds = wishlistIds.filter(id => id !== propertyId);
   } else {
     wishlistIds.push(propertyId);
@@ -226,25 +245,25 @@ export async function toggleWishlist(propertyId){
 // --------------------
 // Admin Actions
 // --------------------
-async function deleteProperty(id){
-  try{
+async function deleteProperty(id) {
+  try {
     const res = await fetch(`${API_URL}/properties/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': 'Bearer ' + token }
     });
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     showToast('Имотът беше изтрит!');
     await loadProperties();
-  } catch(err){
+  } catch (err) {
     console.error(err);
     showToast('Грешка при изтриване на имота');
   }
 }
 
-async function toggleRentalStatus(id){
-  try{
-    const property = JSON.parse(localStorage.getItem('properties')).find(p => p.id === id);
-    if(!property) return;
+async function toggleRentalStatus(id) {
+  try {
+    const property = JSON.parse(localStorage.getItem('properties') || '[]').find(p => p.id === id);
+    if (!property) return;
 
     const newStatus = property.status === 'free' ? 'taken' : 'free';
 
@@ -256,10 +275,10 @@ async function toggleRentalStatus(id){
       },
       body: JSON.stringify({ status: newStatus })
     });
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     showToast(`Статусът на имота е променен!`);
     await loadProperties();
-  } catch(err){
+  } catch (err) {
     console.error(err);
     showToast('Грешка при промяна на статуса');
   }
@@ -268,9 +287,9 @@ async function toggleRentalStatus(id){
 // --------------------
 // Filters
 // --------------------
-function setupFilterListeners(){
+function setupFilterListeners() {
   const applyBtn = document.getElementById('applyFilters');
-  if(!applyBtn) return;
+  if (!applyBtn) return;
 
   applyBtn.addEventListener('click', () => {
     let properties = JSON.parse(localStorage.getItem('properties') || '[]');
@@ -283,11 +302,11 @@ function setupFilterListeners(){
 
     properties = properties.filter(p => {
       const price = Number(p.price);
-      if(locationFilter && !p.location.toLowerCase().includes(locationFilter)) return false;
-      if(!isNaN(minPrice) && price < minPrice) return false;
-      if(!isNaN(maxPrice) && price > maxPrice) return false;
-      if(typeFilter && p.type !== typeFilter) return false;
-      if(p.category === 'rental' && statusFilter && p.status !== statusFilter) return false;
+      if (locationFilter && !p.location.toLowerCase().includes(locationFilter)) return false;
+      if (!isNaN(minPrice) && price < minPrice) return false;
+      if (!isNaN(maxPrice) && price > maxPrice) return false;
+      if (typeFilter && p.type !== typeFilter) return false;
+      if (p.category === 'rental' && statusFilter && p.status !== statusFilter) return false;
       return true;
     });
 
