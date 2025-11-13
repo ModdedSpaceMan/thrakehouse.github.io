@@ -518,3 +518,84 @@ footer {
   background: #b7413e;
   transform: translateY(-1px);
 }
+/* -------------------- */
+/* Edit Property Modal */
+/* -------------------- */
+#editPropertyModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+#editPropertyModal[aria-hidden="false"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#editPropertyModal .modal-content {
+  background: #fff;
+  border-radius: 10px;
+  padding: 25px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  position: relative;
+}
+
+#editPropertyModal .modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+#editPropertyModal .modal-content input,
+#editPropertyModal .modal-content select {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+#editPropertyModal .modal-content button[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  background: #4CAF50;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#editPropertyModal .modal-content button[type="submit"]:hover {
+  background: #45a049;
+}
+
+#editPropertyModal .close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 1.5rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #555;
+}
+
+#editPropertyModal .close:hover {
+  color: #000;
+}
