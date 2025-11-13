@@ -1,4 +1,3 @@
-// auth.js
 import { showToast } from './ui.js';
 import { initProperties } from './properties.js';
 
@@ -35,7 +34,7 @@ safeAddListener(logoutBtn, 'click', () => {
   showToast('Успешен изход');
 });
 
-// Update UI
+// Update UI based on login state
 export function updateUI() {
   const token = localStorage.getItem('token');
   const username = localStorage.getItem('username');
@@ -50,10 +49,10 @@ export function updateUI() {
   if (wishlistBtn) wishlistBtn.style.display = token ? 'inline-block' : 'none';
 }
 
-// Decode your custom token payload safely
+// Decode custom token safely
 function decodeCustomToken(token) {
   try {
-    const base64Payload = token.split('.')[1] || token.split('.')[0]; // support custom or JWT
+    const base64Payload = token.split('.')[1] || token.split('.')[0];
     const json = atob(base64Payload);
     return JSON.parse(json);
   } catch (err) {
@@ -62,7 +61,7 @@ function decodeCustomToken(token) {
   }
 }
 
-// Handle login form
+// Handle login form submission
 safeAddListener(loginForm, 'submit', async (e) => {
   e.preventDefault();
   if (!loginForm) return;
@@ -97,7 +96,7 @@ safeAddListener(loginForm, 'submit', async (e) => {
       updateUI();
       if (loginModal) loginModal.setAttribute('aria-hidden', 'true');
       showToast('Успешен вход');
-      initProperties();
+      await initProperties(); // fetch properties + wishlist
     } else {
       showToast(data.message || 'Грешка при вход');
     }
@@ -107,5 +106,5 @@ safeAddListener(loginForm, 'submit', async (e) => {
   }
 });
 
-// Init UI
+// Initialize UI
 document.addEventListener('DOMContentLoaded', () => updateUI());
