@@ -26,7 +26,6 @@ export async function loginUser(username, password) {
   }
 }
 
-
 function safeAddListener(el, evt, fn) {
   if (el) el.addEventListener(evt, fn);
 }
@@ -77,9 +76,6 @@ function decodeCustomToken(token) {
   }
 }
 
-
-
-
 // Handle login form submission
 safeAddListener(loginForm, 'submit', async (e) => {
   e.preventDefault();
@@ -115,7 +111,9 @@ safeAddListener(loginForm, 'submit', async (e) => {
       updateUI();
       if (loginModal) loginModal.setAttribute('aria-hidden', 'true');
       showToast('Успешен вход');
-      await initProperties(); // fetch properties + wishlist
+
+      // Refresh the page so everything loads with the new login
+      window.location.reload(); 
     } else {
       showToast(data.message || 'Грешка при вход');
     }
