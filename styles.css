@@ -773,4 +773,35 @@ wishlist-btn {
   flex-direction: column;
   gap: 6px;
 }
+#addPropertyModal input,
+#addPropertyModal select,
+#addPropertyModal textarea {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid #f1c0bd;
+  background: #fff0f0;
+}
+
+#addPropertyModal input:focus,
+#addPropertyModal select:focus,
+#addPropertyModal textarea:focus {
+  border-color: #b7413e;
+  box-shadow: 0 0 0 2px rgba(183,65,62,0.2);
+}
+
+#addPropertyModal button {
+  background: #e65c55;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 16px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#addPropertyModal button:hover {
+  background: #b7413e;
+}
 
