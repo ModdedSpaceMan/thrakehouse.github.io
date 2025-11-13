@@ -68,14 +68,16 @@ export function updateUI() {
 // Decode custom token safely
 function decodeCustomToken(token) {
   try {
-    const base64Payload = token.split('.')[1] || token.split('.')[0];
-    const json = atob(base64Payload);
+    const [payloadB64] = token.split("."); // only take the first part
+    if (!payloadB64) return null;
+    const json = atob(payloadB64);
     return JSON.parse(json);
   } catch (err) {
-    console.error('Failed to decode token payload:', err);
+    console.error("Failed to decode token payload:", err);
     return null;
   }
 }
+
 
 // Handle login form submission
 safeAddListener(loginForm, 'submit', async (e) => {
