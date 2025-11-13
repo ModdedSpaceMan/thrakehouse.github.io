@@ -8,7 +8,7 @@ const propertyContainer = document.getElementById('properties');
 // Get user info from localStorage
 const username = localStorage.getItem('username');
 const token = localStorage.getItem('token');
-const role = localStorage.getItem('role'); // assume you save 'admin' or 'user'
+const role = localStorage.getItem('role'); // 'admin' or 'user'
 
 // --------------------
 // Initialize
@@ -17,7 +17,6 @@ export async function initProperties() {
   await loadWishlist();
   await loadProperties();
   setupFilterListeners();
-
   window.addEventListener('propertiesUpdated', loadProperties);
 }
 
@@ -58,17 +57,20 @@ export function renderProperties(properties) {
     const inWishlist = wishlistIds.includes(p.id) ? '❤️' : '🤍';
     const takenClass = isRental && p.status?.toLowerCase() === 'taken' ? 'taken' : '';
 
-    // Only admins get edit/delete buttons
+    // Admin buttons vs user wishlist button
     const adminButtons = role === 'admin' ? `
       <div class="admin-buttons-right">
-        <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
         <button class="edit-btn" data-id="${p.id}">Редактирай</button>
         <button class="delete-btn" data-id="${p.id}">Изтрий</button>
         ${isRental ? `<button class="toggle-status-btn" data-id="${p.id}">${p.status === "free" ? "Зает" : "Свободен"}</button>` : ''}
       </div>
-    ` : `
-      <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
-    `;
+    ` : '';
+
+    const userWishlistBtn = role !== 'admin' ? `
+      <div class="wishlist-wrapper">
+        <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
+      </div>
+    ` : '';
 
     return `
       <div class="property ${takenClass}" data-id="${p.id}">
@@ -81,9 +83,8 @@ export function renderProperties(properties) {
           <p>Тип: ${p.type}</p>
           ${isRental ? `<p>Статус: ${p.status}</p>` : ''}
         </div>
-        <div class="property-actions">
-          ${adminButtons}
-        </div>
+        ${adminButtons}
+        ${userWishlistBtn}
       </div>
     `;
   }).join('');
@@ -108,25 +109,21 @@ function addEventListeners() {
       btn.addEventListener('click', e => {
         e.stopPropagation();
         const id = btn.dataset.id;
-        if (confirm('Наистина ли искате да изтриете този имот?')) {
-          deleteProperty(id);
-        }
+        if (confirm('Наистина ли искате да изтриете този имот?')) deleteProperty(id);
       });
     });
 
     propertyContainer.querySelectorAll('.edit-btn').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        const id = btn.dataset.id;
-        openEditModal(id);
+        openEditModal(btn.dataset.id);
       });
     });
 
     propertyContainer.querySelectorAll('.toggle-status-btn').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        const id = btn.dataset.id;
-        toggleRentalStatus(id);
+        toggleRentalStatus(btn.dataset.id);
       });
     });
   }
@@ -160,18 +157,15 @@ export async function toggleWishlist(propertyId) {
     return;
   }
 
-  if (wishlistIds.includes(propertyId)) {
-    wishlistIds = wishlistIds.filter(id => id !== propertyId);
-  } else {
-    wishlistIds.push(propertyId);
-  }
+  if (wishlistIds.includes(propertyId)) wishlistIds = wishlistIds.filter(id => id !== propertyId);
+  else wishlistIds.push(propertyId);
 
   localStorage.setItem("wishlist", JSON.stringify(wishlistIds));
   showToast(wishlistIds.includes(propertyId) ? 'Добавено в wishlist!' : 'Премахнато от wishlist');
 }
 
 // --------------------
-// Admin Actions (stub, implement with API)
+// Admin Actions
 // --------------------
 async function deleteProperty(id) {
   try {
@@ -189,7 +183,6 @@ async function deleteProperty(id) {
 }
 
 function openEditModal(id) {
-  // Trigger your propertyForms.js modal for editing
   window.dispatchEvent(new CustomEvent('editProperty', { detail: { id } }));
 }
 
@@ -199,7 +192,6 @@ async function toggleRentalStatus(id) {
     if (!property) return;
 
     const newStatus = property.status === 'free' ? 'taken' : 'free';
-
     const res = await fetch(`${API_URL}/properties/${id}/status`, {
       method: 'POST',
       headers: { 
