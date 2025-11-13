@@ -10,6 +10,37 @@ const token = localStorage.getItem('token');
 const role = localStorage.getItem('role'); // 'admin' or 'user'
 
 // --------------------
+// Token monitoring
+// --------------------
+function logoutAndRedirect() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('username');
+  localStorage.removeItem('role');
+  window.location.href = '/login.html';
+}
+
+function monitorToken() {
+  setInterval(() => {
+    const token = localStorage.getItem('token');
+    if (!token || isTokenExpired(token)) {
+      logoutAndRedirect();
+    }
+  }, 3000);
+}
+
+function isTokenExpired(token) {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return Date.now() >= payload.exp * 1000;
+  } catch (err) {
+    return true;
+  }
+}
+
+monitorToken();
+
+// --------------------
 // Initialize
 // --------------------
 export async function initProperties() {
