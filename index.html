@@ -86,12 +86,12 @@
 </div>
 
 <!-- Add Property Modal -->
-<div id="addPropertyModal" class="modal" aria-hidden="false">
+<<div id="addPropertyModal" class="modal" aria-hidden="false">
   <div class="modal-content">
     <button class="close" onclick="document.getElementById('addPropertyModal').setAttribute('aria-hidden','true')">×</button>
     <h2>Добави имот</h2>
 
-    <form id="propertyForm" class="modal-form">
+    <form id="propertyForm">
       <input type="text" id="propertyName" placeholder="Име" required>
       <input type="text" id="propertyLocation" placeholder="Локация" required>
       <input type="number" id="propertyPrice" placeholder="Цена" required>
@@ -115,12 +115,12 @@
         <option value="taken">Зает</option>
       </select>
 
-      <input type="file" id="propertyImage" accept="image/*">
-
+      <input type="file" id="propertyImage">
       <button type="submit">Добави имот</button>
     </form>
   </div>
 </div>
+
 
 
 <!-- Tickets/Admin Modal -->
