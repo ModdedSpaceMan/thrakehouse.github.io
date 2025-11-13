@@ -63,14 +63,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       adminFound.innerHTML = `
-        <div class="admin-property-found">
-          <h4>${prop.name}</h4>
-          <p>Локация: ${prop.location}</p>
-          <p>Цена: ${prop.price}</p>
-          <p>Тип: ${prop.type}</p>
-          <p>Статус: ${prop.status || '-'}</p>
-          ${prop.image ? `<img src="${prop.image}" alt="${prop.name}" style="max-width:100%;margin-top:10px;border-radius:8px;">` : ''}
+        <div class="property">
+          <div class="property-content">
+            <h3>${prop.name}</h3>
+            <p>Локация: ${prop.location}</p>
+            <p>Цена: ${prop.price}</p>
+            <p>Тип: ${prop.type}</p>
+            <p>Статус: ${prop.status || '-'}</p>
+            ${prop.image ? `<img src="${prop.image}" alt="${prop.name}" style="max-width:100%;margin-top:10px;border-radius:8px;">` : ''}
+          </div>
         </div>
+
       `;
     } catch (err) {
       console.error(err);
