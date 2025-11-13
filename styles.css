@@ -469,3 +469,52 @@ footer {
   #adminSidebar { width: 80%; }
   .modal-content { width: 90%; padding: 18px; }
 }
+/* --------------------
+   Add Property Modal
+-------------------- */
+#addPropertyModal form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#addPropertyModal input,
+#addPropertyModal select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #f1c0bd;
+  background: #fff0f0;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#addPropertyModal input:focus,
+#addPropertyModal select:focus {
+  border-color: #b7413e;
+  box-shadow: 0 0 0 2px rgba(183,65,62,0.2);
+}
+
+#addPropertyModal input[type="file"] {
+  background: #fff5f5;
+  padding: 10px;
+  border: 1px solid #f1c0bd;
+  cursor: pointer;
+}
+
+#addPropertyModal button[type="submit"] {
+  background: #e65c55;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 16px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+#addPropertyModal button[type="submit"]:hover {
+  background: #b7413e;
+  transform: translateY(-1px);
+}
