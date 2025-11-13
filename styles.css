@@ -537,9 +537,17 @@ footer {
   transition: opacity 0.3s ease;
 }
 
-#editPropertyModal[aria-hidden="false"] {
-  opacity: 1;
-  pointer-events: auto;
+#editPropertyModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: none; /* start hidden */
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
 #editPropertyModal .modal-content {
@@ -598,4 +606,9 @@ footer {
 
 #editPropertyModal .close:hover {
   color: #000;
+}
+#editPropertyModal[aria-hidden="false"] {
+  display: flex; /* show modal */
+  opacity: 1;
+  pointer-events: auto;
 }
