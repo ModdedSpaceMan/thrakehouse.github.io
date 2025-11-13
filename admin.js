@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewSupportBtn = document.getElementById('viewSupportBtn');
   const supportMessages = document.getElementById('supportMessages');
   const sidebarToggle = document.getElementById('sidebarToggle');
+  const adminSidebar = document.getElementById('adminSidebar'); // <-- new
 
   // Get role from JWT
   function getRoleFromToken() {
@@ -35,7 +36,15 @@ document.addEventListener('DOMContentLoaded', () => {
     sidebarToggle?.style.setProperty('display', 'inline-block');
     openAddBtn?.style.setProperty('display', 'inline-block');
     viewSupportBtn?.style.setProperty('display', 'inline-block');
+    if (adminSidebar) adminSidebar.setAttribute('aria-hidden', 'true'); // start hidden
   }
+
+  // --- Sidebar toggle ---
+  sidebarToggle?.addEventListener('click', () => {
+    if (!adminSidebar) return;
+    const isHidden = adminSidebar.getAttribute('aria-hidden') === 'true';
+    adminSidebar.setAttribute('aria-hidden', isHidden ? 'false' : 'true');
+  });
 
   // Open/close add modal
   openAddBtn?.addEventListener('click', () => openModal(addPropertyModal));
