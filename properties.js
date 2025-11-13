@@ -5,10 +5,9 @@ const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 let wishlistIds = [];
 const propertyContainer = document.getElementById('properties');
 
-// Get user info from localStorage
 const username = localStorage.getItem('username');
 const token = localStorage.getItem('token');
-const role = localStorage.getItem('role'); // assume you save 'admin' or 'user'
+const role = localStorage.getItem('role'); // 'admin' or 'user'
 
 // --------------------
 // Initialize
@@ -17,8 +16,47 @@ export async function initProperties() {
   await loadWishlist();
   await loadProperties();
   setupFilterListeners();
-
   window.addEventListener('propertiesUpdated', loadProperties);
+
+  // Edit modal submission
+  const editForm = document.getElementById('editPropertyForm');
+  if(editForm){
+    editForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const modal = document.getElementById('editPropertyModal');
+      const id = modal.dataset.propertyId;
+      if(!id) return;
+
+      const data = {
+        name: editForm.querySelector('#editPropertyName').value,
+        location: editForm.querySelector('#editPropertyLocation').value,
+        price: editForm.querySelector('#editPropertyPrice').value,
+        type: editForm.querySelector('#editPropertyType').value,
+        category: editForm.querySelector('#editPropertyCategory').value,
+        status: editForm.querySelector('#editPropertyStatus')?.value || 'free'
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/properties/${id}`, {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify(data)
+        });
+
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        showToast('Имотът беше редактиран!');
+        modal.setAttribute('aria-hidden','true'); // close modal
+        await loadProperties(); // reload
+      } catch(err){
+        console.error(err);
+        showToast('Грешка при редактиране на имота');
+      }
+    });
+  }
 }
 
 // --------------------
@@ -58,8 +96,6 @@ export function renderProperties(properties) {
     const inWishlist = wishlistIds.includes(p.id) ? '❤️' : '🤍';
     const takenClass = isRental && p.status?.toLowerCase() === 'taken' ? 'taken' : '';
 
-    // Only admins get edit/delete buttons
-    // Only admins get edit/delete buttons
     const adminButtons = role === 'admin' ? `
       <div class="admin-buttons-right">
         <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
@@ -67,10 +103,7 @@ export function renderProperties(properties) {
         <button class="delete-btn" data-id="${p.id}">Изтрий</button>
         ${isRental ? `<button class="toggle-status-btn" data-id="${p.id}">${p.status === "free" ? "Зает" : "Свободен"}</button>` : ''}
       </div>
-    ` : `
-      <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
-    `;
-
+    ` : `<button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>`;
 
     return `
       <div class="property ${takenClass}" data-id="${p.id}">
@@ -117,35 +150,30 @@ function addEventListeners() {
     });
 
     propertyContainer.querySelectorAll('.edit-btn').forEach(btn => {
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    const id = btn.dataset.id;
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const property = document.querySelector(`.property[data-id="${id}"]`);
+        if(!property) return;
 
-    // Directly open the modal and prefill
-    const property = document.querySelector(`.property[data-id="${id}"]`);
-    if (!property) return;
+        const modal = document.getElementById('editPropertyModal');
+        modal.querySelector('#editPropertyName').value = property.querySelector('h3').innerText;
+        modal.querySelector('#editPropertyLocation').value = property.querySelector('p:nth-of-type(1)').innerText.replace('Локация: ','');
+        modal.querySelector('#editPropertyPrice').value = property.querySelector('p:nth-of-type(2)').innerText.replace('Цена: ','');
+        modal.querySelector('#editPropertyType').value = property.querySelector('p:nth-of-type(4)').innerText.replace('Тип: ','');
+        modal.querySelector('#editPropertyCategory').value = property.querySelector('p:nth-of-type(3)').innerText.includes('Наем') ? 'rental' : 'sale';
+        
+        const statusSelect = modal.querySelector('#editPropertyStatus');
+        if(statusSelect){
+          const statusText = property.querySelector('p:nth-of-type(5)') ? property.querySelector('p:nth-of-type(5)').innerText.replace('Статус: ','') : 'free';
+          statusSelect.value = statusText;
+        }
 
-    const modal = document.getElementById('editPropertyModal');
-    modal.querySelector('#editPropertyName').value = property.querySelector('h3').innerText;
-    modal.querySelector('#editPropertyLocation').value = property.querySelector('p:nth-of-type(1)').innerText.replace('Локация: ','');
-    modal.querySelector('#editPropertyPrice').value = property.querySelector('p:nth-of-type(2)').innerText.replace('Цена: ','');
-    modal.querySelector('#editPropertyType').value = property.querySelector('p:nth-of-type(4)').innerText.replace('Тип: ','');
-    modal.querySelector('#editPropertyCategory').value = property.querySelector('p:nth-of-type(3)').innerText.includes('Наем') ? 'rental' : 'sale';
-    
-    const statusSelect = modal.querySelector('#editPropertyStatus');
-    if (statusSelect) {
-      const statusText = property.querySelector('p:nth-of-type(5)') 
-        ? property.querySelector('p:nth-of-type(5)').innerText.replace('Статус: ','') 
-        : 'free';
-      statusSelect.value = statusText;
-    }
-
-    modal.querySelector('#editPropertyImage').value = ''; // clear file input
-    modal.dataset.propertyId = id; // store ID
-    modal.setAttribute('aria-hidden','false'); // open modal
-  });
-});
-
+        modal.querySelector('#editPropertyImage').value = '';
+        modal.dataset.propertyId = id;
+        modal.setAttribute('aria-hidden','false'); // open modal
+      });
+    });
 
     propertyContainer.querySelectorAll('.toggle-status-btn').forEach(btn => {
       btn.addEventListener('click', e => {
@@ -161,7 +189,7 @@ function addEventListeners() {
 // Wishlist
 // --------------------
 export async function loadWishlist() {
-  if (!username || !token) {
+  if(!username || !token){
     wishlistIds = JSON.parse(localStorage.getItem("wishlist") || "[]");
     return;
   }
@@ -170,22 +198,22 @@ export async function loadWishlist() {
     const res = await fetch(`${API_URL}/wishlists/${username}`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     wishlistIds = data.items || [];
-  } catch (err) {
+  } catch(err){
     console.error("Failed to load wishlist:", err);
     wishlistIds = [];
   }
 }
 
-export async function toggleWishlist(propertyId) {
-  if (!username || !token) {
+export async function toggleWishlist(propertyId){
+  if(!username || !token){
     showToast('Трябва да сте влезли!');
     return;
   }
 
-  if (wishlistIds.includes(propertyId)) {
+  if(wishlistIds.includes(propertyId)){
     wishlistIds = wishlistIds.filter(id => id !== propertyId);
   } else {
     wishlistIds.push(propertyId);
@@ -196,32 +224,27 @@ export async function toggleWishlist(propertyId) {
 }
 
 // --------------------
-// Admin Actions (stub, implement with API)
+// Admin Actions
 // --------------------
-async function deleteProperty(id) {
-  try {
+async function deleteProperty(id){
+  try{
     const res = await fetch(`${API_URL}/properties/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': 'Bearer ' + token }
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
     showToast('Имотът беше изтрит!');
     await loadProperties();
-  } catch (err) {
+  } catch(err){
     console.error(err);
     showToast('Грешка при изтриване на имота');
   }
 }
 
-function openEditModal(id) {
-  // Trigger your propertyForms.js modal for editing
-  window.dispatchEvent(new CustomEvent('editProperty', { detail: { id } }));
-}
-
-async function toggleRentalStatus(id) {
-  try {
+async function toggleRentalStatus(id){
+  try{
     const property = JSON.parse(localStorage.getItem('properties')).find(p => p.id === id);
-    if (!property) return;
+    if(!property) return;
 
     const newStatus = property.status === 'free' ? 'taken' : 'free';
 
@@ -233,10 +256,10 @@ async function toggleRentalStatus(id) {
       },
       body: JSON.stringify({ status: newStatus })
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
     showToast(`Статусът на имота е променен!`);
     await loadProperties();
-  } catch (err) {
+  } catch(err){
     console.error(err);
     showToast('Грешка при промяна на статуса');
   }
@@ -245,9 +268,9 @@ async function toggleRentalStatus(id) {
 // --------------------
 // Filters
 // --------------------
-function setupFilterListeners() {
+function setupFilterListeners(){
   const applyBtn = document.getElementById('applyFilters');
-  if (!applyBtn) return;
+  if(!applyBtn) return;
 
   applyBtn.addEventListener('click', () => {
     let properties = JSON.parse(localStorage.getItem('properties') || '[]');
@@ -260,11 +283,11 @@ function setupFilterListeners() {
 
     properties = properties.filter(p => {
       const price = Number(p.price);
-      if (locationFilter && !p.location.toLowerCase().includes(locationFilter)) return false;
-      if (!isNaN(minPrice) && price < minPrice) return false;
-      if (!isNaN(maxPrice) && price > maxPrice) return false;
-      if (typeFilter && p.type !== typeFilter) return false;
-      if (p.category === 'rental' && statusFilter && p.status !== statusFilter) return false;
+      if(locationFilter && !p.location.toLowerCase().includes(locationFilter)) return false;
+      if(!isNaN(minPrice) && price < minPrice) return false;
+      if(!isNaN(maxPrice) && price > maxPrice) return false;
+      if(typeFilter && p.type !== typeFilter) return false;
+      if(p.category === 'rental' && statusFilter && p.status !== statusFilter) return false;
       return true;
     });
 
