@@ -34,30 +34,38 @@ export async function initProperties() {
 
   // Open modal & prefill
   function openEditModal(propertyId){
-    const propertyCard = document.querySelector(`.property[data-id="${propertyId}"]`);
-    if(!propertyCard || !editModal) return;
+  const propertyCard = document.querySelector(`.property[data-id="${propertyId}"]`);
+  if(!propertyCard || !editModal) return;
 
-    // Prefill values from card
-    editModal.querySelector('#editPropertyName').value = propertyCard.querySelector('h3').innerText;
-    editModal.querySelector('#editPropertyLocation').value = propertyCard.querySelector('p:nth-of-type(1)').innerText.replace('Локация: ','');
-    editModal.querySelector('#editPropertyPrice').value = propertyCard.querySelector('p:nth-of-type(2)').innerText.replace('Цена: ','');
-    editModal.querySelector('#editPropertyType').value = propertyCard.querySelector('p:nth-of-type(4)').innerText.replace('Тип: ','');
-    editModal.querySelector('#editPropertyCategory').value = propertyCard.querySelector('p:nth-of-type(3)').innerText.includes('Наем') ? 'rental' : 'sale';
+  const nameInput = editModal.querySelector('#editPropertyName');
+  const locationInput = editModal.querySelector('#editPropertyLocation');
+  const priceInput = editModal.querySelector('#editPropertyPrice');
+  const typeSelect = editModal.querySelector('#editPropertyType');
+  const categorySelect = editModal.querySelector('#editPropertyCategory');
+  const statusSelect = editModal.querySelector('#editPropertyStatus');
+  const imageInput = editModal.querySelector('#editPropertyImage');
 
-    const statusSelect = editModal.querySelector('#editPropertyStatus');
-    if(statusSelect){
-      const statusText = propertyCard.querySelector('p:nth-of-type(5)') 
-        ? propertyCard.querySelector('p:nth-of-type(5)').innerText.replace('Статус: ','') 
-        : 'free';
-      statusSelect.value = statusText;
-    }
+  // Safely get values from property card
+  const name = propertyCard.querySelector('h3')?.innerText || '';
+  const location = propertyCard.querySelector('p:nth-of-type(1)')?.innerText.replace('Локация: ','') || '';
+  const price = propertyCard.querySelector('p:nth-of-type(2)')?.innerText.replace('Цена: ','') || '';
+  const categoryText = propertyCard.querySelector('p:nth-of-type(3)')?.innerText || '';
+  const type = propertyCard.querySelector('p:nth-of-type(4)')?.innerText.replace('Тип: ','') || '';
+  const statusText = propertyCard.querySelector('p:nth-of-type(5)')?.innerText.replace('Статус: ','') || 'free';
 
-    editModal.querySelector('#editPropertyImage').value = '';
-    editModal.dataset.propertyId = propertyId;
+  // Fill modal inputs
+  if(nameInput) nameInput.value = name;
+  if(locationInput) locationInput.value = location;
+  if(priceInput) priceInput.value = price;
+  if(typeSelect) typeSelect.value = type;
+  if(categorySelect) categorySelect.value = categoryText.includes('Наем') ? 'rental' : 'sale';
+  if(statusSelect) statusSelect.value = statusText;
+  if(imageInput) imageInput.value = '';
 
-    // Show modal
-    editModal.setAttribute('aria-hidden','false');
-  }
+  editModal.dataset.propertyId = propertyId;
+  editModal.setAttribute('aria-hidden','false'); // show modal
+}
+
 
   // Form submit
 if (editForm) {
