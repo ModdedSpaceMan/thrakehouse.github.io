@@ -42,41 +42,86 @@ document.addEventListener('DOMContentLoaded', () => {
   closeAddBtn?.addEventListener('click', () => closeModal(addPropertyModal));
 
   // --- Admin Search Property by ID ---
-  adminSearchBtn?.addEventListener('click', async () => {
-    if (!adminSearchInput || !adminFound) return;
+adminSearchBtn?.addEventListener('click', async () => {
+  if (!adminSearchInput || !adminFound) return;
 
-    const searchId = adminSearchInput.value.trim();
-    if (!searchId) return;
+  const searchId = adminSearchInput.value.trim();
+  if (!searchId) return;
 
-    try {
-      const res = await fetch(`${API_URL}/properties`, {
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-      });
+  try {
+    const res = await fetch(`${API_URL}/properties`, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    });
 
-      if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      const properties = await res.json();
-      const prop = properties.find(p => p.id === searchId);
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    const properties = await res.json();
+    const prop = properties.find(p => p.id === searchId);
 
-      if (!prop) {
-        adminFound.textContent = 'Няма намерен имот с това ID';
-        return;
-      }
+    if (!prop) {
+      adminFound.textContent = 'Няма намерен имот с това ID';
+      return;
+    }
 
-      adminFound.innerHTML = `
-        <div class="admin-property-found">
-          <h4>${prop.name}</h4>
+    // Render the property with admin buttons
+    const isRental = prop.category === 'rental';
+    const inWishlist = '🤍'; // Optionally fetch if in wishlist
+    const takenClass = isRental && prop.status?.toLowerCase() === 'taken' ? 'taken' : '';
+
+    adminFound.innerHTML = `
+      <div class="property ${takenClass}" data-id="${prop.id}">
+        ${prop.image ? `<img src="${prop.image}" alt="${prop.name}">` : ''}
+        <div class="property-content">
+          <h3>${prop.name}</h3>
           <p>Локация: ${prop.location}</p>
           <p>Цена: ${prop.price}</p>
+          <p>Категория: ${isRental ? "Наем" : "Продажба"}</p>
           <p>Тип: ${prop.type}</p>
-          <p>Статус: ${prop.status || '-'}</p>
-          ${prop.image ? `<img src="${prop.image}" alt="${prop.name}" style="max-width:100%;margin-top:10px;border-radius:8px;">` : ''}
+          ${isRental ? `<p>Статус: ${prop.status}</p>` : ''}
         </div>
-      `;
-    } catch (err) {
-      console.error(err);
-      adminFound.textContent = 'Грешка при търсене на имота';
-    }
-  });
+        <div class="property-actions">
+          <div class="admin-buttons-right">
+            <button class="wishlist-btn" data-id="${prop.id}">${inWishlist}</button>
+            <button class="edit-btn" data-id="${prop.id}">Редактирай</button>
+            <button class="delete-btn" data-id="${prop.id}">Изтрий</button>
+            ${isRental ? `<button class="toggle-status-btn" data-id="${prop.id}">${prop.status === "free" ? "Зает" : "Свободен"}</button>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Add the same event listeners as in properties.js
+    const wishlistBtn = adminFound.querySelector('.wishlist-btn');
+    wishlistBtn?.addEventListener('click', async e => {
+      e.stopPropagation();
+      await toggleWishlist(prop.id); // Make sure toggleWishlist is imported or defined
+    });
+
+    const deleteBtn = adminFound.querySelector('.delete-btn');
+    deleteBtn?.addEventListener('click', e => {
+      e.stopPropagation();
+      if (confirm('Наистина ли искате да изтриете този имот?')) {
+        deleteProperty(prop.id); // Make sure deleteProperty is imported or defined
+      }
+    });
+
+    const editBtn = adminFound.querySelector('.edit-btn');
+    editBtn?.addEventListener('click', e => {
+      e.stopPropagation();
+      openEditModal(prop.id); // Make sure openEditModal is imported or defined
+    });
+
+    const toggleBtn = adminFound.querySelector('.toggle-status-btn');
+    toggleBtn?.addEventListener('click', e => {
+      e.stopPropagation();
+      toggleRentalStatus(prop.id); // Make sure toggleRentalStatus is imported or defined
+    });
+
+  } catch (err) {
+    console.error(err);
+    adminFound.textContent = 'Грешка при търсене на имота';
+  }
+});
+
 
   // --- View Support Tickets (read-only) ---
   viewSupportBtn?.addEventListener('click', async () => {
