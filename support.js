@@ -1,5 +1,5 @@
 /* ---------- Base API URL ---------- */
-const API_URL = ''; // empty since same origin, or put your backend URL if cross-origin
+const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
 /* ---------- Toast Utility ---------- */
 function showToast(message, duration = 3000) {
