@@ -135,6 +135,8 @@ export function renderProperties(properties) {
         <div class="property-actions">
           ${adminButtons}
         </div>
+        <!-- ID Badge -->
+        <div class="property-id">ID: ${p.id}</div>
       </div>
     `;
   }).join('');
