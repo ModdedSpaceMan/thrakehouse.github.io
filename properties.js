@@ -267,6 +267,35 @@ async function deleteProperty(id){
   }
 }
 
+function openEditModal(id) {
+  const editModal = document.getElementById('editPropertyModal');
+  const editForm = document.getElementById('editPropertyForm');
+  if (!editModal || !editForm) return;
+
+  // Store which property we're editing
+  editModal.dataset.propertyId = id;
+
+  // Fetch property data to populate the form
+  fetch(`${API_URL}/properties/${id}`, {
+    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+  })
+    .then(res => res.json())
+    .then(p => {
+      editForm.querySelector('#editPropertyName').value = p.name || '';
+      editForm.querySelector('#editPropertyLocation').value = p.location || '';
+      editForm.querySelector('#editPropertyPrice').value = p.price || '';
+      editForm.querySelector('#editPropertyType').value = p.type || '';
+      editForm.querySelector('#editPropertyCategory').value = p.category || '';
+      if(editForm.querySelector('#editPropertyStatus'))
+        editForm.querySelector('#editPropertyStatus').value = p.status || 'free';
+      
+      // Open modal
+      editModal.setAttribute('aria-hidden', 'false');
+    })
+    .catch(err => console.error('Failed to load property for editing:', err));
+}
+
+
 async function toggleRentalStatus(id){
   try{
     const res = await fetch(`${API_URL}/properties/${id}/status`, {
