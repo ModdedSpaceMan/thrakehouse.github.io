@@ -31,7 +31,6 @@
 
     let wishlistIds = [];
 
-    // Fetch wishlist from server
     async function loadWishlist() {
       if (!username || !token) {
         propertyContainer.innerHTML = '<p>Трябва да сте влезли, за да видите любимите имоти.</p>';
@@ -46,7 +45,6 @@
         const data = await res.json();
         wishlistIds = data.items || [];
 
-        // Fetch all properties to filter valid ones
         const propsRes = await fetch(`${API_URL}/properties`);
         const allProperties = await propsRes.json();
         const validProperties = allProperties.filter(p => wishlistIds.includes(p.id));
@@ -58,7 +56,6 @@
       }
     }
 
-    // Render wishlist
     function renderWishlist(properties) {
       if (!properties.length) {
         propertyContainer.innerHTML = '<p>Нямате любими имоти.</p>';
@@ -78,6 +75,7 @@
               <p>Тип: ${p.type}</p>
             </div>
             <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
+            <div class="property-id">ID: ${p.id}</div>
           </div>
         `;
       }).join('');
@@ -85,7 +83,6 @@
       addWishlistListeners();
     }
 
-    // Wishlist toggle
     async function toggleWishlist(propertyId) {
       if (!username || !token) {
         showToast('Трябва да сте влезли!');
@@ -118,7 +115,6 @@
       }
     }
 
-    // Add button listeners
     function addWishlistListeners() {
       propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
         btn.addEventListener('click', e => {
