@@ -229,8 +229,11 @@ function addEventListeners() {
 // Wishlist
 // --------------------
 export async function loadWishlist() {
-  if(!username || !token){
-    wishlistIds = JSON.parse(localStorage.getItem("wishlist") || "[]");
+  const username = localStorage.getItem('username');
+  const token = localStorage.getItem('token');
+
+  if (!username || !token) {
+    wishlistIds = [];
     return;
   }
 
@@ -238,30 +241,59 @@ export async function loadWishlist() {
     const res = await fetch(`${API_URL}/wishlists/${username}`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    wishlistIds = data.items || [];
-  } catch(err){
+
+    // Filter out properties that no longer exist on server
+    const propertiesRes = await fetch(`${API_URL}/properties`);
+    const properties = await propertiesRes.json();
+    const validIds = properties.map(p => p.id);
+
+    wishlistIds = (data.items || []).filter(id => validIds.includes(id));
+  } catch (err) {
     console.error("Failed to load wishlist:", err);
     wishlistIds = [];
   }
 }
 
-export async function toggleWishlist(propertyId){
-  if(!username || !token){
+export async function toggleWishlist(propertyId) {
+  const username = localStorage.getItem('username');
+  const token = localStorage.getItem('token');
+
+  if (!username || !token) {
     showToast('Трябва да сте влезли!');
     return;
   }
 
-  if(wishlistIds.includes(propertyId)){
-    wishlistIds = wishlistIds.filter(id => id !== propertyId);
-  } else {
-    wishlistIds.push(propertyId);
-  }
+  const action = wishlistIds.includes(propertyId) ? 'remove' : 'add';
 
-  localStorage.setItem("wishlist", JSON.stringify(wishlistIds));
-  showToast(wishlistIds.includes(propertyId) ? 'Добавено в wishlist!' : 'Премахнато от wishlist');
+  try {
+    const res = await fetch(`${API_URL}/wishlists/${username}/${action}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ propertyId })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      if (action === 'add') wishlistIds.push(propertyId);
+      else wishlistIds = wishlistIds.filter(id => id !== propertyId);
+
+      showToast(action === 'add' ? 'Добавено в wishlist!' : 'Премахнато от wishlist');
+      await loadProperties(); // Refresh UI to reflect changes
+    } else {
+      showToast('Грешка при промяна на любими');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Грешка при връзка със сървъра');
+  }
 }
+
+
 
 // --------------------
 // Admin Actions
