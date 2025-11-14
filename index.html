@@ -5,41 +5,51 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Имоти в Гърция</title>
 <link rel="stylesheet" href="styles.css" />
+
+<style>
+/* Hide Google top bar */
+.goog-te-banner-frame { display: none !important; }
+body { top: 0 !important; }
+/* Hide "Powered by Google" */
+.goog-logo-link, .goog-te-gadget { display: none !important; }
+/* Hide Google default dropdown frame */
+.goog-te-menu-frame { display: none !important; }
+/* Prevent layout shifting during translation */
+.goog-te-banner { display: none !important; }
+</style>
 </head>
 <body>
-  <div id="google_translate_element" style="display:none;"></div>
+<div id="google_translate_element" style="display:none;"></div>
 
 <header>
-  
-
   <div class="header-inner">
     <h1>Имоти в Гърция</h1>
     <nav class="top-nav">
-      <a href="/wishlist.html" class="go-wishlist-btn">Любими</a>
-      <button id="loginBtn" class="top-btn">Вход</button>
-      <a id="registerBtn" href="signup.html" class="top-btn">Регистрация</a>
+      <a href="/wishlist.html" class="go-wishlist-btn" data-translate>Любими</a>
+      <button id="loginBtn" class="top-btn" data-translate>Вход</button>
+      <a id="registerBtn" href="signup.html" class="top-btn" data-translate>Регистрация</a>
       <span id="userDisplay" class="top-btn" style="display:none;"></span>
-      <button id="logoutBtn" class="top-btn" style="display:none;">Изход</button>
+      <button id="logoutBtn" class="top-btn" style="display:none;" data-translate>Изход</button>
       <button id="sidebarToggle" class="top-btn" style="display:none;">☰</button>
       <div class="lang-dropdown">
-      <button><img src="https://flagcdn.com/w20/bg.png" class="flag"> Български</button>
-      <div class="lang-dropdown-content">
-        <div onclick="translatePage('bg')"><img src="https://flagcdn.com/w20/bg.png" class="flag"> Български</div>
-        <div onclick="translatePage('el')"><img src="https://flagcdn.com/w20/gr.png" class="flag"> Greek</div>
-        <div onclick="translatePage('tr')"><img src="https://flagcdn.com/w20/tr.png" class="flag"> Turkish</div>
-        <div onclick="translatePage('en')"><img src="https://flagcdn.com/w20/gb.png" class="flag"> English</div>
+        <button><img src="https://flagcdn.com/w20/bg.png" class="flag"> Български</button>
+        <div class="lang-dropdown-content">
+          <div onclick="translatePage('bg')"><img src="https://flagcdn.com/w20/bg.png" class="flag"> Български</div>
+          <div onclick="translatePage('el')"><img src="https://flagcdn.com/w20/gr.png" class="flag"> Greek</div>
+          <div onclick="translatePage('tr')"><img src="https://flagcdn.com/w20/tr.png" class="flag"> Turkish</div>
+          <div onclick="translatePage('en')"><img src="https://flagcdn.com/w20/gb.png" class="flag"> English</div>
+        </div>
       </div>
-    </div>
     </nav>
   </div>
 </header>
 
 <!-- Admin Sidebar -->
 <div id="adminSidebar" class="sidebar" aria-hidden="true">
-  <button id="addPropertySidebarBtn" class="sidebar-btn">Добави имот</button>
-  <button id="viewSupportBtn" class="sidebar-btn">Преглед на тикети</button>
-  <input type="text" id="adminSearchInput" placeholder="Търси имот по ID..." />
-  <button id="adminSearchBtn" class="sidebar-btn">Търси</button>
+  <button id="addPropertySidebarBtn" class="sidebar-btn" data-translate>Добави имот</button>
+  <button id="viewSupportBtn" class="sidebar-btn" data-translate>Преглед на тикети</button>
+  <input type="text" id="adminSearchInput" placeholder="Търси имот по ID..." data-translate />
+  <button id="adminSearchBtn" class="sidebar-btn" data-translate>Търси</button>
   <div id="adminFound" class="admin-search-results"></div>
 </div>
 
@@ -47,34 +57,33 @@
 <div id="editPropertyModal" class="modal" aria-hidden="true">
   <div class="modal-content">
     <button class="close" onclick="closeEditModal()">×</button>
-    <h2>Редактирай имот</h2>
+    <h2 data-translate>Редактирай имот</h2>
     <form id="editPropertyForm">
-      <input type="text" id="editPropertyName" name="editPropertyName" placeholder="Име" required>
-      <input type="text" id="editPropertyLocation" name="editPropertyLocation" placeholder="Локация" required>
-      <input type="number" id="editPropertyPrice" name="editPropertyPrice" placeholder="Цена" required>
-      <select id="editPropertyType" name="editPropertyType" required>
+      <input type="text" id="editPropertyName" name="editPropertyName" placeholder="Име" required data-translate>
+      <input type="text" id="editPropertyLocation" name="editPropertyLocation" placeholder="Локация" required data-translate>
+      <input type="number" id="editPropertyPrice" name="editPropertyPrice" placeholder="Цена" required data-translate>
+      <select id="editPropertyType" name="editPropertyType" required data-translate>
         <option value="">Изберете тип</option>
         <option value="apartment">Апартамент</option>
         <option value="house">Къща</option>
         <option value="villa">Вила</option>
         <option value="farm">Земеделски имот</option>
       </select>
-      <select id="editPropertyCategory" name="editPropertyCategory" required>
+      <select id="editPropertyCategory" name="editPropertyCategory" required data-translate>
         <option value="">Изберете категория</option>
         <option value="sale">Продажба</option>
         <option value="rental">Наем</option>
       </select>
-      <select id="editPropertyStatus" name="editPropertyStatus">
+      <select id="editPropertyStatus" name="editPropertyStatus" data-translate>
         <option value="free">Свободен</option>
         <option value="taken">Зает</option>
       </select>
       <input type="file" id="editPropertyImage" name="editPropertyImage">
-      <button type="submit">Запази промени</button>
+      <button type="submit" data-translate>Запази промени</button>
     </form>
   </div>
 </div>
 
-  
 <main>
   <div class="background-icon"></div> <!-- floating background -->
 
@@ -82,13 +91,13 @@
   <div id="loginModal" class="modal" aria-hidden="true">
     <div class="centered-card signup-container modal-form">
       <button id="closeLogin" class="close">&times;</button>
-      <h2>Вход</h2>
+      <h2 data-translate>Вход</h2>
       <form id="loginForm">
-        <input type="text" id="username" placeholder="Потребителско име" required>
-        <input type="password" id="password" placeholder="Парола" required>
-        <button type="submit">Вход</button>
-        <p class="muted" style="margin-top:10px;">
-          Нямате акаунт? <a href="signup.html" id="openSignup" class="accent">Регистрация</a>
+        <input type="text" id="username" placeholder="Потребителско име" required data-translate>
+        <input type="password" id="password" placeholder="Парола" required data-translate>
+        <button type="submit" data-translate>Вход</button>
+        <p class="muted" style="margin-top:10px;" data-translate>
+          Нямате акаунт? <a href="signup.html" id="openSignup" class="accent" data-translate>Регистрация</a>
         </p>
       </form>
     </div>
@@ -96,27 +105,27 @@
 
   <!-- Filters -->
   <section class="filters">
-    <input type="text" id="filterLocation" placeholder="Локация" />
-    <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
-    <input type="number" id="filterMaxPrice" placeholder="Макс. цена" />
-    <select id="filterType">
+    <input type="text" id="filterLocation" placeholder="Локация" data-translate />
+    <input type="number" id="filterMinPrice" placeholder="Мин. цена" data-translate />
+    <input type="number" id="filterMaxPrice" placeholder="Макс. цена" data-translate />
+    <select id="filterType" data-translate>
       <option value="">Всички типове</option>
       <option value="apartment">Апартамент</option>
       <option value="house">Къща</option>
       <option value="villa">Вила</option>
       <option value="farm">Земеделски имот</option>
     </select>
-    <select id="filterCategory">
+    <select id="filterCategory" data-translate>
       <option value="">Всички категории</option>
       <option value="sale">Продажба</option>
       <option value="rental">Наем</option>
     </select>
-    <select id="filterStatus">
+    <select id="filterStatus" data-translate>
       <option value="">Всички статуси</option>
       <option value="free">Свободен</option>
       <option value="taken">Зает</option>
     </select>
-    <button id="applyFilters">Филтрирай</button>
+    <button id="applyFilters" data-translate>Филтрирай</button>
   </section>
 
   <section id="properties" class="properties"></section>
@@ -126,11 +135,11 @@
 <div id="propertyModal" class="modal" aria-hidden="true">
   <div class="modal-content">
     <span id="closePropertyModal" class="close">&times;</span>
-    <h2 id="modalTitle"></h2>
-    <p id="modalLocation"></p>
-    <p id="modalPrice"></p>
-    <p id="modalType"></p>
-    <p id="modalCategory"></p>
+    <h2 id="modalTitle" data-translate></h2>
+    <p id="modalLocation" data-translate></p>
+    <p id="modalPrice" data-translate></p>
+    <p id="modalType" data-translate></p>
+    <p id="modalCategory" data-translate></p>
     <img id="modalImage" src="" alt="Имот снимка" style="max-width:100%;" />
   </div>
 </div>
@@ -139,57 +148,50 @@
 <div id="addPropertyModal" class="modal" aria-hidden="true">
   <div class="modal-content">
     <button class="close" onclick="document.getElementById('addPropertyModal').setAttribute('aria-hidden','true')">×</button>
-    <h2>Добави имот</h2>
-
+    <h2 data-translate>Добави имот</h2>
     <form id="propertyForm">
-      <input type="text" id="propertyName" placeholder="Име" required>
-      <input type="text" id="propertyLocation" placeholder="Локация" required>
-      <input type="number" id="propertyPrice" placeholder="Цена" required>
-
-      <select id="propertyType" required>
+      <input type="text" id="propertyName" placeholder="Име" required data-translate>
+      <input type="text" id="propertyLocation" placeholder="Локация" required data-translate>
+      <input type="number" id="propertyPrice" placeholder="Цена" required data-translate>
+      <select id="propertyType" required data-translate>
         <option value="">Изберете тип</option>
         <option value="apartment">Апартамент</option>
         <option value="house">Къща</option>
         <option value="villa">Вила</option>
         <option value="farm">Земеделски имот</option>
       </select>
-
-      <select id="propertyCategory" required>
+      <select id="propertyCategory" required data-translate>
         <option value="">Изберете категория</option>
         <option value="sale">Продажба</option>
         <option value="rental">Наем</option>
       </select>
-
       <select id="propertyStatus" style="display:none;">
         <option value="free">Свободен</option>
         <option value="taken">Зает</option>
       </select>
-
       <input type="file" id="propertyImage">
-      <button type="submit">Добави имот</button>
+      <button type="submit" data-translate>Добави имот</button>
     </form>
   </div>
 </div>
-
-
 
 <!-- Tickets/Admin Modal -->
 <div id="ticketModal" class="modal" aria-hidden="true">
   <div class="modal-content">
     <button id="closeTicketModal" class="close">&times;</button>
-    <h2>Управление на тикети</h2>
-    <input type="text" id="ticketSearch" placeholder="Търси по потребител или имейл..." />
+    <h2 data-translate>Управление на тикети</h2>
+    <input type="text" id="ticketSearch" placeholder="Търси по потребител или имейл..." data-translate />
     <div id="ticketsLeftPanel"></div>
     <div id="ticketDetailContainer">
-      <h3 id="ticketTitle">Изберете тикет</h3>
-      <p id="ticketMessage"></p>
-      <label for="ticketStatus">Статус:</label>
-      <select id="ticketStatus">
+      <h3 id="ticketTitle" data-translate>Изберете тикет</h3>
+      <p id="ticketMessage" data-translate></p>
+      <label for="ticketStatus" data-translate>Статус:</label>
+      <select id="ticketStatus" data-translate>
         <option value="pending">Pending</option>
         <option value="ongoing">Ongoing</option>
         <option value="finished">Resolved</option>
       </select>
-      <button id="deleteTicketBtn">Изтрий тикет</button>
+      <button id="deleteTicketBtn" data-translate>Изтрий тикет</button>
     </div>
   </div>
 </div>
@@ -197,12 +199,12 @@
 <!-- Support Form -->
 <footer>
   <div class="support-card">
-    <h4>Изпратете съобщение до нас</h4>
+    <h4 data-translate>Изпратете съобщение до нас</h4>
     <form id="supportForm" class="support-form">
-      <input type="text" id="supportName" placeholder="Вашето име" required />
-      <input type="email" id="supportEmail" placeholder="Вашият имейл" required />
-      <textarea id="supportMessage" placeholder="Съобщение" required></textarea>
-      <button type="submit" class="support-submit">Изпрати</button>
+      <input type="text" id="supportName" placeholder="Вашето име" required data-translate />
+      <input type="email" id="supportEmail" placeholder="Вашият имейл" required data-translate />
+      <textarea id="supportMessage" placeholder="Съобщение" required data-translate></textarea>
+      <button type="submit" class="support-submit" data-translate>Изпрати</button>
     </form>
   </div>
 </footer>
@@ -217,41 +219,80 @@
 <script type="module" src="propertyForms.js" defer></script>
 <script type="module" src="properties.js" defer></script>
 <script type="module" src="tickets.js" defer></script>
-<script>
-function setLanguage(lang) {
-    const combo = document.querySelector('.goog-te-combo');
 
-    // Wait until Google loads
-    if (!combo) {
-        setTimeout(() => setLanguage(lang), 200);
-        return;
-    }
-
-    // Reset to Bulgarian
-    if (lang === 'bg') {
-        location.reload(); 
-        return;
-    }
-
-    // Change language instantly
-    combo.value = lang;
-    combo.dispatchEvent(new Event('change'));
-}
-
-function translatePage(lang) {
-    setLanguage(lang);
-}
-</script>
+<!-- ========== Improved Google Translate Integration ========== -->
 <script type="text/javascript">
-function googleTranslateElementInit() {
-  new google.translate.TranslateElement({
-      pageLanguage: 'bg',
-      includedLanguages: 'bg,el,tr,en',
-      autoDisplay: false
-  }, 'google_translate_element');
+/* Language metadata and glossary */
+const LANG_META = {
+  bg: { label: "Български", flag: "https://flagcdn.com/w20/bg.png" },
+  el: { label: "Ελληνικά",  flag: "https://flagcdn.com/w20/gr.png" },
+  tr: { label: "Türkçe",    flag: "https://flagcdn.com/w20/tr.png" },
+  en: { label: "English",    flag: "https://flagcdn.com/w20/gb.png" }
+};
+
+const glossary = {
+  en: [["Exodus","Exit"]],
+  tr: [["Exodus","Çıkış"]],
+  el: [],
+  bg: []
+};
+
+function updateLangButton(lang) {
+  const dd = document.querySelector('.lang-dropdown');
+  if (!dd) return;
+  const btn = dd.querySelector('button');
+  if (!btn) return;
+  const meta = LANG_META[lang] || LANG_META['bg'];
+  btn.innerHTML = `<img src="${meta.flag}" class="flag" style="width:20px;height:15px;margin-right:6px;"> ${meta.label}`;
 }
+
+function applyGlossary(text,targetLang){
+  if(!targetLang||!glossary[targetLang]) return text;
+  let fixed=text;
+  glossary[targetLang].forEach(([wrong,right])=>{fixed=fixed.split(wrong).join(right);});
+  return fixed;
+}
+
+function setLanguage(lang){
+  updateLangButton(lang);
+  if(lang==='bg'){ 
+    document.querySelectorAll('[data-original]').forEach(el=>{
+      if(el.dataset.original) el.innerHTML=el.dataset.original;
+      el.removeAttribute('data-original');
+    });
+    location.reload();
+    return;
+  }
+  const combo=document.querySelector('.goog-te-combo');
+  if(!combo){ setTimeout(()=>setLanguage(lang),200); return; }
+  combo.value=lang;
+  combo.dispatchEvent(new Event('change'));
+  const runPostProcess=(attempt=0)=>{
+    const elements=document.querySelectorAll('[data-translate]');
+    elements.forEach(el=>{
+      if(!el.dataset.original) el.dataset.original=el.innerHTML;
+      const fixed=applyGlossary(el.innerHTML,lang);
+      if(fixed!==el.innerHTML) el.innerHTML=fixed;
+    });
+    if(attempt<6) setTimeout(()=>runPostProcess(attempt+1),300);
+  };
+  setTimeout(()=>runPostProcess(0),500);
+}
+
+function translatePage(lang){ setLanguage(lang); }
+
+document.addEventListener('DOMContentLoaded',()=>{updateLangButton('bg');});
 </script>
 
+<script type="text/javascript">
+function googleTranslateElementInit(){
+  new google.translate.TranslateElement({
+    pageLanguage:'bg',
+    includedLanguages:'bg,el,tr,en',
+    autoDisplay:false
+  },'google_translate_element');
+}
+</script>
 <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
 </body>
