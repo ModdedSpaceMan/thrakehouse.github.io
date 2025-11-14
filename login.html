@@ -29,41 +29,47 @@
   <div id="toastContainer"></div>
 
   <script type="module">
-    import { showToast, uiInit } from './ui.js';
+    <script type="module">
+  import { showToast, uiInit } from './ui.js';
 
-    const loginForm = document.getElementById('loginForm');
+  const loginForm = document.getElementById('loginForm');
 
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
 
-      if (!username || !password) {
-        showToast('Попълнете всички полета');
-        return;
+    if (!username || !password) {
+      showToast('Попълнете всички полета');
+      return;
+    }
+
+    try {
+      const res = await fetch('https://my-backend.martinmiskata.workers.dev/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+      if (data.success && data.token) {
+        // ✅ Store token as 'token' and username for other scripts
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('username', username);
+        uiInit?.(); // optional if you have UI initialization
+
+        showToast('Влязохте успешно!');
+        window.location.href = 'index.html';
+      } else {
+        showToast(data.message || 'Невалидно потребителско име или парола');
       }
+    } catch (err) {
+      console.error(err);
+      showToast('Грешка при опит за вход');
+    }
+  });
+</script>
 
-      try {
-        const res = await fetch('https://my-backend.martinmiskata.workers.dev/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
-
-        const data = await res.json();
-        if (data.success && data.token) {
-          localStorage.setItem('jwt', data.token);
-          uiInit();
-          showToast('Влязохте успешно!');
-          window.location.href = 'index.html';
-        } else {
-          showToast(data.message || 'Невалидно потребителско име или парола');
-        }
-      } catch (err) {
-        console.error(err);
-        showToast('Грешка при опит за вход');
-      }
-    });
   </script>
 </body>
 </html>
