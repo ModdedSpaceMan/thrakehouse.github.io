@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <title>Любими</title>
+  <link rel="stylesheet" href="style.css"> <!-- your site CSS -->
+  <style>
+    /* Extra wishlist-specific styles */
+    #emptyWishlist {
+      text-align: center;
+      padding: 40px;
+      color: #6b5e57;
+      font-size: 1.1rem;
+    }
+
+    #wishlistGrid .property .remove-btn {
+      background: #e65c55;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    #wishlistGrid .property .remove-btn:hover {
+      background: #b7413e;
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <h1>Любими имоти</h1>
+    <nav class="top-nav">
+      <a href="index.html" class="top-btn">Начало</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <h2 style="color:#7a2f2a; margin-bottom: 20px; text-align:center;">Вашите любими имоти</h2>
+
+  <div id="emptyWishlist" style="display:none;">
+    <p>Все още нямате добавени имоти в „Любими“.</p>
+    <a href="index.html" class="go-wishlist-btn" style="margin-top:18px; display:inline-block;">Разгледайте имоти</a>
+  </div>
+
+  <div id="wishlistGrid" class="properties"></div>
+</main>
+
+<script>
+(async () => {
+  const username = window.USERNAME; // define your logged-in username globally
+  const token = localStorage.getItem("token"); // read token from localStorage
+
+  if (!token) {
+    window.location.href = "/login.html"; // redirect if not logged in
+    return;
+  }
+
+  const wishlistGrid = document.getElementById("wishlistGrid");
+  const emptyState = document.getElementById("emptyWishlist");
+
+  async function fetchWishlist() {
+    const res = await fetch(`/wishlists/${username}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    return data.items || [];
+  }
+
+  async function removeItem(propertyId) {
+    const res = await fetch(`/wishlists/${username}/remove`, {
+      method: "POST",
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ propertyId })
+    });
+    const data = await res.json();
+    return data.success;
+  }
+
+  async function renderWishlist() {
+    wishlistGrid.innerHTML = '';
+    const items = await fetchWishlist();
+
+    if (!items.length) {
+      emptyState.style.display = 'block';
+      return;
+    } else {
+      emptyState.style.display = 'none';
+    }
+
+    items.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "property";
+      card.innerHTML = `
+        <span class="status-badge">Любим</span>
+        <img src="${item.image || 'https://via.placeholder.com/400x200'}" alt="Property Image">
+        <div class="property-content">
+          <h3>${item.title || 'Имот #' + item.id}</h3>
+          <p><strong>Цена:</strong> ${item.price || '—'}</p>
+          <p><strong>Локация:</strong> ${item.location || '—'}</p>
+          <button class="remove-btn">Премахни</button>
+        </div>
+      `;
+
+      card.querySelector(".remove-btn").addEventListener("click", async () => {
+        const success = await removeItem(item.id);
+        if (success) card.remove();
+        if (wishlistGrid.children.length === 0) emptyState.style.display = 'block';
+      });
+
+      wishlistGrid.appendChild(card);
+    });
+  }
+
+  renderWishlist();
+})();
+</script>
+
+</body>
+</html>
