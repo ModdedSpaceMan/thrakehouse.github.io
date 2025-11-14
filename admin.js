@@ -32,6 +32,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const hidden = adminSidebar.getAttribute('aria-hidden') === 'true';
     adminSidebar.setAttribute('aria-hidden', hidden ? 'false' : 'true');
   });
+  // Close Add Property modal
+const closeAddBtn = addPropertyModal?.querySelector('.close');
+closeAddBtn?.addEventListener('click', () => {
+  addPropertyModal.setAttribute('aria-hidden', 'true');
+});
 
   // Open Add Property modal
   openAddBtn?.addEventListener('click', () => {
