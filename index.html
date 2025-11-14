@@ -19,6 +19,15 @@
       <span id="userDisplay" class="top-btn" style="display:none;"></span>
       <button id="logoutBtn" class="top-btn" style="display:none;">Изход</button>
       <button id="sidebarToggle" class="top-btn" style="display:none;">☰</button>
+      <div class="lang-dropdown">
+      <button><img src="https://flagcdn.com/w20/bg.png" class="flag"> Български</button>
+      <div class="lang-dropdown-content">
+        <div onclick="translatePage('bg')"><img src="https://flagcdn.com/w20/bg.png" class="flag"> Български</div>
+        <div onclick="translatePage('el')"><img src="https://flagcdn.com/w20/gr.png" class="flag"> Greek</div>
+        <div onclick="translatePage('tr')"><img src="https://flagcdn.com/w20/tr.png" class="flag"> Turkish</div>
+        <div onclick="translatePage('en')"><img src="https://flagcdn.com/w20/gb.png" class="flag"> English</div>
+      </div>
+    </div>
     </nav>
   </div>
 </header>
@@ -206,6 +215,30 @@
 <script type="module" src="propertyForms.js" defer></script>
 <script type="module" src="properties.js" defer></script>
 <script type="module" src="tickets.js" defer></script>
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'bg', includedLanguages: 'bg,el,tr,en'}, 'google_translate_element');
+}
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
+<script>
+function translatePage(lang) {
+  const frame = document.querySelector('iframe.goog-te-menu-frame');
+  if (lang === 'bg') {
+    location.reload(); // Reload to default Bulgarian
+    return;
+  }
+
+  // Open the Google Translate menu and select language
+  const select = document.querySelector('select.goog-te-combo');
+  if (select) {
+    select.value = lang;
+    select.dispatchEvent(new Event('change'));
+  } else {
+    alert('Please wait a few seconds for Google Translate to load.');
+  }
+}
+</script>
 </body>
 </html>
