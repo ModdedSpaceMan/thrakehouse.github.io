@@ -217,30 +217,42 @@
 <script type="module" src="propertyForms.js" defer></script>
 <script type="module" src="properties.js" defer></script>
 <script type="module" src="tickets.js" defer></script>
+<script>
+function setLanguage(lang) {
+    const combo = document.querySelector('.goog-te-combo');
+
+    // Wait until Google loads
+    if (!combo) {
+        setTimeout(() => setLanguage(lang), 200);
+        return;
+    }
+
+    // Reset to Bulgarian
+    if (lang === 'bg') {
+        location.reload(); 
+        return;
+    }
+
+    // Change language instantly
+    combo.value = lang;
+    combo.dispatchEvent(new Event('change'));
+}
+
+function translatePage(lang) {
+    setLanguage(lang);
+}
+</script>
 <script type="text/javascript">
 function googleTranslateElementInit() {
-  new google.translate.TranslateElement({pageLanguage: 'bg', includedLanguages: 'bg,el,tr,en'}, 'google_translate_element');
+  new google.translate.TranslateElement({
+      pageLanguage: 'bg',
+      includedLanguages: 'bg,el,tr,en',
+      autoDisplay: false
+  }, 'google_translate_element');
 }
 </script>
-<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
-<script>
-function translatePage(lang) {
-  const frame = document.querySelector('iframe.goog-te-menu-frame');
-  if (lang === 'bg') {
-    location.reload(); // Reload to default Bulgarian
-    return;
-  }
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
-  // Open the Google Translate menu and select language
-  const select = document.querySelector('select.goog-te-combo');
-  if (select) {
-    select.value = lang;
-    select.dispatchEvent(new Event('change'));
-  } else {
-    alert('Please wait a few seconds for Google Translate to load.');
-  }
-}
-</script>
 </body>
 </html>
