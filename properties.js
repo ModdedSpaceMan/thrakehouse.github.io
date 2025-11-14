@@ -35,30 +35,45 @@ function setupEditModal() {
     editCloseBtn.addEventListener('click', () => {
       editModal.setAttribute('aria-hidden', 'true');
       editModal.dataset.propertyId = '';
+      editForm.reset();
     });
   }
+
+  // Open modal function
+  window.openEditModal = function(property) {
+    editModal.dataset.propertyId = property.id;
+
+    editForm.editPropertyName.value = property.name || '';
+    editForm.editPropertyLocation.value = property.location || '';
+    editForm.editPropertyPrice.value = property.price || '';
+    editForm.editPropertyType.value = property.type || '';
+    editForm.editPropertyCategory.value = property.category || '';
+    editForm.editPropertyStatus.value = property.status || 'free';
+
+    editModal.setAttribute('aria-hidden', 'false');
+  };
 
   // Submit modal form
   editForm.addEventListener('submit', async e => {
     e.preventDefault();
+
     const id = editModal.dataset.propertyId;
-    if (!id) return;
+    if (!id) return showToast('Property ID missing');
 
-    // Safely get all form fields
-    const nameField = document.getElementById('editPropertyName');
-    const locationField = document.getElementById('editPropertyLocation');
-    const priceField = document.getElementById('editPropertyPrice');
-    const typeField = document.getElementById('editPropertyType');
-    const categoryField = document.getElementById('editPropertyCategory');
-    const statusField = document.getElementById('editPropertyStatus');
+    // Grab all form fields dynamically
+    const formData = Object.fromEntries(new FormData(editForm).entries());
+    
+    // Convert price to number
+    formData.editPropertyPrice = parseFloat(formData.editPropertyPrice) || 0;
 
+    // Map formData keys to your API format
     const data = {
-      name: nameField?.value || '',
-      location: locationField?.value || '',
-      price: priceField?.value || '',
-      type: typeField?.value || '',
-      category: categoryField?.value || '',
-      status: statusField?.value || 'free'
+      name: formData.editPropertyName,
+      location: formData.editPropertyLocation,
+      price: formData.editPropertyPrice,
+      type: formData.editPropertyType,
+      category: formData.editPropertyCategory,
+      status: formData.editPropertyStatus || 'free'
     };
 
     try {
@@ -76,6 +91,7 @@ function setupEditModal() {
       showToast('Имотът беше редактиран!');
       editModal.setAttribute('aria-hidden', 'true');
       editModal.dataset.propertyId = '';
+      editForm.reset();
       await loadProperties();
     } catch (err) {
       console.error(err);
@@ -83,6 +99,7 @@ function setupEditModal() {
     }
   });
 }
+
 
 // --------------------
 // Open edit modal
