@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Любими</title>
-  <link rel="stylesheet" href="styles.css"> <!-- your site CSS -->
+  <link rel="stylesheet" href="styles.css">
   <style>
-    /* Extra wishlist-specific styles */
     #emptyWishlist {
       text-align: center;
       padding: 40px;
@@ -54,11 +53,9 @@
 
 <script>
 (async () => {
-  // Get token and username from localStorage
   const token = localStorage.getItem("token");
   const username = localStorage.getItem("username");
 
-  // Redirect to login if not logged in
   if (!token || !username) {
     window.location.href = "/login.html";
     return;
@@ -67,7 +64,6 @@
   const wishlistGrid = document.getElementById("wishlistGrid");
   const emptyState = document.getElementById("emptyWishlist");
 
-  // Fetch wishlist from worker
   async function fetchWishlist() {
     try {
       const res = await fetch(`/wishlists/${username}`, {
@@ -81,7 +77,6 @@
     }
   }
 
-  // Remove item from wishlist
   async function removeItem(propertyId) {
     try {
       const res = await fetch(`/wishlists/${username}/remove`, {
@@ -100,7 +95,6 @@
     }
   }
 
-  // Render wishlist
   async function renderWishlist() {
     wishlistGrid.innerHTML = '';
     const items = await fetchWishlist();
@@ -125,14 +119,11 @@
           <button class="remove-btn">Премахни</button>
         </div>
       `;
-
-      // Remove button handler
       card.querySelector(".remove-btn").addEventListener("click", async () => {
         const success = await removeItem(item.id);
         if (success) card.remove();
         if (wishlistGrid.children.length === 0) emptyState.style.display = 'block';
       });
-
       wishlistGrid.appendChild(card);
     });
   }
