@@ -220,80 +220,16 @@ body { top: 0 !important; }
 <script type="module" src="properties.js" defer></script>
 <script type="module" src="tickets.js" defer></script>
 
-<!-- ========== Improved Google Translate Integration ========== -->
-<script type="text/javascript">
-/* Language metadata and glossary */
-const LANG_META = {
-  bg: { label: "Български", flag: "https://flagcdn.com/w20/bg.png" },
-  el: { label: "Ελληνικά",  flag: "https://flagcdn.com/w20/gr.png" },
-  tr: { label: "Türkçe",    flag: "https://flagcdn.com/w20/tr.png" },
-  en: { label: "English",    flag: "https://flagcdn.com/w20/gb.png" }
-};
+<script type="module">
+  import { initLanguageDropdown, setLanguage } from './i18n.js';
 
-const glossary = {
-  en: [["Exodus","Exit"]],
-  tr: [["Exodus","Çıkış"]],
-  el: [],
-  bg: []
-};
+  // Set default language on page load
+  setLanguage('bg');
 
-function updateLangButton(lang) {
-  const dd = document.querySelector('.lang-dropdown');
-  if (!dd) return;
-  const btn = dd.querySelector('button');
-  if (!btn) return;
-  const meta = LANG_META[lang] || LANG_META['bg'];
-  btn.innerHTML = `<img src="${meta.flag}" class="flag" style="width:20px;height:15px;margin-right:6px;"> ${meta.label}`;
-}
-
-function applyGlossary(text,targetLang){
-  if(!targetLang||!glossary[targetLang]) return text;
-  let fixed=text;
-  glossary[targetLang].forEach(([wrong,right])=>{fixed=fixed.split(wrong).join(right);});
-  return fixed;
-}
-
-function setLanguage(lang){
-  updateLangButton(lang);
-  if(lang==='bg'){ 
-    document.querySelectorAll('[data-original]').forEach(el=>{
-      if(el.dataset.original) el.innerHTML=el.dataset.original;
-      el.removeAttribute('data-original');
-    });
-    location.reload();
-    return;
-  }
-  const combo=document.querySelector('.goog-te-combo');
-  if(!combo){ setTimeout(()=>setLanguage(lang),200); return; }
-  combo.value=lang;
-  combo.dispatchEvent(new Event('change'));
-  const runPostProcess=(attempt=0)=>{
-    const elements=document.querySelectorAll('[data-translate]');
-    elements.forEach(el=>{
-      if(!el.dataset.original) el.dataset.original=el.innerHTML;
-      const fixed=applyGlossary(el.innerHTML,lang);
-      if(fixed!==el.innerHTML) el.innerHTML=fixed;
-    });
-    if(attempt<6) setTimeout(()=>runPostProcess(attempt+1),300);
-  };
-  setTimeout(()=>runPostProcess(0),500);
-}
-
-function translatePage(lang){ setLanguage(lang); }
-
-document.addEventListener('DOMContentLoaded',()=>{updateLangButton('bg');});
+  // Initialize dropdown
+  initLanguageDropdown();
 </script>
 
-<script type="text/javascript">
-function googleTranslateElementInit(){
-  new google.translate.TranslateElement({
-    pageLanguage:'bg',
-    includedLanguages:'bg,el,tr,en',
-    autoDisplay:false
-  },'google_translate_element');
-}
-</script>
-<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
 </body>
 </html>
