@@ -20,6 +20,17 @@ export async function initProperties() {
   setupEditModal();
 }
 
+function closeEditModal() {
+  const editModal = document.getElementById('editPropertyModal');
+  const editForm = document.getElementById('editPropertyForm');
+  if (!editModal || !editForm) return;
+
+  editModal.setAttribute('aria-hidden', 'true');
+  editModal.dataset.propertyId = '';
+  editForm.reset();
+}
+
+
 // --------------------
 // Edit modal setup
 // --------------------
