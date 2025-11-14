@@ -5,48 +5,29 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Имоти в Гърция</title>
 <link rel="stylesheet" href="styles.css" />
-
-<style>
-/* Hide Google translate UI completely */
-.goog-te-banner-frame, .goog-logo-link, .goog-te-gadget, .goog-te-menu-frame, .goog-te-banner {
-  display: none !important;
-}
-body { top: 0 !important; }
-</style>
 </head>
 <body>
 
 <header>
   <div class="header-inner">
-    <h1 data-translate>Имоти в Гърция</h1>
+    <h1>Имоти в Гърция</h1>
     <nav class="top-nav">
-      <a href="/wishlist.html" class="go-wishlist-btn" data-translate>Любими</a>
-      <button id="loginBtn" class="top-btn" data-translate>Вход</button>
-      <a id="registerBtn" href="signup.html" class="top-btn" data-translate>Регистрация</a>
+      <a href="/wishlist.html" class="go-wishlist-btn">Любими</a>
+      <button id="loginBtn" class="top-btn">Вход</button>
+      <a id="registerBtn" href="signup.html" class="top-btn">Регистрация</a>
       <span id="userDisplay" class="top-btn" style="display:none;"></span>
-      <button id="logoutBtn" class="top-btn" style="display:none;" data-translate>Изход</button>
+      <button id="logoutBtn" class="top-btn" style="display:none;">Изход</button>
       <button id="sidebarToggle" class="top-btn" style="display:none;">☰</button>
-
-      <!-- Language dropdown -->
-      <div class="lang-dropdown">
-        <button id="langBtn"><img src="https://flagcdn.com/w20/bg.png" class="flag"> Български</button>
-        <div class="lang-dropdown-content">
-          <div data-lang="bg"><img src="https://flagcdn.com/w20/bg.png" class="flag"> Български</div>
-          <div data-lang="el"><img src="https://flagcdn.com/w20/gr.png" class="flag"> Greek</div>
-          <div data-lang="tr"><img src="https://flagcdn.com/w20/tr.png" class="flag"> Turkish</div>
-          <div data-lang="en"><img src="https://flagcdn.com/w20/gb.png" class="flag"> English</div>
-        </div>
-      </div>
     </nav>
   </div>
 </header>
 
 <!-- Admin Sidebar -->
 <div id="adminSidebar" class="sidebar" aria-hidden="true">
-  <button id="addPropertySidebarBtn" class="sidebar-btn" data-translate>Добави имот</button>
-  <button id="viewSupportBtn" class="sidebar-btn" data-translate>Преглед на тикети</button>
-  <input type="text" id="adminSearchInput" placeholder="Търси имот по ID..." data-translate />
-  <button id="adminSearchBtn" class="sidebar-btn" data-translate>Търси</button>
+  <button id="addPropertySidebarBtn" class="sidebar-btn">Добави имот</button>
+  <button id="viewSupportBtn" class="sidebar-btn">Преглед на тикети</button>
+  <input type="text" id="adminSearchInput" placeholder="Търси имот по ID..." />
+  <button id="adminSearchBtn" class="sidebar-btn">Търси</button>
   <div id="adminFound" class="admin-search-results"></div>
 </div>
 
@@ -54,29 +35,29 @@ body { top: 0 !important; }
 <div id="editPropertyModal" class="modal" aria-hidden="true">
   <div class="modal-content">
     <button class="close" onclick="closeEditModal()">×</button>
-    <h2 data-translate>Редактирай имот</h2>
+    <h2>Редактирай имот</h2>
     <form id="editPropertyForm">
-      <input type="text" id="editPropertyName" placeholder="Име" required data-translate>
-      <input type="text" id="editPropertyLocation" placeholder="Локация" required data-translate>
-      <input type="number" id="editPropertyPrice" placeholder="Цена" required data-translate>
-      <select id="editPropertyType" required data-translate>
+      <input type="text" id="editPropertyName" placeholder="Име" required>
+      <input type="text" id="editPropertyLocation" placeholder="Локация" required>
+      <input type="number" id="editPropertyPrice" placeholder="Цена" required>
+      <select id="editPropertyType" required>
         <option value="">Изберете тип</option>
         <option value="apartment">Апартамент</option>
         <option value="house">Къща</option>
         <option value="villa">Вила</option>
         <option value="farm">Земеделски имот</option>
       </select>
-      <select id="editPropertyCategory" required data-translate>
+      <select id="editPropertyCategory" required>
         <option value="">Изберете категория</option>
         <option value="sale">Продажба</option>
         <option value="rental">Наем</option>
       </select>
-      <select id="editPropertyStatus" data-translate>
+      <select id="editPropertyStatus">
         <option value="free">Свободен</option>
         <option value="taken">Зает</option>
       </select>
       <input type="file" id="editPropertyImage">
-      <button type="submit" data-translate>Запази промени</button>
+      <button type="submit">Запази промени</button>
     </form>
   </div>
 </div>
@@ -88,13 +69,13 @@ body { top: 0 !important; }
   <div id="loginModal" class="modal" aria-hidden="true">
     <div class="centered-card signup-container modal-form">
       <button id="closeLogin" class="close">&times;</button>
-      <h2 data-translate>Вход</h2>
+      <h2>Вход</h2>
       <form id="loginForm">
-        <input type="text" id="username" placeholder="Потребителско име" required data-translate>
-        <input type="password" id="password" placeholder="Парола" required data-translate>
-        <button type="submit" data-translate>Вход</button>
-        <p class="muted" style="margin-top:10px;" data-translate>
-          Нямате акаунт? <a href="signup.html" class="accent" data-translate>Регистрация</a>
+        <input type="text" id="username" placeholder="Потребителско име" required>
+        <input type="password" id="password" placeholder="Парола" required>
+        <button type="submit">Вход</button>
+        <p class="muted" style="margin-top:10px;">
+          Нямате акаунт? <a href="signup.html" class="accent">Регистрация</a>
         </p>
       </form>
     </div>
@@ -102,27 +83,27 @@ body { top: 0 !important; }
 
   <!-- Filters -->
   <section class="filters">
-    <input type="text" id="filterLocation" placeholder="Локация" data-translate />
-    <input type="number" id="filterMinPrice" placeholder="Мин. цена" data-translate />
-    <input type="number" id="filterMaxPrice" placeholder="Макс. цена" data-translate />
-    <select id="filterType" data-translate>
+    <input type="text" id="filterLocation" placeholder="Локация" />
+    <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
+    <input type="number" id="filterMaxPrice" placeholder="Макс. цена" />
+    <select id="filterType">
       <option value="">Всички типове</option>
       <option value="apartment">Апартамент</option>
       <option value="house">Къща</option>
       <option value="villa">Вила</option>
       <option value="farm">Земеделски имот</option>
     </select>
-    <select id="filterCategory" data-translate>
+    <select id="filterCategory">
       <option value="">Всички категории</option>
       <option value="sale">Продажба</option>
       <option value="rental">Наем</option>
     </select>
-    <select id="filterStatus" data-translate>
+    <select id="filterStatus">
       <option value="">Всички статуси</option>
       <option value="free">Свободен</option>
       <option value="taken">Зает</option>
     </select>
-    <button id="applyFilters" data-translate>Филтрирай</button>
+    <button id="applyFilters">Филтрирай</button>
   </section>
 
   <section id="properties" class="properties"></section>
@@ -131,12 +112,12 @@ body { top: 0 !important; }
 <!-- Footer -->
 <footer>
   <div class="support-card">
-    <h4 data-translate>Изпратете съобщение до нас</h4>
+    <h4>Изпратете съобщение до нас</h4>
     <form id="supportForm" class="support-form">
-      <input type="text" id="supportName" placeholder="Вашето име" required data-translate>
-      <input type="email" id="supportEmail" placeholder="Вашият имейл" required data-translate>
-      <textarea id="supportMessage" placeholder="Съобщение" required data-translate></textarea>
-      <button type="submit" class="support-submit" data-translate>Изпрати</button>
+      <input type="text" id="supportName" placeholder="Вашето име" required>
+      <input type="email" id="supportEmail" placeholder="Вашият имейл" required>
+      <textarea id="supportMessage" placeholder="Съобщение" required></textarea>
+      <button type="submit" class="support-submit">Изпрати</button>
     </form>
   </div>
 </footer>
@@ -151,15 +132,6 @@ body { top: 0 !important; }
 <script type="module" src="propertyForms.js" defer></script>
 <script type="module" src="properties.js" defer></script>
 <script type="module" src="tickets.js" defer></script>
-
-<script type="module">
-  import { setLanguage, initLanguageDropdown } from './i18n.js';
-
-  document.addEventListener('DOMContentLoaded', () => {
-    setLanguage('bg');       // default language
-    initLanguageDropdown();  // attach dropdown click events
-  });
-</script>
 
 </body>
 </html>
