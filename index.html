@@ -21,6 +21,25 @@
     </nav>
   </div>
 </header>
+<!-- Ticket Modal -->
+<div id="ticketModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <button id="closeTicketModal" class="close">&times;</button>
+    <h2 id="ticketTitle">Изберете тикет</h2>
+    <p id="ticketMessage"></p>
+    <label for="ticketStatus">Статус:</label>
+    <select id="ticketStatus">
+      <option value="pending">Pending</option>
+      <option value="ongoing">Ongoing</option>
+      <option value="finished">Resolved</option>
+    </select>
+    <button id="deleteTicketBtn">Изтрий тикет</button>
+  </div>
+</div>
+
+<!-- Tickets list panel -->
+<div id="ticketsLeftPanel"></div>
+<input type="text" id="ticketSearch" placeholder="Търси по потребител или имейл..." />
 
 <!-- Admin Sidebar -->
 <div id="adminSidebar" class="sidebar" aria-hidden="true">
