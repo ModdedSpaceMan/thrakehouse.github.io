@@ -54,7 +54,7 @@ export function updateUI() {
   const token = localStorage.getItem('token');
   const username = localStorage.getItem('username');
   const role = localStorage.getItem('role');
-
+  if (registerBtn) registerBtn.style.display = token ? 'none' : 'inline-block'
   if (loginBtn) loginBtn.style.display = token ? 'none' : 'inline-block';
   if (logoutBtn) logoutBtn.style.display = token ? 'inline-block' : 'none';
   if (userDisplay) {
