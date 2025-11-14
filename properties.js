@@ -13,14 +13,18 @@ const role = localStorage.getItem('role'); // 'admin' or 'user'
 // Initialize
 // --------------------
 export async function initProperties() {
-  await loadWishlist();
-  await loadProperties();
+  await loadWishlist();      // ensure wishlist loaded first
+  await loadProperties();    // then render properties
   setupFilterListeners();
   window.addEventListener('propertiesUpdated', loadProperties);
 
-  // --------------------
-  // Edit Property Modal
-  // --------------------
+  setupEditModal();
+}
+
+// --------------------
+// Edit modal setup
+// --------------------
+function setupEditModal() {
   const editModal = document.getElementById('editPropertyModal');
   const editCloseBtn = editModal?.querySelector('.close');
   const editForm = document.getElementById('editPropertyForm');
@@ -32,34 +36,6 @@ export async function initProperties() {
     });
   }
 
-  // Open modal & prefill
-  function openEditModal(propertyId){
-    const propertyCard = document.querySelector(`.property[data-id="${propertyId}"]`);
-    if(!propertyCard || !editModal) return;
-
-    // Prefill values from card
-    editModal.querySelector('#editPropertyName').value = propertyCard.querySelector('h3').innerText;
-    editModal.querySelector('#editPropertyLocation').value = propertyCard.querySelector('p:nth-of-type(1)').innerText.replace('Локация: ','');
-    editModal.querySelector('#editPropertyPrice').value = propertyCard.querySelector('p:nth-of-type(2)').innerText.replace('Цена: ','');
-    editModal.querySelector('#editPropertyType').value = propertyCard.querySelector('p:nth-of-type(4)').innerText.replace('Тип: ','');
-    editModal.querySelector('#editPropertyCategory').value = propertyCard.querySelector('p:nth-of-type(3)').innerText.includes('Наем') ? 'rental' : 'sale';
-
-    const statusSelect = editModal.querySelector('#editPropertyStatus');
-    if(statusSelect){
-      const statusText = propertyCard.querySelector('p:nth-of-type(5)') 
-        ? propertyCard.querySelector('p:nth-of-type(5)').innerText.replace('Статус: ','') 
-        : 'free';
-      statusSelect.value = statusText;
-    }
-
-    editModal.querySelector('#editPropertyImage').value = '';
-    editModal.dataset.propertyId = propertyId;
-
-    // Show modal
-    editModal.setAttribute('aria-hidden','false');
-  }
-
-  // Form submit
   if(editForm){
     editForm.addEventListener('submit', async e => {
       e.preventDefault();
@@ -67,12 +43,12 @@ export async function initProperties() {
       if(!id) return;
 
       const data = {
-        name: editForm.querySelector('editPropertyName').value,
-        location: editForm.querySelector('editPropertyLocation').value,
-        price: editForm.querySelector('editPropertyPrice').value,
-        type: editForm.querySelector('editPropertyType').value,
-        category: editForm.querySelector('editPropertyCategory').value,
-        status: editForm.querySelector('editPropertyStatus')?.value || 'free'
+        name: editForm.querySelector('#editPropertyName').value,
+        location: editForm.querySelector('#editPropertyLocation').value,
+        price: editForm.querySelector('#editPropertyPrice').value,
+        type: editForm.querySelector('#editPropertyType').value,
+        category: editForm.querySelector('#editPropertyCategory').value,
+        status: editForm.querySelector('#editPropertyStatus')?.value || 'free'
       };
 
       try {
@@ -167,14 +143,13 @@ export function renderProperties(properties) {
 }
 
 // --------------------
-// Event listeners for buttons
+// Event listeners
 // --------------------
 function addEventListeners() {
   propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
     btn.addEventListener('click', async e => {
       e.stopPropagation();
       await toggleWishlist(btn.dataset.id);
-      await loadProperties();
     });
   });
 
@@ -193,25 +168,7 @@ function addEventListeners() {
       btn.addEventListener('click', e => {
         e.stopPropagation();
         const id = btn.dataset.id;
-        const property = document.querySelector(`.property[data-id="${id}"]`);
-        if(!property) return;
-
-        const modal = document.getElementById('editPropertyModal');
-        modal.querySelector('editPropertyName').value = property.querySelector('h3').innerText;
-        modal.querySelector('editPropertyLocation').value = property.querySelector('p:nth-of-type(1)').innerText.replace('Локация: ','');
-        modal.querySelector('editPropertyPrice').value = property.querySelector('p:nth-of-type(2)').innerText.replace('Цена: ','');
-        modal.querySelector('editPropertyType').value = property.querySelector('p:nth-of-type(4)').innerText.replace('Тип: ','');
-        modal.querySelector('editPropertyCategory').value = property.querySelector('p:nth-of-type(3)').innerText.includes('Наем') ? 'rental' : 'sale';
-        
-        const statusSelect = modal.querySelector('editPropertyStatus');
-        if(statusSelect){
-          const statusText = property.querySelector('p:nth-of-type(5)') ? property.querySelector('p:nth-of-type(5)').innerText.replace('Статус: ','') : 'free';
-          statusSelect.value = statusText;
-        }
-
-        modal.querySelector('editPropertyImage').value = '';
-        modal.dataset.propertyId = id;
-        modal.setAttribute('aria-hidden','false'); // open modal
+        openEditModal(id);
       });
     });
 
@@ -226,12 +183,9 @@ function addEventListeners() {
 }
 
 // --------------------
-// Wishlist
+// Wishlist functions
 // --------------------
 export async function loadWishlist() {
-  const username = localStorage.getItem('username');
-  const token = localStorage.getItem('token');
-
   if (!username || !token) {
     wishlistIds = [];
     return;
@@ -244,7 +198,7 @@ export async function loadWishlist() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    // Filter out properties that no longer exist on server
+    // Remove deleted properties
     const propertiesRes = await fetch(`${API_URL}/properties`);
     const properties = await propertiesRes.json();
     const validIds = properties.map(p => p.id);
@@ -257,9 +211,6 @@ export async function loadWishlist() {
 }
 
 export async function toggleWishlist(propertyId) {
-  const username = localStorage.getItem('username');
-  const token = localStorage.getItem('token');
-
   if (!username || !token) {
     showToast('Трябва да сте влезли!');
     return;
@@ -278,25 +229,26 @@ export async function toggleWishlist(propertyId) {
     });
 
     const data = await res.json();
-    if (data.success) {
-      if (action === 'add') wishlistIds.push(propertyId);
-      else wishlistIds = wishlistIds.filter(id => id !== propertyId);
+    if (!res.ok || !data.success) throw new Error(data.message || 'Грешка при wishlist');
 
-      showToast(action === 'add' ? 'Добавено в wishlist!' : 'Премахнато от wishlist');
-      await loadProperties(); // Refresh UI to reflect changes
-    } else {
-      showToast('Грешка при промяна на любими');
-    }
+    // Update memory state
+    if (action === 'add') wishlistIds.push(propertyId);
+    else wishlistIds = wishlistIds.filter(id => id !== propertyId);
+
+    showToast(action === 'add' ? 'Добавено в wishlist!' : 'Премахнато от wishlist');
+
+    // Update just the button
+    const btn = document.querySelector(`.wishlist-btn[data-id="${propertyId}"]`);
+    if (btn) btn.textContent = wishlistIds.includes(propertyId) ? '❤️' : '🤍';
+
   } catch (err) {
     console.error(err);
     showToast('Грешка при връзка със сървъра');
   }
 }
 
-
-
 // --------------------
-// Admin Actions
+// Admin actions
 // --------------------
 async function deleteProperty(id){
   try{
@@ -315,21 +267,16 @@ async function deleteProperty(id){
 
 async function toggleRentalStatus(id){
   try{
-    const property = JSON.parse(localStorage.getItem('properties')).find(p => p.id === id);
-    if(!property) return;
-
-    const newStatus = property.status === 'free' ? 'taken' : 'free';
-
     const res = await fetch(`${API_URL}/properties/${id}/status`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + token
       },
-      body: JSON.stringify({ status: newStatus })
+      body: JSON.stringify({ status: 'toggle' })
     });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    showToast(`Статусът на имота е променен!`);
+    showToast('Статусът на имота е променен!');
     await loadProperties();
   } catch(err){
     console.error(err);
@@ -344,8 +291,9 @@ function setupFilterListeners(){
   const applyBtn = document.getElementById('applyFilters');
   if(!applyBtn) return;
 
-  applyBtn.addEventListener('click', () => {
-    let properties = JSON.parse(localStorage.getItem('properties') || '[]');
+  applyBtn.addEventListener('click', async () => {
+    const properties = await loadProperties();
+    let filtered = properties;
 
     const locationFilter = document.getElementById('filterLocation').value.toLowerCase();
     const minPrice = Number(document.getElementById('filterMinPrice').value);
@@ -353,7 +301,7 @@ function setupFilterListeners(){
     const typeFilter = document.getElementById('filterType').value;
     const statusFilter = document.getElementById('filterStatus').value;
 
-    properties = properties.filter(p => {
+    filtered = filtered.filter(p => {
       const price = Number(p.price);
       if(locationFilter && !p.location.toLowerCase().includes(locationFilter)) return false;
       if(!isNaN(minPrice) && price < minPrice) return false;
@@ -363,7 +311,7 @@ function setupFilterListeners(){
       return true;
     });
 
-    renderProperties(properties);
+    renderProperties(filtered);
   });
 }
 
