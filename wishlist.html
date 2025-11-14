@@ -1,47 +1,59 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Любими имоти</title>
-  <link rel="stylesheet" href="styles.css">
-  <style>
-    /* Wishlist-specific styles */
-    #emptyWishlist {
-      text-align: center;
-      padding: 40px;
-      color: #6b5e57;
-      font-size: 1.1rem;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Любими имоти</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* Extra wishlist-specific styles */
+  #emptyWishlist {
+    text-align: center;
+    padding: 40px;
+    color: #6b5e57;
+    font-size: 1.1rem;
+  }
 
-    #wishlistGrid .property .remove-btn {
-      background: #e65c55;
-      color: #fff;
-      padding: 8px 14px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.2s ease, transform 0.2s ease;
-    }
+  #wishlistGrid .property .remove-btn {
+    background: #e65c55;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
 
-    #wishlistGrid .property .remove-btn:hover {
-      background: #b7413e;
-      transform: translateY(-1px);
-    }
-  </style>
+  #wishlistGrid .property .remove-btn:hover {
+    background: #b7413e;
+    transform: translateY(-1px);
+  }
+
+  .go-wishlist-btn {
+    margin-top: 18px;
+    display: inline-block;
+    background: #e65c55;
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .go-wishlist-btn:hover {
+    background: #b7413e;
+    transform: translateY(-1px);
+  }
+</style>
 </head>
 <body>
-
 <header>
   <div class="header-inner">
     <h1>Любими имоти</h1>
     <nav class="top-nav">
       <a href="index.html" class="top-btn">Начало</a>
-      <button id="loginBtn" class="top-btn">Вход</button>
-      <a id="registerBtn" href="signup.html" class="top-btn">Регистрация</a>
-      <span id="userDisplay" class="top-btn" style="display:none;"></span>
-      <button id="logoutBtn" class="top-btn" style="display:none;">Изход</button>
     </nav>
   </div>
 </header>
@@ -51,29 +63,11 @@
 
   <div id="emptyWishlist" style="display:none;">
     <p>Все още нямате добавени имоти в „Любими“.</p>
-    <a href="index.html" class="go-wishlist-btn" style="margin-top:18px; display:inline-block;">Разгледайте имоти</a>
+    <a href="index.html" class="go-wishlist-btn">Разгледайте имоти</a>
   </div>
 
   <div id="wishlistGrid" class="properties"></div>
 </main>
-
-<!-- Login Modal -->
-<div id="loginModal" class="modal" aria-hidden="true">
-  <div class="centered-card signup-container modal-form">
-    <button id="closeLogin" class="close">&times;</button>
-    <h2>Вход</h2>
-    <form id="loginForm">
-      <input type="text" id="username" placeholder="Потребителско име" required>
-      <input type="password" id="password" placeholder="Парола" required>
-      <button type="submit">Вход</button>
-      <p class="muted" style="margin-top:10px;">
-        Нямате акаунт? <a href="signup.html" class="accent">Регистрация</a>
-      </p>
-    </form>
-  </div>
-</div>
-
-<div id="toast" class="toast"></div>
 
 <script type="module">
 import { updateUI } from './auth.js';
@@ -88,11 +82,13 @@ import { showToast } from './ui.js';
     return;
   }
 
+  const API_URL = "https://my-backend.martinmiskata.workers.dev";
+
   const wishlistGrid = document.getElementById("wishlistGrid");
   const emptyState = document.getElementById("emptyWishlist");
 
   async function fetchAllProperties() {
-    const res = await fetch("/properties", {
+    const res = await fetch(`${API_URL}/properties`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     const data = await res.json();
@@ -100,7 +96,7 @@ import { showToast } from './ui.js';
   }
 
   async function fetchWishlist() {
-    const res = await fetch(`/wishlists/${username}`, {
+    const res = await fetch(`${API_URL}/wishlists/${username}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     const data = await res.json();
@@ -108,7 +104,7 @@ import { showToast } from './ui.js';
   }
 
   async function removeItem(propertyId) {
-    const res = await fetch(`/wishlists/${username}/remove`, {
+    const res = await fetch(`${API_URL}/wishlists/${username}/remove`, {
       method: "POST",
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -128,10 +124,10 @@ import { showToast } from './ui.js';
       fetchWishlist()
     ]);
 
+    // Remove properties that were deleted by admin
     const validIds = new Set(allProperties.map(p => p.id));
     const validWishlist = wishlistItems.filter(id => validIds.has(id));
 
-    // Auto-remove invalid properties
     const removedPromises = wishlistItems.filter(id => !validIds.has(id))
       .map(id => removeItem(id));
     await Promise.all(removedPromises);
@@ -171,10 +167,7 @@ import { showToast } from './ui.js';
   }
 
   renderWishlist();
-
-  // Initialize login/logout UI
   updateUI();
-
 })();
 </script>
 
