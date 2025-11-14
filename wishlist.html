@@ -2,9 +2,11 @@
 <html lang="bg">
 <head>
   <meta charset="UTF-8">
-  <title>Любими</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Любими имоти</title>
   <link rel="stylesheet" href="styles.css">
   <style>
+    /* Wishlist-specific styles */
     #emptyWishlist {
       text-align: center;
       padding: 40px;
@@ -36,6 +38,10 @@
     <h1>Любими имоти</h1>
     <nav class="top-nav">
       <a href="index.html" class="top-btn">Начало</a>
+      <button id="loginBtn" class="top-btn">Вход</button>
+      <a id="registerBtn" href="signup.html" class="top-btn">Регистрация</a>
+      <span id="userDisplay" class="top-btn" style="display:none;"></span>
+      <button id="logoutBtn" class="top-btn" style="display:none;">Изход</button>
     </nav>
   </div>
 </header>
@@ -51,7 +57,28 @@
   <div id="wishlistGrid" class="properties"></div>
 </main>
 
-<script>
+<!-- Login Modal -->
+<div id="loginModal" class="modal" aria-hidden="true">
+  <div class="centered-card signup-container modal-form">
+    <button id="closeLogin" class="close">&times;</button>
+    <h2>Вход</h2>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Потребителско име" required>
+      <input type="password" id="password" placeholder="Парола" required>
+      <button type="submit">Вход</button>
+      <p class="muted" style="margin-top:10px;">
+        Нямате акаунт? <a href="signup.html" class="accent">Регистрация</a>
+      </p>
+    </form>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+import { updateUI } from './auth.js';
+import { showToast } from './ui.js';
+
 (async () => {
   const token = localStorage.getItem("token");
   const username = localStorage.getItem("username");
@@ -64,71 +91,90 @@
   const wishlistGrid = document.getElementById("wishlistGrid");
   const emptyState = document.getElementById("emptyWishlist");
 
+  async function fetchAllProperties() {
+    const res = await fetch("/properties", {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    return data.items || [];
+  }
+
   async function fetchWishlist() {
-    try {
-      const res = await fetch(`/wishlists/${username}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      return data.items || [];
-    } catch (err) {
-      console.error(err);
-      return [];
-    }
+    const res = await fetch(`/wishlists/${username}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    return data.items || [];
   }
 
   async function removeItem(propertyId) {
-    try {
-      const res = await fetch(`/wishlists/${username}/remove`, {
-        method: "POST",
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ propertyId })
-      });
-      const data = await res.json();
-      return data.success;
-    } catch (err) {
-      console.error(err);
-      return false;
-    }
+    const res = await fetch(`/wishlists/${username}/remove`, {
+      method: "POST",
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ propertyId })
+    });
+    const data = await res.json();
+    return data.success;
   }
 
   async function renderWishlist() {
     wishlistGrid.innerHTML = '';
-    const items = await fetchWishlist();
 
-    if (!items.length) {
+    const [allProperties, wishlistItems] = await Promise.all([
+      fetchAllProperties(),
+      fetchWishlist()
+    ]);
+
+    const validIds = new Set(allProperties.map(p => p.id));
+    const validWishlist = wishlistItems.filter(id => validIds.has(id));
+
+    // Auto-remove invalid properties
+    const removedPromises = wishlistItems.filter(id => !validIds.has(id))
+      .map(id => removeItem(id));
+    await Promise.all(removedPromises);
+
+    if (!validWishlist.length) {
       emptyState.style.display = 'block';
       return;
     } else {
       emptyState.style.display = 'none';
     }
 
-    items.forEach(item => {
+    validWishlist.forEach(id => {
+      const property = allProperties.find(p => p.id === id);
+      if (!property) return;
+
       const card = document.createElement("div");
       card.className = "property";
       card.innerHTML = `
         <span class="status-badge">Любим</span>
-        <img src="${item.image || 'https://via.placeholder.com/400x200'}" alt="Property Image">
+        <img src="${property.image || 'https://via.placeholder.com/400x200'}" alt="Property Image">
         <div class="property-content">
-          <h3>${item.title || 'Имот #' + item.id}</h3>
-          <p><strong>Цена:</strong> ${item.price || '—'}</p>
-          <p><strong>Локация:</strong> ${item.location || '—'}</p>
+          <h3>${property.title || 'Имот #' + property.id}</h3>
+          <p><strong>Цена:</strong> ${property.price || '—'}</p>
+          <p><strong>Локация:</strong> ${property.location || '—'}</p>
           <button class="remove-btn">Премахни</button>
         </div>
       `;
+
       card.querySelector(".remove-btn").addEventListener("click", async () => {
-        const success = await removeItem(item.id);
+        const success = await removeItem(property.id);
         if (success) card.remove();
         if (wishlistGrid.children.length === 0) emptyState.style.display = 'block';
       });
+
       wishlistGrid.appendChild(card);
     });
   }
 
   renderWishlist();
+
+  // Initialize login/logout UI
+  updateUI();
+
 })();
 </script>
 
