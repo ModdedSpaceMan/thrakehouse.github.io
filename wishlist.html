@@ -54,38 +54,53 @@
 
 <script>
 (async () => {
-  const username = window.USERNAME; // define your logged-in username globally
-  const token = localStorage.getItem("token"); // read token from localStorage
+  // Get token and username from localStorage
+  const token = localStorage.getItem("token");
+  const username = localStorage.getItem("username");
 
-  if (!token) {
-    window.location.href = "/login.html"; // redirect if not logged in
+  // Redirect to login if not logged in
+  if (!token || !username) {
+    window.location.href = "/login.html";
     return;
   }
 
   const wishlistGrid = document.getElementById("wishlistGrid");
   const emptyState = document.getElementById("emptyWishlist");
 
+  // Fetch wishlist from worker
   async function fetchWishlist() {
-    const res = await fetch(`/wishlists/${username}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
-    return data.items || [];
+    try {
+      const res = await fetch(`/wishlists/${username}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      return data.items || [];
+    } catch (err) {
+      console.error(err);
+      return [];
+    }
   }
 
+  // Remove item from wishlist
   async function removeItem(propertyId) {
-    const res = await fetch(`/wishlists/${username}/remove`, {
-      method: "POST",
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ propertyId })
-    });
-    const data = await res.json();
-    return data.success;
+    try {
+      const res = await fetch(`/wishlists/${username}/remove`, {
+        method: "POST",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ propertyId })
+      });
+      const data = await res.json();
+      return data.success;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
   }
 
+  // Render wishlist
   async function renderWishlist() {
     wishlistGrid.innerHTML = '';
     const items = await fetchWishlist();
@@ -111,6 +126,7 @@
         </div>
       `;
 
+      // Remove button handler
       card.querySelector(".remove-btn").addEventListener("click", async () => {
         const success = await removeItem(item.id);
         if (success) card.remove();
