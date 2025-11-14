@@ -67,12 +67,12 @@ export async function initProperties() {
       if(!id) return;
 
       const data = {
-        name: editForm.querySelector('#editPropertyName').value,
-        location: editForm.querySelector('#editPropertyLocation').value,
-        price: editForm.querySelector('#editPropertyPrice').value,
-        type: editForm.querySelector('#editPropertyType').value,
-        category: editForm.querySelector('#editPropertyCategory').value,
-        status: editForm.querySelector('#editPropertyStatus')?.value || 'free'
+        name: editForm.querySelector('editPropertyName').value,
+        location: editForm.querySelector('editPropertyLocation').value,
+        price: editForm.querySelector('editPropertyPrice').value,
+        type: editForm.querySelector('editPropertyType').value,
+        category: editForm.querySelector('editPropertyCategory').value,
+        status: editForm.querySelector('editPropertyStatus')?.value || 'free'
       };
 
       try {
@@ -197,19 +197,19 @@ function addEventListeners() {
         if(!property) return;
 
         const modal = document.getElementById('editPropertyModal');
-        modal.querySelector('#editPropertyName').value = property.querySelector('h3').innerText;
-        modal.querySelector('#editPropertyLocation').value = property.querySelector('p:nth-of-type(1)').innerText.replace('Локация: ','');
-        modal.querySelector('#editPropertyPrice').value = property.querySelector('p:nth-of-type(2)').innerText.replace('Цена: ','');
-        modal.querySelector('#editPropertyType').value = property.querySelector('p:nth-of-type(4)').innerText.replace('Тип: ','');
-        modal.querySelector('#editPropertyCategory').value = property.querySelector('p:nth-of-type(3)').innerText.includes('Наем') ? 'rental' : 'sale';
+        modal.querySelector('editPropertyName').value = property.querySelector('h3').innerText;
+        modal.querySelector('editPropertyLocation').value = property.querySelector('p:nth-of-type(1)').innerText.replace('Локация: ','');
+        modal.querySelector('editPropertyPrice').value = property.querySelector('p:nth-of-type(2)').innerText.replace('Цена: ','');
+        modal.querySelector('editPropertyType').value = property.querySelector('p:nth-of-type(4)').innerText.replace('Тип: ','');
+        modal.querySelector('editPropertyCategory').value = property.querySelector('p:nth-of-type(3)').innerText.includes('Наем') ? 'rental' : 'sale';
         
-        const statusSelect = modal.querySelector('#editPropertyStatus');
+        const statusSelect = modal.querySelector('editPropertyStatus');
         if(statusSelect){
           const statusText = property.querySelector('p:nth-of-type(5)') ? property.querySelector('p:nth-of-type(5)').innerText.replace('Статус: ','') : 'free';
           statusSelect.value = statusText;
         }
 
-        modal.querySelector('#editPropertyImage').value = '';
+        modal.querySelector('editPropertyImage').value = '';
         modal.dataset.propertyId = id;
         modal.setAttribute('aria-hidden','false'); // open modal
       });
