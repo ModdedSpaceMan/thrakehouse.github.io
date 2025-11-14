@@ -1,175 +1,134 @@
 <!DOCTYPE html>
 <html lang="bg">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Любими имоти</title>
-<link rel="stylesheet" href="styles.css">
-<style>
-  /* Extra wishlist-specific styles */
-  #emptyWishlist {
-    text-align: center;
-    padding: 40px;
-    color: #6b5e57;
-    font-size: 1.1rem;
-  }
-
-  #wishlistGrid .property .remove-btn {
-    background: #e65c55;
-    color: #fff;
-    padding: 8px 14px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background 0.2s ease, transform 0.2s ease;
-  }
-
-  #wishlistGrid .property .remove-btn:hover {
-    background: #b7413e;
-    transform: translateY(-1px);
-  }
-
-  .go-wishlist-btn {
-    margin-top: 18px;
-    display: inline-block;
-    background: #e65c55;
-    color: #fff;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background 0.2s ease, transform 0.2s ease;
-  }
-
-  .go-wishlist-btn:hover {
-    background: #b7413e;
-    transform: translateY(-1px);
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Любими имоти</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header>
-  <div class="header-inner">
+  <header>
     <h1>Любими имоти</h1>
-    <nav class="top-nav">
-      <a href="index.html" class="top-btn">Начало</a>
+    <nav>
+      <a href="index.html">Начало</a>
+      <a href="wishlist.html">Любими</a>
     </nav>
-  </div>
-</header>
+  </header>
 
-<main>
-  <h2 style="color:#7a2f2a; margin-bottom: 20px; text-align:center;">Вашите любими имоти</h2>
+  <main>
+    <section id="wishlistProperties" class="properties"></section>
+  </main>
 
-  <div id="emptyWishlist" style="display:none;">
-    <p>Все още нямате добавени имоти в „Любими“.</p>
-    <a href="index.html" class="go-wishlist-btn">Разгледайте имоти</a>
-  </div>
+  <div id="toast" class="toast"></div>
 
-  <div id="wishlistGrid" class="properties"></div>
-</main>
+  <script type="module">
+    import { showToast } from './ui.js';
 
-<script type="module">
-import { updateUI } from './auth.js';
-import { showToast } from './ui.js';
+    const API_URL = 'https://my-backend.martinmiskata.workers.dev';
+    const username = localStorage.getItem('username');
+    const token = localStorage.getItem('token');
+    const propertyContainer = document.getElementById('wishlistProperties');
 
-(async () => {
-  const token = localStorage.getItem("token");
-  const username = localStorage.getItem("username");
+    let wishlistIds = [];
 
-  if (!token || !username) {
-    window.location.href = "/login.html";
-    return;
-  }
+    // Fetch wishlist from server
+    async function loadWishlist() {
+      if (!username || !token) {
+        propertyContainer.innerHTML = '<p>Трябва да сте влезли, за да видите любимите имоти.</p>';
+        return;
+      }
 
-  const API_URL = "https://my-backend.martinmiskata.workers.dev";
+      try {
+        const res = await fetch(`${API_URL}/wishlists/${username}`, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        wishlistIds = data.items || [];
 
-  const wishlistGrid = document.getElementById("wishlistGrid");
-  const emptyState = document.getElementById("emptyWishlist");
+        // Fetch all properties to filter valid ones
+        const propsRes = await fetch(`${API_URL}/properties`);
+        const allProperties = await propsRes.json();
+        const validProperties = allProperties.filter(p => wishlistIds.includes(p.id));
 
-  async function fetchAllProperties() {
-    const res = await fetch(`${API_URL}/properties`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
-    return data.items || [];
-  }
-
-  async function fetchWishlist() {
-    const res = await fetch(`${API_URL}/wishlists/${username}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
-    return data.items || [];
-  }
-
-  async function removeItem(propertyId) {
-    const res = await fetch(`${API_URL}/wishlists/${username}/remove`, {
-      method: "POST",
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ propertyId })
-    });
-    const data = await res.json();
-    return data.success;
-  }
-
-  async function renderWishlist() {
-    wishlistGrid.innerHTML = '';
-
-    const [allProperties, wishlistItems] = await Promise.all([
-      fetchAllProperties(),
-      fetchWishlist()
-    ]);
-
-    // Remove properties that were deleted by admin
-    const validIds = new Set(allProperties.map(p => p.id));
-    const validWishlist = wishlistItems.filter(id => validIds.has(id));
-
-    const removedPromises = wishlistItems.filter(id => !validIds.has(id))
-      .map(id => removeItem(id));
-    await Promise.all(removedPromises);
-
-    if (!validWishlist.length) {
-      emptyState.style.display = 'block';
-      return;
-    } else {
-      emptyState.style.display = 'none';
+        renderWishlist(validProperties);
+      } catch (err) {
+        console.error(err);
+        propertyContainer.innerHTML = '<p>Грешка при зареждане на любимите имоти.</p>';
+      }
     }
 
-    validWishlist.forEach(id => {
-      const property = allProperties.find(p => p.id === id);
-      if (!property) return;
+    // Render wishlist
+    function renderWishlist(properties) {
+      if (!properties.length) {
+        propertyContainer.innerHTML = '<p>Нямате любими имоти.</p>';
+        return;
+      }
 
-      const card = document.createElement("div");
-      card.className = "property";
-      card.innerHTML = `
-        <span class="status-badge">Любим</span>
-        <img src="${property.image || 'https://via.placeholder.com/400x200'}" alt="Property Image">
-        <div class="property-content">
-          <h3>${property.title || 'Имот #' + property.id}</h3>
-          <p><strong>Цена:</strong> ${property.price || '—'}</p>
-          <p><strong>Локация:</strong> ${property.location || '—'}</p>
-          <button class="remove-btn">Премахни</button>
-        </div>
-      `;
+      propertyContainer.innerHTML = properties.map(p => {
+        const inWishlist = wishlistIds.includes(p.id) ? '❤️' : '🤍';
+        return `
+          <div class="property" data-id="${p.id}">
+            ${p.image ? `<img src="${p.image}" alt="${p.name}">` : ''}
+            <div class="property-content">
+              <h3>${p.name}</h3>
+              <p>Локация: ${p.location}</p>
+              <p>Цена: ${p.price}</p>
+              <p>Категория: ${p.category === 'rental' ? 'Наем' : 'Продажба'}</p>
+              <p>Тип: ${p.type}</p>
+            </div>
+            <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
+          </div>
+        `;
+      }).join('');
 
-      card.querySelector(".remove-btn").addEventListener("click", async () => {
-        const success = await removeItem(property.id);
-        if (success) card.remove();
-        if (wishlistGrid.children.length === 0) emptyState.style.display = 'block';
+      addWishlistListeners();
+    }
+
+    // Wishlist toggle
+    async function toggleWishlist(propertyId) {
+      if (!username || !token) {
+        showToast('Трябва да сте влезли!');
+        return;
+      }
+
+      const action = wishlistIds.includes(propertyId) ? 'remove' : 'add';
+      try {
+        const res = await fetch(`${API_URL}/wishlists/${username}/${action}`, {
+          method: 'POST',
+          headers: { 
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ propertyId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (action === 'add') wishlistIds.push(propertyId);
+          else wishlistIds = wishlistIds.filter(id => id !== propertyId);
+
+          showToast(action === 'add' ? 'Добавено в wishlist!' : 'Премахнато от wishlist');
+          await loadWishlist();
+        } else {
+          showToast('Грешка при промяна на любимите');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Грешка при връзка със сървъра');
+      }
+    }
+
+    // Add button listeners
+    function addWishlistListeners() {
+      propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          toggleWishlist(btn.dataset.id);
+        });
       });
+    }
 
-      wishlistGrid.appendChild(card);
-    });
-  }
-
-  renderWishlist();
-  updateUI();
-})();
-</script>
-
+    document.addEventListener('DOMContentLoaded', loadWishlist);
+  </script>
 </body>
 </html>
