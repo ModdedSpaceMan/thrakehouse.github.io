@@ -21,29 +21,20 @@
     </nav>
   </div>
 </header>
-<!-- Ticket Modal -->
-<div id="ticketModal" class="modal" aria-hidden="true">
-  <div class="modal-content">
-    <button id="closeTicketModal" class="close">&times;</button>
-    <h2 id="ticketTitle">Изберете тикет</h2>
-    <p id="ticketMessage"></p>
-    <label for="ticketStatus">Статус:</label>
-    <select id="ticketStatus">
-      <option value="pending">Pending</option>
-      <option value="ongoing">Ongoing</option>
-      <option value="finished">Resolved</option>
-    </select>
-    <button id="deleteTicketBtn">Изтрий тикет</button>
-  </div>
+
+<!-- Admin Sidebar -->
+<div id="adminSidebar" class="sidebar" aria-hidden="true">
+  <button id="addPropertySidebarBtn" class="sidebar-btn">Добави имот</button>
+  <button id="viewSupportBtn" class="sidebar-btn">Преглед на тикети</button>
+  <input type="text" id="adminSearchInput" placeholder="Търси имот по ID..." />
+  <button id="adminSearchBtn" class="sidebar-btn">Търси</button>
+  <div id="adminFound" class="admin-search-results"></div>
 </div>
 
-<!-- Tickets list panel -->
-<div id="ticketsLeftPanel"></div>
-<input type="text" id="ticketSearch" placeholder="Търси по потребител или имейл..." />
 <!-- Add Property Modal -->
 <div id="addPropertyModal" class="modal" aria-hidden="true">
   <div class="modal-content">
-    <button class="close">×</button>
+    <button class="close" onclick="closeAddModal()">×</button>
     <h2>Добави имот</h2>
     <form id="propertyForm">
       <input type="text" id="propertyName" placeholder="Име" required>
@@ -65,15 +56,6 @@
       <button type="submit">Добави имот</button>
     </form>
   </div>
-</div>
-
-<!-- Admin Sidebar -->
-<div id="adminSidebar" class="sidebar" aria-hidden="true">
-  <button id="addPropertySidebarBtn" class="sidebar-btn">Добави имот</button>
-  <button id="viewSupportBtn" class="sidebar-btn">Преглед на тикети</button>
-  <input type="text" id="adminSearchInput" placeholder="Търси имот по ID..." />
-  <button id="adminSearchBtn" class="sidebar-btn">Търси</button>
-  <div id="adminFound" class="admin-search-results"></div>
 </div>
 
 <!-- Edit Property Modal -->
@@ -104,6 +86,25 @@
       <input type="file" id="editPropertyImage">
       <button type="submit">Запази промени</button>
     </form>
+  </div>
+</div>
+
+<!-- Tickets Modal -->
+<div id="ticketModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <input type="text" id="ticketSearch" placeholder="Търси по потребител или имейл">
+    <div id="ticketsLeftPanel"></div>
+    <div id="ticketDetailContainer">
+      <h3 id="ticketTitle">Изберете тикет</h3>
+      <p id="ticketMessage"></p>
+      <select id="ticketStatus">
+        <option value="pending">Pending</option>
+        <option value="ongoing">Ongoing</option>
+        <option value="done">Done</option>
+      </select>
+      <button id="deleteTicketBtn">Изтрий тикета</button>
+      <button id="closeTicketModal">Затвори</button>
+    </div>
   </div>
 </div>
 
@@ -154,7 +155,6 @@
   <section id="properties" class="properties"></section>
 </main>
 
-<!-- Footer -->
 <footer>
   <div class="support-card">
     <h4>Изпратете съобщение до нас</h4>
@@ -169,7 +169,6 @@
 
 <div id="toast" class="toast"></div>
 
-<!-- JS Modules -->
 <script type="module" src="auth.js" defer></script>
 <script type="module" src="ui.js" defer></script>
 <script type="module" src="support.js" defer></script>
