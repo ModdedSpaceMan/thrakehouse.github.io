@@ -657,7 +657,7 @@ footer {
 
 .wishlist-btn:hover {
   background: #b7413e;
-  transform: translateY(-2px);
+  transform: translateY(-7px)
   box-shadow: 0 6px 14px rgba(0,0,0,0.12);
 }
 
