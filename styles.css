@@ -668,3 +668,44 @@ footer {
 .wishlist-btn {
   transform: translateY(-6px);
 }
+/* Admin Sidebar Search */
+#adminSidebar input#adminSearchInput {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 1px solid #f1c0bd;
+  outline: none;
+  font-size: 14px;
+}
+
+#adminSidebar input#adminSearchInput:focus {
+  border-color: #b7413e;
+  box-shadow: 0 0 0 2px rgba(183,65,62,0.2);
+}
+
+#adminSidebar button#adminSearchBtn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #e65c55;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#adminSidebar button#adminSearchBtn:hover {
+  background: #b7413e;
+}
+
+#adminSidebar .admin-search-results {
+  max-height: 250px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  background: #fff0f0;
+  padding: 10px;
+  border-radius: 8px;
+}
