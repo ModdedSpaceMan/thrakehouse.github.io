@@ -40,6 +40,32 @@
 <!-- Tickets list panel -->
 <div id="ticketsLeftPanel"></div>
 <input type="text" id="ticketSearch" placeholder="Търси по потребител или имейл..." />
+<!-- Add Property Modal -->
+<div id="addPropertyModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <button class="close">×</button>
+    <h2>Добави имот</h2>
+    <form id="propertyForm">
+      <input type="text" id="propertyName" placeholder="Име" required>
+      <input type="text" id="propertyLocation" placeholder="Локация" required>
+      <input type="number" id="propertyPrice" placeholder="Цена" required>
+      <select id="propertyType" required>
+        <option value="">Изберете тип</option>
+        <option value="apartment">Апартамент</option>
+        <option value="house">Къща</option>
+        <option value="villa">Вила</option>
+        <option value="farm">Земеделски имот</option>
+      </select>
+      <select id="propertyCategory" required>
+        <option value="">Изберете категория</option>
+        <option value="sale">Продажба</option>
+        <option value="rental">Наем</option>
+      </select>
+      <input type="file" id="propertyImage">
+      <button type="submit">Добави имот</button>
+    </form>
+  </div>
+</div>
 
 <!-- Admin Sidebar -->
 <div id="adminSidebar" class="sidebar" aria-hidden="true">
