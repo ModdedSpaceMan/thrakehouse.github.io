@@ -61,7 +61,6 @@ export function renderProperties(properties) {
     const adminButtons = role === 'admin' ? `
       <div class="admin-buttons-right">
         <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
-        <button class="edit-btn" data-id="${p.id}">Редактирай</button>
         <button class="delete-btn" data-id="${p.id}">Изтрий</button>
         ${isRental ? `<button class="toggle-status-btn" data-id="${p.id}">${p.status === "free" ? "Зает" : "Свободен"}</button>` : ''}
       </div>
