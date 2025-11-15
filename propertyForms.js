@@ -193,3 +193,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+window.closeEditModal = closeEditModal;
