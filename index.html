@@ -31,32 +31,34 @@
   <div id="adminFound" class="admin-search-results"></div>
 </div>
 
+
 <!-- Add Property Modal -->
-<form id="propertyForm">
-  <input type="text" id="propertyName" placeholder="Име" required>
-  <input type="text" id="propertyLocation" placeholder="Локация" required>
-  <input type="number" id="propertyPrice" placeholder="Цена" required>
-  <select id="propertyType" required>
-    <option value="">Изберете тип</option>
-    <option value="apartment">Апартамент</option>
-    <option value="house">Къща</option>
-    <option value="villa">Вила</option>
-    <option value="farm">Земеделски имот</option>
-  </select>
-  <select id="propertyCategory" required>
-    <option value="">Изберете категория</option>
-    <option value="sale">Продажба</option>
-    <option value="rental">Наем</option>
-  </select>
-  <!-- STATUS SELECT FOR RENTALS -->
-  <select id="propertyStatus" style="display:none;">
-    <option value="">Изберете статус</option>
-    <option value="free">Свободен</option>
-    <option value="taken">Зает</option>
-  </select>
-  <input type="file" id="propertyImage">
-  <button type="submit">Добави имот</button>
-</form>
+<div id="addPropertyModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <button class="close" onclick="closeAddModal()">×</button>
+    <h2>Добави имот</h2>
+    <form id="propertyForm">
+      <input type="text" id="propertyName" placeholder="Име" required>
+      <input type="text" id="propertyLocation" placeholder="Локация" required>
+      <input type="number" id="propertyPrice" placeholder="Цена" required>
+      <select id="propertyType" required>
+        <option value="">Изберете тип</option>
+        <option value="apartment">Апартамент</option>
+        <option value="house">Къща</option>
+        <option value="villa">Вила</option>
+        <option value="farm">Земеделски имот</option>
+      </select>
+      <select id="propertyCategory" required>
+        <option value="">Изберете категория</option>
+        <option value="sale">Продажба</option>
+        <option value="rental">Наем</option>
+      </select>
+      <input type="file" id="propertyImage">
+      <button type="submit">Добави имот</button>
+    </form>
+  </div>
+</div>
+
 
 
 <!-- Edit Property Modal -->
