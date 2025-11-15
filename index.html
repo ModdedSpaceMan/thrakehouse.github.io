@@ -61,37 +61,6 @@
 
 
 
-<!-- Edit Property Modal -->
-<div id="editPropertyModal" class="modal" aria-hidden="true">
-  <div class="modal-content">
-    <button class="close">×</button>
-    <h2>Редактирай имот</h2>
-    <form id="editPropertyForm">
-      <input type="text" id="editPropertyName" placeholder="Име" required>
-      <input type="text" id="editPropertyLocation" placeholder="Локация" required>
-      <input type="number" id="editPropertyPrice" placeholder="Цена" required>
-      <select id="editPropertyType" required>
-        <option value="">Изберете тип</option>
-        <option value="apartment">Апартамент</option>
-        <option value="house">Къща</option>
-        <option value="villa">Вила</option>
-        <option value="farm">Земеделски имот</option>
-      </select>
-      <select id="editPropertyCategory" required>
-        <option value="">Изберете категория</option>
-        <option value="sale">Продажба</option>
-        <option value="rental">Наем</option>
-      </select>
-      <select id="editPropertyStatus">
-        <option value="free">Свободен</option>
-        <option value="taken">Зает</option>
-      </select>
-      <input type="file" id="editPropertyImage">
-      <img id="editPropertyImagePreview" src="" alt="Image preview" style="max-width: 100%; margin-bottom: 12px; display: block;">
-      <button type="submit">Запази промени</button>
-    </form>
-  </div>
-</div>
 
 <!-- Tickets Modal -->
 <div id="ticketModal" class="modal" aria-hidden="true">
