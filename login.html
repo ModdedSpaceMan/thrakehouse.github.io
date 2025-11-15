@@ -29,7 +29,8 @@
   <div id="toastContainer"></div>
 
   <script type="module">
-    import { showToast } from './ui.js'; // your toast system
+    <script type="module">
+import { showToast } from './ui.js'; // your toast system
 
 const loginForm = document.getElementById('loginForm');
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
@@ -40,41 +41,54 @@ loginForm.addEventListener('submit', async (e) => {
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
 
+  console.log("Submitting login form...");
+  console.log("Username:", username);
+  console.log("Password:", password ? "*****" : "empty"); // mask actual password
+
   if (!username || !password) {
     showToast('Попълнете всички полета');
+    console.log("Form validation failed: empty fields");
     return;
   }
 
   try {
+    const bodyData = { username, password };
+    console.log("Sending POST request with body:", bodyData);
+
     const res = await fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify(bodyData)
     });
 
-    // Always try to parse JSON even if status is 401
+    console.log("Response status:", res.status);
+    console.log("Response ok:", res.ok);
+
     const data = await res.json().catch(() => null);
+    console.log("Response JSON:", data);
 
     if (res.ok && data?.success && data.token) {
-      // Store token and username for other scripts
       localStorage.setItem('token', data.token);
       localStorage.setItem('username', username);
 
       showToast('Влязохте успешно!');
+      console.log("Login successful, redirecting...");
       setTimeout(() => {
-        window.location.href = 'index.html'; // redirect to main page
+        window.location.href = 'index.html';
       }, 500);
     } else {
-      // If backend returned JSON, show its message
       showToast(data?.message || 'Невалидно потребителско име или парола');
+      console.log("Login failed:", data?.message);
     }
   } catch (err) {
     console.error('Login error:', err);
     showToast('Грешка при опит за вход');
   }
 });
+</script>
+
 
   </script>
 </body>
