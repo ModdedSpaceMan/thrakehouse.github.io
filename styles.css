@@ -650,3 +650,110 @@ footer {
     padding: 25px 18px;
   }
 }
+/* --------------------
+      Ticket Form
+-------------------- */
+#ticketModal .modal-content {
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #e0f1fc; /* light blue card */
+  border-radius: 12px;
+  padding: 22px;
+}
+
+#ticketSearch {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #92b1db;
+  margin-bottom: 12px;
+  width: 100%;
+  background: #d2e3f4;
+  color: #0f1c2b;
+  outline: none;
+}
+
+#ticketSearch:focus {
+  border-color: #2c5da0;
+  box-shadow: 0 0 0 2px rgba(44,93,160,0.2);
+}
+
+#ticketsLeftPanel {
+  background: #d2e3f4;
+  padding: 12px;
+  border-radius: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+#ticketDetailContainer {
+  margin-top: 12px;
+  background: #d2e3f4;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+#ticketDetailContainer button {
+  background: #2c5da0;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+#ticketDetailContainer button:hover {
+  background: #17375d;
+}
+
+/* --------------------
+      Add Property Form
+-------------------- */
+#addPropertyModal form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#addPropertyModal input,
+#addPropertyModal select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #92b1db;
+  background: #d2e3f4;
+  font-size: 14px;
+  color: #0f1c2b;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#addPropertyModal input:focus,
+#addPropertyModal select:focus {
+  border-color: #2c5da0;
+  box-shadow: 0 0 0 2px rgba(44,93,160,0.2);
+}
+
+#addPropertyModal input[type="file"] {
+  background: #e0f1fc;
+  padding: 10px;
+  border: 1px solid #92b1db;
+  cursor: pointer;
+}
+
+#addPropertyModal button[type="submit"] {
+  background: #2c5da0;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 16px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+#addPropertyModal button[type="submit"]:hover {
+  background: #17375d;
+  transform: translateY(-1px);
+}
