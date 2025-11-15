@@ -1,47 +1,81 @@
-// sessionManager.js
-const API_LOGIN_PAGE = '/login.html'; // redirect here on logout
+/**
+ * SessionManager handles login state purely via localStorage.
+ * It waits briefly for token/username to appear after login/signup.
+ */
 
-// Optional: element ID for visible timer
-const TIMER_ELEMENT_ID = 'session-timer';
+const SessionManager = (() => {
+  const TOKEN_KEY = 'token';
+  const USERNAME_KEY = 'username';
 
-// Start monitoring the token
-export function startSessionManager() {
-  const token = localStorage.getItem('token');
-  const exp = parseInt(localStorage.getItem('token_exp') || '0', 10);
+  // Wait for token/username to appear in localStorage (optional)
+  function waitForSession(timeout = 500) {
+    return new Promise(resolve => {
+      const interval = setInterval(() => {
+        const token = localStorage.getItem(TOKEN_KEY);
+        const username = localStorage.getItem(USERNAME_KEY);
+        if (token && username) {
+          clearInterval(interval);
+          resolve({ loggedIn: true, username, token });
+        }
+      }, 50);
 
-  if (!token || !exp) {
-    forceLogout();
-    return;
+      setTimeout(() => {
+        clearInterval(interval);
+        const token = localStorage.getItem(TOKEN_KEY);
+        const username = localStorage.getItem(USERNAME_KEY);
+        if (token && username) {
+          resolve({ loggedIn: true, username, token });
+        } else {
+          resolve({ loggedIn: false });
+        }
+      }, timeout);
+    });
   }
 
-  const checkInterval = 1000; // every second
-  const intervalId = setInterval(() => {
-    const now = Math.floor(Date.now() / 1000);
-    const remaining = exp - now;
+  // Check if user is logged in
+  async function isLoggedIn() {
+    const session = await waitForSession();
+    if (!session.loggedIn) return false;
 
-    // Update visible timer if element exists
-    const timerEl = document.getElementById(TIMER_ELEMENT_ID);
-    if (timerEl) timerEl.textContent = `Сесия: ${remaining}s`;
-
-    if (remaining <= 0) {
-      clearInterval(intervalId);
-      forceLogout();
+    // Optional: check token expiration (assuming JWT-like payload)
+    try {
+      const payloadB64 = session.token.split('.')[0];
+      const payload = JSON.parse(atob(payloadB64));
+      if (payload.exp && Math.floor(Date.now() / 1000) > payload.exp) {
+        logout(); // token expired
+        return false;
+      }
+    } catch {
+      return false;
     }
-  }, checkInterval);
-}
 
-// Force logout function
-function forceLogout() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('token_exp');
-  alert('Сесията ви е изтекла. Моля, влезте отново.');
-  window.location.href = API_LOGIN_PAGE;
-}
+    return true;
+  }
 
-// Optional: utility to check token validity anywhere
-export function isTokenValid() {
-  const token = localStorage.getItem('token');
-  const exp = parseInt(localStorage.getItem('token_exp') || '0', 10);
-  if (!token || !exp) return false;
-  return Math.floor(Date.now() / 1000) < exp;
-}
+  // Get current username
+  function getUsername() {
+    return localStorage.getItem(USERNAME_KEY) || null;
+  }
+
+  // Logout user
+  function logout() {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USERNAME_KEY);
+  }
+
+  // Get token
+  function getToken() {
+    return localStorage.getItem(TOKEN_KEY) || null;
+  }
+
+  return {
+    waitForSession,
+    isLoggedIn,
+    getUsername,
+    getToken,
+    logout,
+  };
+})();
+
+// Export for modules
+export default SessionManager;
