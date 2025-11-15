@@ -1,4 +1,5 @@
-import { showToast } from './ui.js'; // your toast system
+import { showToast } from './ui.js';
+import SessionManager from './sessionManager.js';
 
 const signupForm = document.getElementById('signupForm');
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
@@ -28,9 +29,12 @@ signupForm.addEventListener('submit', async (e) => {
       showToast('Успешна регистрация! Влизане автоматично...');
       signupForm.reset();
 
-      // Auto-login: store token/username so sessionManager works
+      // Store session using sessionManager
       localStorage.setItem('token', data.token);
       localStorage.setItem('username', username);
+
+      // Wait for sessionManager to pick it up
+      await SessionManager.waitForSession();
 
       setTimeout(() => window.location.href = 'index.html', 900);
     } else {
