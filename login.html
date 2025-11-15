@@ -29,53 +29,53 @@
   <div id="toastContainer"></div>
 
   <script type="module">
-    import { showToast, uiInit } from './ui.js';
-    import { startSessionManager } from './sessionManager.js';
+    import { showToast } from './ui.js'; // your toast system
 
-    const loginForm = document.getElementById('loginForm');
+const loginForm = document.getElementById('loginForm');
+const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-      if (!username || !password) {
-        showToast('Попълнете всички полета');
-        return;
-      }
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
 
-      try {
-        const res = await fetch('https://my-backend.martinmiskata.workers.dev/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
+  if (!username || !password) {
+    showToast('Попълнете всички полета');
+    return;
+  }
 
-        const data = await res.json();
-
-        if (data.success && data.token) {
-          // ✅ Store token and username
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('username', username);
-
-          // Start session manager
-          const payload = JSON.parse(atob(data.token.split('.')[0]));
-          localStorage.setItem('token_exp', payload.exp);
-          startSessionManager();
-
-          // Optional UI init
-          uiInit?.();
-
-          showToast('Влязохте успешно!');
-          setTimeout(() => window.location.href = 'index.html', 700);
-        } else {
-          showToast(data.message || 'Невалидно потребителско име или парола');
-        }
-      } catch (err) {
-        console.error(err);
-        showToast('Грешка при опит за вход');
-      }
+  try {
+    const res = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
     });
+
+    // Always try to parse JSON even if status is 401
+    const data = await res.json().catch(() => null);
+
+    if (res.ok && data?.success && data.token) {
+      // Store token and username for other scripts
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('username', username);
+
+      showToast('Влязохте успешно!');
+      setTimeout(() => {
+        window.location.href = 'index.html'; // redirect to main page
+      }, 500);
+    } else {
+      // If backend returned JSON, show its message
+      showToast(data?.message || 'Невалидно потребителско име или парола');
+    }
+  } catch (err) {
+    console.error('Login error:', err);
+    showToast('Грешка при опит за вход');
+  }
+});
+
   </script>
 </body>
 </html>
