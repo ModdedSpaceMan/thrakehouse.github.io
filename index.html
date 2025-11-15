@@ -153,7 +153,10 @@
 <script type="module" src="propertyForms.js" defer></script>
 <script type="module" src="properties.js" defer></script>
 <script type="module" src="tickets.js" defer></script>
-<script type="module" src="sessionManager.js" defer></script>
+<script type="module">
+  import { startSessionManager } from './sessionManager.js';
+  startSessionManager();
+</script>
 <!-- Session Timer -->
 <div id="sessionTimer" style="
   position: fixed;
