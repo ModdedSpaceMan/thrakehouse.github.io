@@ -88,111 +88,104 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --------------------
-// EDIT PROPERTY LOGIC
-// --------------------
+  // --- EDIT PROPERTY HANDLING ---
 document.addEventListener("DOMContentLoaded", () => {
-  const editModal = document.getElementById("editPropertyModal");
-  const editForm = document.getElementById("editPropertyForm");
-  const editImageInput = document.getElementById("editPropertyImage");
-  const editImagePreview = document.getElementById("editPropertyImagePreview");
+  const editModal = document.getElementById('editPropertyModal');
+  const editForm = document.getElementById('editPropertyForm');
+  const editName = document.getElementById('editPropertyName');
+  const editLocation = document.getElementById('editPropertyLocation');
+  const editPrice = document.getElementById('editPropertyPrice');
+  const editType = document.getElementById('editPropertyType');
+  const editCategory = document.getElementById('editPropertyCategory');
+  const editStatus = document.getElementById('editPropertyStatus');
+  const editImage = document.getElementById('editPropertyImage');
+  const editImagePreview = document.getElementById('editPropertyImagePreview');
+
   let editBase64Image = "";
 
-  if (!editModal || !editForm || !editImageInput) return;
+  if (!editModal || !editForm) return;
 
-  // Close edit modal function
-  function closeEditModal() {
-    editModal.setAttribute("aria-hidden", "true");
-    editModal.dataset.propertyId = "";
+  // --- Open edit modal with property data ---
+  window.openEditModal = async (property) => {
+    if (!property) return;
+
+    editModal.setAttribute('aria-hidden', 'false');
+    editModal.dataset.propertyId = property.id;
+
+    editName.value = property.name || "";
+    editLocation.value = property.location || "";
+    editPrice.value = property.price || "";
+    editType.value = property.type || "";
+    editCategory.value = property.category || "";
+    editStatus.value = property.status || "";
+
+    editBase64Image = property.image || "";
+    editImagePreview.src = property.image || "";
+  };
+
+  // --- Close edit modal ---
+  const closeEditModal = () => {
+    editModal.setAttribute('aria-hidden', 'true');
+    editModal.dataset.propertyId = '';
     editForm.reset();
     editBase64Image = "";
-    if (editImagePreview) editImagePreview.src = "";
-  }
-  window.closeEditModal = closeEditModal; // Make accessible from HTML onclick
+    editImagePreview.src = "";
+  };
 
   const closeBtn = editModal.querySelector(".close");
   closeBtn?.addEventListener("click", closeEditModal);
 
-  // Convert new image to base64
-  editImageInput.addEventListener("change", (e) => {
+  // --- Handle image input for preview ---
+  editImage.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       editBase64Image = reader.result;
-      if (editImagePreview) editImagePreview.src = editBase64Image;
+      editImagePreview.src = editBase64Image;
     };
     reader.readAsDataURL(file);
   });
 
-  // Function to open modal and load existing property
-  window.openEditModal = async function (propertyId) {
-    if (!propertyId) return;
-    try {
-      const res = await fetch(`${API_URL}/properties`);
-      const properties = await res.json();
-      const prop = properties.find(p => p.id === propertyId);
-      if (!prop) return;
-
-      editModal.dataset.propertyId = propertyId;
-      editForm.elements["editPropertyName"].value = prop.name || "";
-      editForm.elements["editPropertyLocation"].value = prop.location || "";
-      editForm.elements["editPropertyPrice"].value = prop.price || "";
-      editForm.elements["editPropertyType"].value = prop.type || "";
-      editForm.elements["editPropertyCategory"].value = prop.category || "";
-      editForm.elements["editPropertyStatus"].value = prop.status || "";
-
-      // Show image preview if exists
-      editBase64Image = prop.image || "";
-      if (editImagePreview) editImagePreview.src = editBase64Image;
-
-      editModal.setAttribute("aria-hidden", "false");
-    } catch (err) {
-      console.error("Failed to load property for editing:", err);
-    }
-  };
-
-  // Submit edit form
+  // --- Submit edit form ---
   editForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+
     const propertyId = editModal.dataset.propertyId;
-    if (!propertyId) return;
+    if (!propertyId) return showToast("Не е избран имот за редакция!");
 
     const updatedProperty = {
-      name: editForm.elements["editPropertyName"].value.trim(),
-      location: editForm.elements["editPropertyLocation"].value.trim(),
-      price: parseFloat(editForm.elements["editPropertyPrice"].value) || 0,
-      type: editForm.elements["editPropertyType"].value,
-      category: editForm.elements["editPropertyCategory"].value,
-      status: editForm.elements["editPropertyCategory"].value === "rental"
-        ? editForm.elements["editPropertyStatus"].value
-        : "",
+      name: editName.value.trim(),
+      location: editLocation.value.trim(),
+      price: parseFloat(editPrice.value) || 0,
+      type: editType.value,
+      category: editCategory.value,
+      status: editCategory.value === "rental" ? editStatus.value : "",
       image: editBase64Image
     };
 
     try {
       const res = await fetch(`${API_URL}/properties/${propertyId}`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + localStorage.getItem("token")
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + localStorage.getItem('token')
         },
         body: JSON.stringify({ property: updatedProperty })
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to update property");
+      if (!res.ok) throw new Error(data.message || "Грешка при редакция на имота");
 
-      showToast("Имотът беше успешно редактиран!");
+      showToast("Имотът беше редактиран успешно!");
       closeEditModal();
 
-      // Trigger re-render
+      // Refresh properties list
       window.dispatchEvent(new Event("propertiesUpdated"));
       await loadProperties();
     } catch (err) {
       console.error(err);
-      showToast("Грешка при редактиране на имота");
+      showToast("Грешка при редакция на имота");
     }
   });
 });
-
