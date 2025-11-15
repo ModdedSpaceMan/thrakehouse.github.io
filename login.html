@@ -30,57 +30,51 @@
   <script type="module">
     import { showToast } from './ui.js'; // your toast system
 
-    const loginForm = document.getElementById('loginForm');
-    const API_URL = 'https://my-backend.martinmiskata.workers.dev';
+const loginForm = document.getElementById('loginForm');
+const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
 
-      if (!username || !password) {
-        showToast('Попълнете всички полета');
-        return;
-      }
+  if (!username || !password) {
+    showToast('Попълнете всички полета');
+    return;
+  }
 
-      try {
-        const res = await fetch(`${API_URL}/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
+  console.log('Submitting login form...');
+  console.log('Username:', username);
+  console.log('Password:', '*'.repeat(password.length));
 
-        const data = await res.json().catch(() => null);
-
-        if (res.ok && data?.success && data.token) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('username', username);
-
-          if (window.sessionManager && typeof window.sessionManager.onLogin === 'function') {
-            window.sessionManager.onLogin({ username, token: data.token });
-          }
-
-          showToast('Влязохте успешно!');
-          setTimeout(() => {
-            window.location.href = 'index.html';
-          }, 500);
-        } else {
-          showToast(data?.message || 'Невалидно потребителско име или парола');
-        }
-      } catch {
-        showToast('Грешка при опит за вход');
-      }
+  try {
+    const res = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
     });
 
-    // Update sessionManager on page load if already logged in
-    document.addEventListener('DOMContentLoaded', () => {
-      const token = localStorage.getItem('token');
-      const storedUsername = localStorage.getItem('username');
-      if (token && storedUsername && window.sessionManager?.onLogin) {
-        window.sessionManager.onLogin({ username: storedUsername, token });
-      }
-    });
+    const data = await res.json().catch(() => null);
+    console.log('Response status:', res.status, 'OK:', res.ok);
+    console.log('Response JSON:', data);
+
+    if (res.ok && data?.success && data.token) {
+      // Store token and username for sessionManager
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('username', username);
+
+      showToast('Влязохте успешно!');
+      setTimeout(() => window.location.href = 'index.html', 500);
+    } else {
+      showToast(data?.message || 'Невалидно потребителско име или парола');
+    }
+  } catch (err) {
+    console.error('Login error:', err);
+    showToast('Грешка при опит за вход');
+  }
+});
+
   </script>
 </body>
 </html>
