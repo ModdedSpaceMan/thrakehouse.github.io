@@ -88,103 +88,105 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // -------------------- EDIT PROPERTY --------------------
+  // --------------------
+// EDIT PROPERTY LOGIC
+// --------------------
+document.addEventListener("DOMContentLoaded", () => {
   const editModal = document.getElementById("editPropertyModal");
   const editForm = document.getElementById("editPropertyForm");
-  if (!editModal || !editForm) return;
+  const editImageInput = document.getElementById("editPropertyImage");
+  const editImagePreview = document.getElementById("editPropertyImagePreview");
+  let editBase64Image = "";
 
-  const nameInput = document.getElementById("editPropertyName");
-  const locationInput = document.getElementById("editPropertyLocation");
-  const priceInput = document.getElementById("editPropertyPrice");
-  const typeSelect = document.getElementById("editPropertyType");
-  const categorySelect = document.getElementById("editPropertyCategory");
-  const statusSelect = document.getElementById("editPropertyStatus");
-  const imageInput = document.getElementById("editPropertyImage");
-  const imagePreview = document.getElementById("editPropertyImagePreview");
-  let currentBase64Image = "";
+  if (!editModal || !editForm || !editImageInput) return;
 
-  const closeEditModal = () => {
+  // Close edit modal function
+  function closeEditModal() {
     editModal.setAttribute("aria-hidden", "true");
+    editModal.dataset.propertyId = "";
     editForm.reset();
-    imagePreview.src = "";
-    currentBase64Image = "";
-  };
+    editBase64Image = "";
+    if (editImagePreview) editImagePreview.src = "";
+  }
+  window.closeEditModal = closeEditModal; // Make accessible from HTML onclick
 
-  const editCloseBtn = editModal.querySelector(".close");
-  editCloseBtn?.addEventListener("click", closeEditModal);
+  const closeBtn = editModal.querySelector(".close");
+  closeBtn?.addEventListener("click", closeEditModal);
 
-  categorySelect?.addEventListener("change", () => {
-    statusSelect.style.display = categorySelect.value === "rental" ? "block" : "none";
-  });
-
-  imageInput?.addEventListener("change", (e) => {
+  // Convert new image to base64
+  editImageInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      currentBase64Image = reader.result;
-      imagePreview.src = currentBase64Image;
+      editBase64Image = reader.result;
+      if (editImagePreview) editImagePreview.src = editBase64Image;
     };
     reader.readAsDataURL(file);
   });
 
-  // Expose a function to open modal with property data
-  window.openEditModal = async (propertyId) => {
+  // Function to open modal and load existing property
+  window.openEditModal = async function (propertyId) {
+    if (!propertyId) return;
     try {
-      const res = await fetch(`${API_URL}/properties/${propertyId}`, {
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-      });
-      if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      const property = await res.json();
+      const res = await fetch(`${API_URL}/properties`);
+      const properties = await res.json();
+      const prop = properties.find(p => p.id === propertyId);
+      if (!prop) return;
 
-      nameInput.value = property.name || "";
-      locationInput.value = property.location || "";
-      priceInput.value = property.price || "";
-      typeSelect.value = property.type || "";
-      categorySelect.value = property.category || "";
-      statusSelect.value = property.status || "";
-      statusSelect.style.display = property.category === "rental" ? "block" : "none";
+      editModal.dataset.propertyId = propertyId;
+      editForm.elements["editPropertyName"].value = prop.name || "";
+      editForm.elements["editPropertyLocation"].value = prop.location || "";
+      editForm.elements["editPropertyPrice"].value = prop.price || "";
+      editForm.elements["editPropertyType"].value = prop.type || "";
+      editForm.elements["editPropertyCategory"].value = prop.category || "";
+      editForm.elements["editPropertyStatus"].value = prop.status || "";
 
-      imagePreview.src = property.image || "";
-      currentBase64Image = property.image || "";
+      // Show image preview if exists
+      editBase64Image = prop.image || "";
+      if (editImagePreview) editImagePreview.src = editBase64Image;
 
-      editForm.dataset.propertyId = property.id;
       editModal.setAttribute("aria-hidden", "false");
     } catch (err) {
-      console.error(err);
-      showToast("Грешка при зареждане на имота");
+      console.error("Failed to load property for editing:", err);
     }
   };
 
+  // Submit edit form
   editForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const propertyId = editForm.dataset.propertyId;
-    if (!propertyId) return showToast("Невалиден имот");
+    const propertyId = editModal.dataset.propertyId;
+    if (!propertyId) return;
 
     const updatedProperty = {
-      name: nameInput.value.trim(),
-      location: locationInput.value.trim(),
-      price: parseFloat(priceInput.value) || 0,
-      type: typeSelect.value,
-      category: categorySelect.value,
-      status: categorySelect.value === "rental" ? statusSelect.value : "",
-      image: currentBase64Image
+      name: editForm.elements["editPropertyName"].value.trim(),
+      location: editForm.elements["editPropertyLocation"].value.trim(),
+      price: parseFloat(editForm.elements["editPropertyPrice"].value) || 0,
+      type: editForm.elements["editPropertyType"].value,
+      category: editForm.elements["editPropertyCategory"].value,
+      status: editForm.elements["editPropertyCategory"].value === "rental"
+        ? editForm.elements["editPropertyStatus"].value
+        : "",
+      image: editBase64Image
     };
 
     try {
       const res = await fetch(`${API_URL}/properties/${propertyId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + localStorage.getItem('token')
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + localStorage.getItem("token")
         },
         body: JSON.stringify({ property: updatedProperty })
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to update property");
 
-      showToast("Имотът беше редактиран успешно!");
+      showToast("Имотът беше успешно редактиран!");
       closeEditModal();
+
+      // Trigger re-render
       window.dispatchEvent(new Event("propertiesUpdated"));
       await loadProperties();
     } catch (err) {
@@ -193,17 +195,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-function closeEditModal() {
-  const editModal = document.getElementById('editPropertyModal');
-  const editForm = document.getElementById('editPropertyForm');
-  if (!editModal || !editForm) return;
 
-  editModal.setAttribute('aria-hidden', 'true');
-  editModal.dataset.propertyId = '';
-  editForm.reset();
-  const preview = document.getElementById('editPropertyImagePreview');
-  if (preview) preview.src = '';
-}
-
-// Make it global for HTML onclick
-window.closeEditModal = closeEditModal;
