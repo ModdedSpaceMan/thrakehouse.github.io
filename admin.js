@@ -47,11 +47,6 @@ closeAddBtn?.addEventListener('click', () => {
   viewSupportBtn?.addEventListener('click', () => {
     if (ticketModal) ticketModal.setAttribute('aria-hidden', 'false');
   });
-    // Close Add Property modal
-  const closeAddBtn = addPropertyModal?.querySelector('.close');
-  closeAddBtn?.addEventListener('click', () => {
-    addPropertyModal.setAttribute('aria-hidden', 'true');
-  });
 
   // Admin search property by ID
   adminSearchBtn?.addEventListener('click', async () => {
