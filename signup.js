@@ -1,4 +1,4 @@
-import {  updateUI } from './auth.js';
+import { updateUI } from './auth.js';
 
 const signupForm = document.getElementById('signupForm');
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
@@ -48,14 +48,21 @@ signupForm.addEventListener('submit', async (e) => {
       body: JSON.stringify({ username: usernameInput, email: emailInput, password })
     });
 
-    if (!res.ok) throw new Error('Signup request failed');
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
 
-    if (data.success) {
-      showToastLocal('Успешна регистрация! Влизане автоматично...');
+    if (res.ok && data?.success && data.token) {
+      // Auto-login
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('username', usernameInput);
+
+      // Notify sessionManager
+      if (window.sessionManager && typeof window.sessionManager.onLogin === 'function') {
+        window.sessionManager.onLogin({ username: usernameInput, token: data.token });
+      }
+
+      showToastLocal('Успешна регистрация! Влязохте автоматично.');
       signupForm.reset();
-      await loginUser(usernameInput, password); // auto-login
-      setTimeout(() => window.location.href = 'index.html', 900);
+      setTimeout(() => window.location.href = 'index.html', 500);
     } else if (data.message === 'Username taken') {
       showToastLocal('Потребителското име вече е заето!');
     } else if (data.message === 'Email taken') {
