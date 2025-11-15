@@ -17,7 +17,6 @@ export async function initProperties() {
   await loadProperties();
   setupFilterListeners();
   window.addEventListener('propertiesUpdated', loadProperties);
-  setupEditModal();
 }
 
 
