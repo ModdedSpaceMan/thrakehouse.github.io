@@ -36,52 +36,55 @@ function closeEditModal() {
 // --------------------
 function setupEditModal() {
   const editModal = document.getElementById('editPropertyModal');
-  const editCloseBtn = editModal?.querySelector('.close');
   const editForm = document.getElementById('editPropertyForm');
-
   if (!editModal || !editForm) return;
 
+  const editCloseBtn = editModal.querySelector('.close');
+
   // Close modal
-  if (editCloseBtn) {
-    editCloseBtn.addEventListener('click', () => {
-      editModal.setAttribute('aria-hidden', 'true');
-      editModal.dataset.propertyId = '';
-      editForm.reset();
-    });
-  }
+  const closeModal = () => {
+    editModal.setAttribute('aria-hidden', 'true');
+    editModal.dataset.propertyId = '';
+    editForm.reset();
+  };
 
-  // Open modal function
-  window.openEditModal = function(property) {
-    editModal.dataset.propertyId = property.id;
+  if (editCloseBtn) editCloseBtn.addEventListener('click', closeModal);
 
-    editForm.editPropertyName.value = property.name || '';
-    editForm.editPropertyLocation.value = property.location || '';
-    editForm.editPropertyPrice.value = property.price || '';
-    editForm.editPropertyType.value = property.type || '';
-    editForm.editPropertyCategory.value = property.category || '';
-    editForm.editPropertyStatus.value = property.status || 'free';
+  // Open modal with property data
+  window.openEditModal = async function(propertyId) {
+    try {
+      const res = await fetch(`${API_URL}/properties/${propertyId}`, {
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const property = await res.json();
 
-    editModal.setAttribute('aria-hidden', 'false');
+      editModal.dataset.propertyId = property.id;
+      editForm.editPropertyName.value = property.name || '';
+      editForm.editPropertyLocation.value = property.location || '';
+      editForm.editPropertyPrice.value = property.price || '';
+      editForm.editPropertyType.value = property.type || '';
+      editForm.editPropertyCategory.value = property.category || '';
+      editForm.editPropertyStatus.value = property.status || 'free';
+
+      editModal.setAttribute('aria-hidden', 'false');
+    } catch (err) {
+      console.error('Failed to load property for editing:', err);
+      showToast('Грешка при зареждане на имота');
+    }
   };
 
   // Submit modal form
   editForm.addEventListener('submit', async e => {
     e.preventDefault();
-
     const id = editModal.dataset.propertyId;
     if (!id) return showToast('Property ID missing');
 
-    // Grab all form fields dynamically
     const formData = Object.fromEntries(new FormData(editForm).entries());
-    
-    // Convert price to number
-    formData.editPropertyPrice = parseFloat(formData.editPropertyPrice) || 0;
-
-    // Map formData keys to your API format
     const data = {
       name: formData.editPropertyName,
       location: formData.editPropertyLocation,
-      price: formData.editPropertyPrice,
+      price: parseFloat(formData.editPropertyPrice) || 0,
       type: formData.editPropertyType,
       category: formData.editPropertyCategory,
       status: formData.editPropertyStatus || 'free'
@@ -96,13 +99,10 @@ function setupEditModal() {
         },
         body: JSON.stringify(data)
       });
-
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       showToast('Имотът беше редактиран!');
-      editModal.setAttribute('aria-hidden', 'true');
-      editModal.dataset.propertyId = '';
-      editForm.reset();
+      closeModal();
       await loadProperties();
     } catch (err) {
       console.error(err);
@@ -110,6 +110,7 @@ function setupEditModal() {
     }
   });
 }
+
 
 
 // --------------------
