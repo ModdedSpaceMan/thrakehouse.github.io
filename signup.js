@@ -1,77 +1,43 @@
-import { updateUI } from './auth.js';
+import { showToast } from './ui.js'; // your toast system
 
 const signupForm = document.getElementById('signupForm');
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
-function showToastLocal(msg, duration = 3000) {
-  const t = document.createElement('div');
-  t.textContent = msg;
-  t.style.position = 'fixed';
-  t.style.right = '28px';
-  t.style.bottom = '28px';
-  t.style.padding = '12px 16px';
-  t.style.background = '#111827';
-  t.style.color = '#fff';
-  t.style.borderRadius = '10px';
-  t.style.boxShadow = '0 8px 30px rgba(2,6,23,0.4)';
-  t.style.transition = 'opacity 0.5s ease';
-  t.style.opacity = '1';
-  document.body.appendChild(t);
-
-  setTimeout(() => {
-    t.style.opacity = '0';
-    setTimeout(() => document.body.removeChild(t), 500);
-  }, duration);
-}
-
 signupForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const usernameInput = document.getElementById('signupUsername').value.trim();
-  const emailInput = document.getElementById('signupEmail').value.trim();
+  const username = document.getElementById('signupUsername').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
   const password = document.getElementById('signupPassword').value;
   const confirm = document.getElementById('signupConfirmPassword').value;
 
-  if (password !== confirm) return showToastLocal('Паролите не съвпадат!');
-
+  if (password !== confirm) return showToast('Паролите не съвпадат!');
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(emailInput)) return showToastLocal('Моля, въведете валиден имейл');
-
-  const allowedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "mail.bg"];
-  const domain = emailInput.split("@")[1];
-  if (!allowedDomains.includes(domain)) return showToastLocal('Моля, използвайте валиден имейл');
+  if (!emailRegex.test(email)) return showToast('Моля, въведете валиден имейл');
 
   try {
     const res = await fetch(`${API_URL}/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: usernameInput, email: emailInput, password })
+      body: JSON.stringify({ username, email, password })
     });
 
     const data = await res.json().catch(() => null);
 
-    if (res.ok && data?.success && data.token) {
-      // Auto-login
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('username', usernameInput);
-
-      // Notify sessionManager
-      if (window.sessionManager && typeof window.sessionManager.onLogin === 'function') {
-        window.sessionManager.onLogin({ username: usernameInput, token: data.token });
-      }
-
-      showToastLocal('Успешна регистрация! Влязохте автоматично.');
+    if (data.success && data.token) {
+      showToast('Успешна регистрация! Влизане автоматично...');
       signupForm.reset();
-      setTimeout(() => window.location.href = 'index.html', 500);
-    } else if (data.message === 'Username taken') {
-      showToastLocal('Потребителското име вече е заето!');
-    } else if (data.message === 'Email taken') {
-      showToastLocal('Имейлът вече е регистриран!');
+
+      // Auto-login: store token/username so sessionManager works
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('username', username);
+
+      setTimeout(() => window.location.href = 'index.html', 900);
     } else {
-      showToastLocal(data.message || 'Грешка при регистрация');
+      showToast(data.message || 'Грешка при регистрация');
     }
   } catch (err) {
-    showToastLocal('Грешка при регистрация');
-    console.error(err);
+    console.error('Signup error:', err);
+    showToast('Грешка при регистрация');
   }
 });
