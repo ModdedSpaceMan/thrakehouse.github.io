@@ -193,4 +193,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+function closeEditModal() {
+  const editModal = document.getElementById('editPropertyModal');
+  const editForm = document.getElementById('editPropertyForm');
+  if (!editModal || !editForm) return;
+
+  editModal.setAttribute('aria-hidden', 'true');
+  editModal.dataset.propertyId = '';
+  editForm.reset();
+  const preview = document.getElementById('editPropertyImagePreview');
+  if (preview) preview.src = '';
+}
+
+// Make it global for HTML onclick
 window.closeEditModal = closeEditModal;
