@@ -1,4 +1,4 @@
-import { loginUser } from './auth.js';
+import {  updateUI } from './auth.js';
 
 const signupForm = document.getElementById('signupForm');
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
