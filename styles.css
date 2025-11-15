@@ -9,8 +9,8 @@
 }
 
 body {
-  background: #fdf6f5;
-  color: #3b3a36;
+  background: #d9e4f1; /* slightly darker light blue */
+  color: #0f1c2b; /* darker blue-gray text */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -24,8 +24,8 @@ a {
       Header
 -------------------- */
 header {
-  background: #b7413e;
-  color: #fff;
+  background: #17375d; /* darker deep blue */
+  color: #ffffff;
   padding: 18px 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   position: sticky;
@@ -49,7 +49,7 @@ header h1 {
 .top-nav a,
 .top-nav button,
 .top-btn {
-  color: #fff;
+  color: #ffffff;
   margin-left: 12px;
   font-weight: 700;
   border: none;
@@ -57,11 +57,11 @@ header h1 {
   padding: 10px 16px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: #e65c55;
+  background: #2c5da0; /* slightly darker medium blue */
 }
 
 .top-btn:hover {
-  background: #b7413e;
+  background: #17375d; /* darker deep blue on hover */
   transform: translateY(-2px);
 }
 
@@ -80,7 +80,7 @@ main {
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 24px;
-  background: #fff0f0;
+  background: #c2d4ed; /* darker light blue */
   padding: 12px 14px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.06);
@@ -91,19 +91,20 @@ main {
 .filters select {
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid #f1c0bd;
+  border: 1px solid #92b1db;
   outline: none;
   font-size: 14px;
+  background: #d2e3f4; /* darker light blue */
 }
 
 .filters input:focus,
 .filters select:focus {
-  border-color: #b7413e;
-  box-shadow: 0 0 0 2px rgba(183,65,62,0.2);
+  border-color: #2c5da0;
+  box-shadow: 0 0 0 2px rgba(44,93,160,0.2);
 }
 
 .filters button {
-  background: #e65c55;
+  background: #2c5da0; /* darker medium blue */
   color: #fff;
   border-radius: 8px;
   padding: 10px 18px;
@@ -113,7 +114,7 @@ main {
 }
 
 .filters button:hover {
-  background: #b7413e;
+  background: #17375d; /* darker deep blue */
   transform: scale(1.05);
 }
 
@@ -124,10 +125,12 @@ main {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 26px;
+  position: relative; /* above background */
+  z-index: 1;
 }
 
 .property {
-  background: #fff5f5;
+  background: #cde0f3; /* darker light blue */
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 12px 28px rgba(0,0,0,0.06);
@@ -155,21 +158,21 @@ main {
 .property-content h3 {
   font-size: 1.3rem;
   margin-bottom: 8px;
-  color: #7a2f2a;
+  color: #17375d;
 }
 
 .property-content p {
   margin-bottom: 6px;
-  color: #6b5e57;
+  color: #2c4b70;
   font-size: 0.95rem;
 }
 
-/* Status badge (Free/Taken) */
+/* Status badge */
 .property .status-badge {
   position: absolute;
   top: 12px;
   left: 12px;
-  background: rgba(183,65,62,0.85);
+  background: rgba(44,93,160,0.85);
   color: #fff;
   padding: 6px 10px;
   border-radius: 8px;
@@ -183,14 +186,14 @@ main {
   opacity: 0.9;
 }
 
-/* Admin Buttons on Properties */
+/* Admin Buttons */
 .property .admin-buttons-right {
   position: absolute;
   top: 0;
   right: -150px;
   width: 150px;
   height: 100%;
-  background: rgba(120,40,38,0.95);
+  background: rgba(23,55,93,0.95);
   display: flex;
   flex-direction: column;
   padding: 12px;
@@ -219,12 +222,27 @@ main {
   text-align: center;
 }
 
-.property .admin-buttons-right .delete-btn { background: #e65c55; }
-.property .admin-buttons-right .edit-btn { background: #a67878; }
-.property .admin-buttons-right .toggle-btn { background: #cf8f8c; }
+.property .admin-buttons-right .delete-btn { background: #2c5da0; }
+.property .admin-buttons-right .edit-btn { background: #4a7ab0; }
+.property .admin-buttons-right .toggle-btn { background: #6695c9; }
+
+/* Property ID badge */
+.property .property-id {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 10;
+}
 
 /* --------------------
-      Modals (all)
+      Modals
 -------------------- */
 .modal {
   display: none;
@@ -242,7 +260,7 @@ main {
 }
 
 .modal-content {
-  background: #fff5f5;
+  background: #cde0f3; /* darker light blue */
   border-radius: 12px;
   width: 100%;
   max-width: 540px;
@@ -259,14 +277,14 @@ main {
   background: none;
   border: none;
   cursor: pointer;
-  color: #7a2f2a;
+  color: #17375d;
   font-weight: bold;
 }
 
 .modal h2 {
   text-align: center;
   margin-bottom: 16px;
-  color: #7a2f2a;
+  color: #17375d;
 }
 
 /* Modal Forms */
@@ -277,19 +295,19 @@ main {
   padding: 12px 14px;
   margin-bottom: 12px;
   border-radius: 8px;
-  border: 1px solid #f1c0bd;
-  background: #fff0f0;
+  border: 1px solid #92b1db;
+  background: #d2e3f4;
 }
 
 .modal-form input:focus,
 .modal-form select:focus,
 .modal-form textarea:focus {
-  border-color: #b7413e;
-  box-shadow: 0 0 0 2px rgba(183,65,62,0.2);
+  border-color: #2c5da0;
+  box-shadow: 0 0 0 2px rgba(44,93,160,0.2);
 }
 
 .modal-form button {
-  background: #e65c55;
+  background: #2c5da0;
   color: #fff;
   border-radius: 8px;
   padding: 10px 16px;
@@ -299,11 +317,11 @@ main {
 }
 
 .modal-form button:hover {
-  background: #b7413e;
+  background: #17375d;
 }
 
 /* --------------------
-      Admin Sidebar
+      Admin Sidebar / Ticket Search
 -------------------- */
 #adminSidebar {
   position: fixed;
@@ -311,7 +329,7 @@ main {
   top: 0;
   width: 320px;
   height: 100%;
-  background: #7a2f2a;
+  background: #17375d;
   color: #fff;
   padding: 22px;
   transition: left 0.28s ease, opacity 0.28s ease;
@@ -329,7 +347,7 @@ main {
 
 #adminSidebar h3 {
   margin-bottom: 12px;
-  color: #fff5f5;
+  color: #d9e4f1;
 }
 
 .sidebar-btn {
@@ -339,349 +357,31 @@ main {
   margin-bottom: 10px;
   border: none;
   border-radius: 10px;
-  background: #e65c55;
+  background: #2c5da0;
   color: #fff;
   font-weight: 700;
   cursor: pointer;
 }
 
 .sidebar-btn:hover {
-  background: #b7413e;
+  background: #17375d;
 }
 
-/* --------------------
-      Ticket System
--------------------- */
-#ticketModal .modal-content {
-  max-width: 900px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-#ticketSearch {
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #f1c0bd;
-  margin-bottom: 12px;
-  width: 100%;
-}
-
-#ticketSearch:focus {
-  border-color: #b7413e;
-  box-shadow: 0 0 0 2px rgba(183,65,62,0.2);
-}
-
-#ticketsLeftPanel {
-  background: #fff0f0;
-  padding: 12px;
-  border-radius: 10px;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-#ticketDetailContainer {
-  margin-top: 12px;
-  background: #fff0f0;
-  padding: 16px;
-  border-radius: 12px;
-}
-
-/* Ticket Buttons */
-#ticketDetailContainer button {
-  background: #e65c55;
-  color: #fff;
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-}
-
-#ticketDetailContainer button:hover {
-  background: #b7413e;
-}
-
-/* --------------------
-      Toast
--------------------- */
-.toast {
-  position: fixed;
-  right: 28px;
-  bottom: 28px;
-  background: #7a2f2a;
-  color: #fff;
-  padding: 12px 16px;
-  border-radius: 10px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity .26s ease, transform .26s ease;
-  z-index: 999;
-  pointer-events: none;
-}
-
-.toast.show {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-/* --------------------
-      Footer / Support
--------------------- */
-footer {
-  background: #fff5f5;
-  margin-top: 28px;
-  padding: 30px 20px;
-  box-shadow: 0 -8px 30px rgba(0,0,0,0.04);
-}
-
-.support-card input,
-.support-card textarea {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  border: 1px solid #f1c0bd;
-  background: #fff0f0;
-}
-
-.support-submit {
-  background: #e65c55;
-  color: #fff;
-  border-radius: 8px;
-  padding: 10px 16px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.support-submit:hover {
-  background: #b7413e;
-}
-
-/* --------------------
-      Responsive
--------------------- */
-@media (max-width: 720px) {
-  .filters { flex-direction: column; }
-  .property-content h3 { font-size: 1.1rem; }
-  #adminSidebar { width: 80%; }
-  .modal-content { width: 90%; padding: 18px; }
-}
-/* --------------------
-   Add Property Modal
--------------------- */
-#addPropertyModal form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-#addPropertyModal input,
-#addPropertyModal select {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 8px;
-  border: 1px solid #f1c0bd;
-  background: #fff0f0;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-#addPropertyModal input:focus,
-#addPropertyModal select:focus {
-  border-color: #b7413e;
-  box-shadow: 0 0 0 2px rgba(183,65,62,0.2);
-}
-
-#addPropertyModal input[type="file"] {
-  background: #fff5f5;
-  padding: 10px;
-  border: 1px solid #f1c0bd;
-  cursor: pointer;
-}
-
-#addPropertyModal button[type="submit"] {
-  background: #e65c55;
-  color: #fff;
-  border-radius: 8px;
-  padding: 10px 16px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-
-#addPropertyModal button[type="submit"]:hover {
-  background: #b7413e;
-  transform: translateY(-1px);
-}
-/* -------------------- */
-/* Edit Property Modal */
-/* -------------------- */
-#editPropertyModal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-
-#editPropertyModal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: none; /* start hidden */
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-#editPropertyModal .modal-content {
-  background: #fff;
-  border-radius: 10px;
-  padding: 25px;
-  width: 400px;
-  max-width: 90%;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-  position: relative;
-}
-
-#editPropertyModal .modal-content h2 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  font-size: 1.5rem;
-  text-align: center;
-}
-
-#editPropertyModal .modal-content input,
-#editPropertyModal .modal-content select {
-  width: 100%;
-  padding: 10px 12px;
-  margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-
-#editPropertyModal .modal-content button[type="submit"] {
-  width: 100%;
-  padding: 12px;
-  background: #4CAF50;
-  color: white;
-  font-weight: bold;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-#editPropertyModal .modal-content button[type="submit"]:hover {
-  background: #45a049;
-}
-
-#editPropertyModal .close {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  font-size: 1.5rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: #555;
-}
-
-#editPropertyModal .close:hover {
-  color: #000;
-}
-#editPropertyModal[aria-hidden="false"] {
-  display: flex; /* show modal */
-  opacity: 1;
-  pointer-events: auto;
-}
-.wishlist-btn {
-  background: #e65c55;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.22s ease;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-}
-
-.wishlist-btn:hover {
-  background: #b7413e;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
-}
-
-.wishlist-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.10);
-}
-.wishlist-btn {
-  display: block;
-  margin: 0 auto;
-}
-.wishlist-btn {
-  width: 48px;
-  height: 48px;
-  background: #e65c55;
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 1.2rem; /* good for an icon (heart/star/etc.) */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.22s ease;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-  margin: 0 auto; /* keeps it centered */
-}
-
-.wishlist-btn:hover {
-  background: #b7413e;
-  transform: translateY(-7px)
-  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
-}
-
-.wishlist-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.10);
-}
-.wishlist-btn {
-  transform: translateY(-6px);
-}
-/* Admin Sidebar Search */
 #adminSidebar input#adminSearchInput {
   width: 100%;
   padding: 10px 12px;
   margin-bottom: 8px;
   border-radius: 8px;
-  border: 1px solid #f1c0bd;
+  border: 1px solid #92b1db;
   outline: none;
   font-size: 14px;
+  background: #d2e3f4;
+  color: #0f1c2b;
 }
 
 #adminSidebar input#adminSearchInput:focus {
-  border-color: #b7413e;
-  box-shadow: 0 0 0 2px rgba(183,65,62,0.2);
+  border-color: #2c5da0;
+  box-shadow: 0 0 0 2px rgba(44,93,160,0.2);
 }
 
 #adminSidebar button#adminSearchBtn {
@@ -691,125 +391,262 @@ footer {
   margin-bottom: 12px;
   border: none;
   border-radius: 8px;
-  background: #e65c55;
+  background: #2c5da0;
   color: #fff;
   font-weight: 700;
   cursor: pointer;
 }
 
 #adminSidebar button#adminSearchBtn:hover {
-  background: #b7413e;
+  background: #17375d;
+}
+/* --------------------
+      Footer / Support
+-------------------- */
+footer {
+  background: #c2d4ed; /* darker light blue */
+  margin-top: 28px;
+  padding: 30px 20px;
+  box-shadow: 0 -8px 30px rgba(0,0,0,0.04);
+  color: #0f1c2b;
 }
 
-#adminSidebar .admin-search-results {
-  max-height: 250px;
-  overflow-y: auto;
-  margin-bottom: 20px;
-  background: #fff0f0;
-  padding: 10px;
-  border-radius: 8px;
+.support-card input,
+.support-card textarea {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: 1px solid #92b1db; /* medium blue border */
+  background: #d2e3f4; /* slightly darker input background */
+  color: #0f1c2b;
 }
-/* Property ID badge */
-.property .property-id {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  background: rgba(0, 0, 0, 0.65); /* black with transparency */
+
+.support-card input:focus,
+.support-card textarea:focus {
+  border-color: #2c5da0; /* medium blue focus */
+  box-shadow: 0 0 0 2px rgba(44,93,160,0.2);
+  outline: none;
+}
+
+.support-submit {
+  background: #2c5da0; /* medium blue button */
   color: #fff;
-  font-size: 0.75rem;
+  border-radius: 8px;
+  padding: 10px 16px;
+  border: none;
   font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 6px;
-  pointer-events: none; /* so it doesn't interfere with clicks */
-  z-index: 10;
-}
-.background-icon {
-  position: fixed;
-  top: -100px;
-  left: 50%;
-  width: 300px;
-  height: 300px;
-  background: url('https://freesvg.org/img/house-icon.png') no-repeat center center;
-  background-size: contain;
-  opacity: 0.05;
-  pointer-events: none;
-  transform: translateX(-50%);
-  z-index: 0;
-}
-
-
-/* Make properties section above the background */
-.properties {
-  position: relative;
-  z-index: 1;
-}
-/* Dropdown styling */
-.lang-dropdown {
-  position: relative;
-  display: inline-block;
   cursor: pointer;
 }
 
-.lang-dropdown button {
-  background-color:  #e65c55;
-  border: 1px solid #ccc;
-  padding: 5px 10px;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
+.support-submit:hover {
+  background: #17375d; /* darker blue hover */
 }
-
-.lang-dropdown-content {
-  display: none;
-  position: absolute;
-  background-color:  #e65c55;
-  min-width: 120px;
-  box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
-  z-index: 1;
-}
-
-.lang-dropdown-content div {
-  padding: 5px 10px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
+/* --------------------
+      Wishlist Button
+-------------------- */
+.wishlist-btn {
+  width: 48px;
+  height: 48px;
+  background: #2c5da0; /* medium blue */
+  color: #fff;
+  border: none;
+  border-radius: 50%;
   cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.22s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  margin: 0 auto;
 }
 
-.lang-dropdown-content div:hover {
-  background-color:  #e65c55;
+.wishlist-btn:hover {
+  background: #17375d; /* darker blue on hover */
+  transform: translateY(-7px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
 }
 
-.lang-dropdown:hover .lang-dropdown-content {
-  display: block;
+.wishlist-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.10);
+}/* --------------------
+      Signup Page
+-------------------- */
+.signup-hero {
+  text-align: center;
+  padding: 60px 20px 30px;
+  background: #1f4e79; /* darker blue banner */
+  color: #fff;
 }
 
-.flag {
-  width: 20px;
-  height: 15px;
-}
-/* Hide Google top bar */
-.goog-te-banner-frame {
-  display: none !important;
+.signup-hero h2 {
+  font-size: 2rem;
+  font-weight: 600;
 }
 
-body {
-  top: 0 !important;
+.centered-card.signup-container {
+  max-width: 400px;
+  margin: -30px auto 60px; /* overlaps hero section */
+  background: #e0f1fc; /* card background */
+  padding: 30px 25px;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.08);
 }
 
-/* Hide "Powered by Google" */
-.goog-logo-link, .goog-te-gadget {
-  display: none !important;
+.signup-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-/* Hide Google default dropdown frame */
-.goog-te-menu-frame {
-  display: none !important;
+.signup-container input {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #92b1db;
+  background: #d2e3f4;
+  color: #0f1c2b;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Prevent layout shifting during translation */
-.goog-te-banner {
-  display: none !important;
+.signup-container input:focus {
+  border-color: #2c5da0;
+  box-shadow: 0 0 0 2px rgba(44,93,160,0.2);
 }
 
+.modal-submit {
+  background: #2c5da0; /* medium blue button */
+  color: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.modal-submit:hover {
+  background: #17375d; /* darker blue hover */
+  transform: translateY(-1px);
+}
+
+.muted {
+  font-size: 0.9rem;
+  color: #1c2a3a;
+  text-align: center;
+}
+
+.muted .accent {
+  color: #2c5da0;
+  font-weight: 600;
+}
+
+.muted .accent:hover {
+  color: #17375d;
+  text-decoration: underline;
+}
+
+/* Responsive Signup */
+@media (max-width: 480px) {
+  .signup-hero h2 {
+    font-size: 1.6rem;
+  }
+
+  .centered-card.signup-container {
+    margin: -20px 15px 40px;
+    padding: 25px 18px;
+  }
+}
+
+/* --------------------
+      Signup Page
+-------------------- */
+.signup-hero {
+  text-align: center;
+  padding: 60px 20px 30px;
+  background: #1f4e79; /* darker blue banner */
+  color: #fff;
+}
+
+.signup-hero h2 {
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.centered-card.signup-container {
+  max-width: 400px;
+  margin: -30px auto 60px; /* overlaps hero section */
+  background: #e0f1fc; /* card background */
+  padding: 30px 25px;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+}
+
+.signup-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.signup-container input {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #92b1db;
+  background: #d2e3f4;
+  color: #0f1c2b;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.signup-container input:focus {
+  border-color: #2c5da0;
+  box-shadow: 0 0 0 2px rgba(44,93,160,0.2);
+}
+
+.modal-submit {
+  background: #2c5da0; /* medium blue button */
+  color: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.modal-submit:hover {
+  background: #17375d; /* darker blue hover */
+  transform: translateY(-1px);
+}
+
+.muted {
+  font-size: 0.9rem;
+  color: #1c2a3a;
+  text-align: center;
+}
+
+.muted .accent {
+  color: #2c5da0;
+  font-weight: 600;
+}
+
+.muted .accent:hover {
+  color: #17375d;
+  text-decoration: underline;
+}
+
+/* Responsive Signup */
+@media (max-width: 480px) {
+  .signup-hero h2 {
+    font-size: 1.6rem;
+  }
+
+  .centered-card.signup-container {
+    margin: -20px 15px 40px;
+    padding: 25px 18px;
+  }
+}
