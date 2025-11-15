@@ -1,6 +1,6 @@
 // propertyForms.js
 import { loadProperties } from './properties.js';
-import { openModal, closeModal, showToast } from './ui.js';
+import { showToast } from './ui.js';
 
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
@@ -8,17 +8,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const addModal = document.getElementById("addPropertyModal");
   const form = document.getElementById("propertyForm");
   const categorySelect = document.getElementById("propertyCategory");
-  const statusSelect = document.getElementById("propertyStatus");
   const imageInput = document.getElementById("propertyImage");
   let base64Image = "";
 
-  if (!form || !addModal || !categorySelect || !statusSelect || !imageInput) return;
+  if (!form || !addModal || !categorySelect || !imageInput) return;
+
+  // Dynamically create status select if it doesn't exist
+  let statusSelect = document.getElementById("propertyStatus");
+  if (!statusSelect) {
+    statusSelect = document.createElement("select");
+    statusSelect.id = "propertyStatus";
+    statusSelect.innerHTML = `
+      <option value="">Изберете статус</option>
+      <option value="free">Свободен</option>
+      <option value="taken">Зает</option>
+    `;
+    // Insert after categorySelect
+    categorySelect.insertAdjacentElement("afterend", statusSelect);
+    statusSelect.style.display = "none"; // hide by default
+  }
 
   // Show/hide status select only for rentals
   categorySelect.addEventListener("change", () => {
-    if (statusSelect) {
-      statusSelect.style.display = categorySelect.value === "rental" ? "block" : "none";
-    }
+    statusSelect.style.display = categorySelect.value === "rental" ? "block" : "none";
   });
 
   // Convert image to base64 on select
@@ -38,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
     statusSelect.style.display = "none";
   };
 
-  // Optional: Close button inside modal
+  // Close button inside modal
   const closeBtn = addModal.querySelector(".close");
   closeBtn?.addEventListener("click", closeAddModal);
 
@@ -58,15 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const newProperty = {
-      name,
-      location,
-      price,
-      type,
-      category,
-      status,
-      image: base64Image
-    };
+    const newProperty = { name, location, price, type, category, status, image: base64Image };
 
     try {
       const res = await fetch(`${API_URL}/properties`, {
