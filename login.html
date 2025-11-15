@@ -39,52 +39,41 @@
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
 
-      console.log("Submitting login form...");
-      console.log("Username:", username);
-      console.log("Password:", password ? "*****" : "empty");
-
       if (!username || !password) {
         showToast('Попълнете всички полета');
         return;
       }
 
       try {
-        const bodyData = { username, password };
-        console.log("Sending POST request with body:", bodyData);
-
         const res = await fetch(`${API_URL}/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(bodyData)
+          body: JSON.stringify({ username, password })
         });
 
         const data = await res.json().catch(() => null);
-        console.log("Response JSON:", data);
 
         if (res.ok && data?.success && data.token) {
-          // Save token and username
           localStorage.setItem('token', data.token);
           localStorage.setItem('username', username);
 
-          // Notify sessionManager if it exists
           if (window.sessionManager && typeof window.sessionManager.onLogin === 'function') {
             window.sessionManager.onLogin({ username, token: data.token });
           }
 
           showToast('Влязохте успешно!');
           setTimeout(() => {
-            window.location.href = 'index.html'; // redirect to main page
+            window.location.href = 'index.html';
           }, 500);
         } else {
           showToast(data?.message || 'Невалидно потребителско име или парола');
         }
-      } catch (err) {
-        console.error('Login error:', err);
+      } catch {
         showToast('Грешка при опит за вход');
       }
     });
 
-    // Optional: Update UI immediately if already logged in
+    // Update sessionManager on page load if already logged in
     document.addEventListener('DOMContentLoaded', () => {
       const token = localStorage.getItem('token');
       const storedUsername = localStorage.getItem('username');
