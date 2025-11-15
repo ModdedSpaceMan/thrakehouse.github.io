@@ -12,9 +12,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const imageInput = document.getElementById("propertyImage");
   let base64Image = "";
 
-  // Show status only for rentals
+  if (!form || !addModal || !categorySelect || !statusSelect || !imageInput) return;
+
+  // Show/hide status select only for rentals
   categorySelect.addEventListener("change", () => {
-    statusSelect.style.display = categorySelect.value === "rental" ? "block" : "none";
+    if (statusSelect) {
+      statusSelect.style.display = categorySelect.value === "rental" ? "block" : "none";
+    }
   });
 
   // Convert image to base64 on select
@@ -26,17 +30,41 @@ document.addEventListener("DOMContentLoaded", () => {
     reader.readAsDataURL(file);
   });
 
-  // Add property
+  // Close modal function
+  const closeAddModal = () => {
+    addModal.setAttribute("aria-hidden", "true");
+    form.reset();
+    base64Image = "";
+    statusSelect.style.display = "none";
+  };
+
+  // Optional: Close button inside modal
+  const closeBtn = addModal.querySelector(".close");
+  closeBtn?.addEventListener("click", closeAddModal);
+
+  // Submit Add Property form
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
+    const name = document.getElementById("propertyName")?.value.trim();
+    const location = document.getElementById("propertyLocation")?.value.trim();
+    const price = parseFloat(document.getElementById("propertyPrice")?.value) || 0;
+    const type = document.getElementById("propertyType")?.value;
+    const category = categorySelect?.value;
+    const status = category === "rental" ? statusSelect?.value : "";
+
+    if (!name || !location || !type || !category) {
+      showToast("Моля, попълнете всички задължителни полета!");
+      return;
+    }
+
     const newProperty = {
-      name: document.getElementById("propertyName").value,
-      location: document.getElementById("propertyLocation").value,
-      price: document.getElementById("propertyPrice").value,
-      category: categorySelect.value,
-      type: document.getElementById("propertyType").value,
-      status: categorySelect.value === "rental" ? statusSelect.value : "",
+      name,
+      location,
+      price,
+      type,
+      category,
+      status,
       image: base64Image
     };
 
@@ -54,10 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!res.ok) throw new Error(data.message || "Failed to add property");
 
       showToast("Имотът беше добавен успешно!");
-      form.reset();
-      base64Image = "";
-      statusSelect.style.display = "none";
-      addModal.setAttribute("aria-hidden", "true");
+      closeAddModal();
 
       // Trigger re-render
       window.dispatchEvent(new Event("propertiesUpdated"));
