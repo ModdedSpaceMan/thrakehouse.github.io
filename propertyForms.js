@@ -86,3 +86,5 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast("Грешка при добавяне на имота");
       }
     });
+  } // <-- end of if check
+}); // <-- end of DOMContentLoaded
