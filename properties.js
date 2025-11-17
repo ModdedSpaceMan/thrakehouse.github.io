@@ -5,6 +5,7 @@ const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 let wishlistIds = [];
 const propertyContainer = document.getElementById('properties');
 const propertyModal = document.getElementById("propertyDetailsModal");
+
 const username = localStorage.getItem('username');
 const token = localStorage.getItem('token');
 const role = localStorage.getItem('role'); // 'admin' or 'user'
@@ -19,12 +20,11 @@ export async function initProperties() {
   window.addEventListener('propertiesUpdated', loadProperties);
 }
 
-
 // --------------------
 // Load properties
 // --------------------
 export async function loadProperties() {
-  if (!propertyContainer) return;
+  if (!propertyContainer) return [];
 
   try {
     const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
@@ -85,6 +85,7 @@ export function renderProperties(properties) {
   }).join('');
 
   addEventListeners();
+  addPropertyClickListeners();
 }
 
 // --------------------
@@ -92,38 +93,75 @@ export function renderProperties(properties) {
 // --------------------
 function addEventListeners() {
   propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
-    btn.addEventListener('click', async e => {
-      e.stopPropagation();
-      await toggleWishlist(btn.dataset.id);
-    });
+    btn.removeEventListener('click', toggleWishlistHandler); // prevent duplicate
+    btn.addEventListener('click', toggleWishlistHandler);
   });
 
   if (role === 'admin') {
     propertyContainer.querySelectorAll('.delete-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        const id = btn.dataset.id;
-        if (confirm('Наистина ли искате да изтриете този имот?')) {
-          deleteProperty(id);
-        }
-      });
+      btn.removeEventListener('click', deletePropertyHandler);
+      btn.addEventListener('click', deletePropertyHandler);
     });
 
     propertyContainer.querySelectorAll('.edit-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        const id = btn.dataset.id;
-        openEditModal(id);
-      });
+      btn.removeEventListener('click', editPropertyHandler);
+      btn.addEventListener('click', editPropertyHandler);
     });
 
     propertyContainer.querySelectorAll('.toggle-status-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        const id = btn.dataset.id;
-        toggleRentalStatus(id);
-      });
+      btn.removeEventListener('click', toggleStatusHandler);
+      btn.addEventListener('click', toggleStatusHandler);
     });
+  }
+}
+
+async function toggleWishlistHandler(e) {
+  e.stopPropagation();
+  await toggleWishlist(this.dataset.id);
+}
+
+function deletePropertyHandler(e) {
+  e.stopPropagation();
+  const id = this.dataset.id;
+  if (confirm('Наистина ли искате да изтриете този имот?')) deleteProperty(id);
+}
+
+function editPropertyHandler(e) {
+  e.stopPropagation();
+  const id = this.dataset.id;
+  openEditModal(id);
+}
+
+function toggleStatusHandler(e) {
+  e.stopPropagation();
+  const id = this.dataset.id;
+  toggleRentalStatus(id);
+}
+
+// --------------------
+// Property click → fetch and open modal
+// --------------------
+function addPropertyClickListeners() {
+  propertyContainer.querySelectorAll('.property').forEach(div => {
+    div.removeEventListener('click', propertyClickHandler);
+    div.addEventListener('click', propertyClickHandler);
+  });
+}
+
+async function propertyClickHandler() {
+  const id = this.dataset.id;
+  if (!id) return;
+
+  try {
+    const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+    const res = await fetch(`${API_URL}/properties/${id}`, { headers });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const property = await res.json();
+    openPropertyDetails(property);
+  } catch (err) {
+    console.error("Failed to load property details:", err);
+    showToast("Грешка при зареждане на имота");
   }
 }
 
@@ -258,16 +296,12 @@ function setupFilterListeners() {
 }
 
 // --------------------
-// Init
-// --------------------
-document.addEventListener('DOMContentLoaded', () => {
-  initProperties();
-});
-// --------------------
 // Property Details Modal
 // --------------------
 function openPropertyDetails(property) {
   const modal = document.getElementById("propertyDetailsModal");
+  if (!modal) return;
+
   document.getElementById("propTitle").textContent = property.name;
   document.getElementById("propLocation").textContent = property.location;
   document.getElementById("propPrice").textContent = property.price + " €";
@@ -284,19 +318,22 @@ function openPropertyDetails(property) {
   }
 
   modal.style.display = "flex";
+
+  // Close modal on click
+  modal.querySelector(".close")?.addEventListener("click", closePropertyDetails);
+  modal.addEventListener("click", e => {
+    if (e.target === modal) closePropertyDetails();
+  });
 }
 
 function closePropertyDetails() {
-  document.getElementById("propertyDetailsModal").style.display = "none";
+  const modal = document.getElementById("propertyDetailsModal");
+  if (modal) modal.style.display = "none";
 }
 
-// Close modal on clicking outside content
-document.getElementById("propertyDetailsModal")?.addEventListener("click", e => {
-  if (e.target.id === "propertyDetailsModal") closePropertyDetails();
+// --------------------
+// Init
+// --------------------
+document.addEventListener('DOMContentLoaded', () => {
+  initProperties();
 });
-
-propertyModal.querySelector(".close").addEventListener("click", closePropertyDetails);
-propertyModal.addEventListener("click", e => {
-  if (e.target === propertyModal) closePropertyDetails();
-});
-
