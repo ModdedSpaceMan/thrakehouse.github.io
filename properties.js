@@ -4,7 +4,7 @@ import { showToast } from './ui.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 let wishlistIds = [];
 const propertyContainer = document.getElementById('properties');
-
+const propertyModal = document.getElementById("propertyDetailsModal");
 const username = localStorage.getItem('username');
 const token = localStorage.getItem('token');
 const role = localStorage.getItem('role'); // 'admin' or 'user'
@@ -294,11 +294,9 @@ function closePropertyDetails() {
 document.getElementById("propertyDetailsModal")?.addEventListener("click", e => {
   if (e.target.id === "propertyDetailsModal") closePropertyDetails();
 });
-// Open modal on property card click
-propertyContainer.querySelectorAll('.property').forEach(div => {
-  div.addEventListener('click', () => {
-    const id = div.dataset.id;
-    const property = properties.find(p => p.id == id);
-    if (property) openPropertyDetails(property);
-  });
+
+propertyModal.querySelector(".close").addEventListener("click", closePropertyDetails);
+propertyModal.addEventListener("click", e => {
+  if (e.target === propertyModal) closePropertyDetails();
 });
+
