@@ -5,10 +5,11 @@ const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 let wishlistIds = [];
 const propertyContainer = document.getElementById('properties');
 const propertyModal = document.getElementById("propertyDetailsModal");
-
 const username = localStorage.getItem('username');
 const token = localStorage.getItem('token');
 const role = localStorage.getItem('role'); // 'admin' or 'user'
+
+let propertiesData = []; // store loaded properties globally
 
 // --------------------
 // Initialize
@@ -32,6 +33,7 @@ export async function loadProperties() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();
+    propertiesData = data; // store globally
     renderProperties(data);
     return data;
   } catch (err) {
@@ -85,11 +87,12 @@ export function renderProperties(properties) {
   }).join('');
 
   addEventListeners();
-  addModalListeners();
+  addModalListeners(); // <-- attach modal click
 }
 
 // --------------------
-// Event listeners (wishlist/admin)
+// Event listeners
+// --------------------
 function addEventListeners() {
   propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
     btn.addEventListener('click', async e => {
@@ -129,6 +132,7 @@ function addEventListeners() {
 
 // --------------------
 // Wishlist
+// --------------------
 export async function loadWishlist() {
   if (!username || !token) {
     wishlistIds = [];
@@ -181,6 +185,7 @@ export async function toggleWishlist(propertyId) {
 
     const btn = document.querySelector(`.wishlist-btn[data-id="${propertyId}"]`);
     if (btn) btn.textContent = wishlistIds.includes(propertyId) ? '❤️' : '🤍';
+
   } catch (err) {
     console.error(err);
     showToast('Грешка при връзка със сървъра');
@@ -189,6 +194,7 @@ export async function toggleWishlist(propertyId) {
 
 // --------------------
 // Admin actions
+// --------------------
 async function deleteProperty(id) {
   try {
     const res = await fetch(`${API_URL}/properties/${id}`, {
@@ -225,6 +231,7 @@ async function toggleRentalStatus(id) {
 
 // --------------------
 // Filters
+// --------------------
 function setupFilterListeners() {
   const applyBtn = document.getElementById('applyFilters');
   if (!applyBtn) return;
@@ -254,25 +261,18 @@ function setupFilterListeners() {
 }
 
 // --------------------
-// Property Modal (fetch fresh info)
+// Property Details Modal
+// --------------------
 function addModalListeners() {
   propertyContainer.querySelectorAll('.property').forEach(el => {
-    el.addEventListener('click', async () => {
+    el.addEventListener('click', () => {
       const id = el.dataset.id;
-      try {
-        const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
-        const res = await fetch(`${API_URL}/properties/${id}`, { headers });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const property = await res.json();
-        openPropertyDetails(property);
-      } catch (err) {
-        console.error('Failed to fetch property details:', err);
-        showToast('Грешка при зареждане на детайли за имота');
-      }
+      const property = propertiesData.find(p => p.id == id); // use existing data
+      if (property) openPropertyDetails(property);
+      else showToast('Не може да се зареди информация за имота');
     });
   });
 
-  // Close modal
   propertyModal.querySelector(".close")?.addEventListener("click", () => {
     propertyModal.style.display = "none";
   });
@@ -282,14 +282,12 @@ function addModalListeners() {
   });
 }
 
-// --------------------
-// Open property details modal
 function openPropertyDetails(property) {
-  document.getElementById("propTitle").textContent = property.name || '';
-  document.getElementById("propLocation").textContent = property.location || '';
-  document.getElementById("propPrice").textContent = (property.price ? property.price + " €" : '');
-  document.getElementById("propType").textContent = property.type || '';
-  document.getElementById("propCategory").textContent = property.category || '';
+  document.getElementById("propTitle").textContent = property.name;
+  document.getElementById("propLocation").textContent = property.location;
+  document.getElementById("propPrice").textContent = property.price + " €";
+  document.getElementById("propType").textContent = property.type;
+  document.getElementById("propCategory").textContent = property.category;
   document.getElementById("propStatus").textContent = property.status || 'Свободен';
 
   const imgEl = document.getElementById("propImage");
@@ -305,4 +303,7 @@ function openPropertyDetails(property) {
 
 // --------------------
 // Init
-document.addEventListener('DOMContentLoaded', initProperties);
+// --------------------
+document.addEventListener('DOMContentLoaded', () => {
+  initProperties();
+});
