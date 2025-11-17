@@ -85,89 +85,50 @@ export function renderProperties(properties) {
   }).join('');
 
   addEventListeners();
-  addPropertyClickListeners();
+  addModalListeners();
 }
 
 // --------------------
-// Event listeners
-// --------------------
+// Event listeners (wishlist/admin)
 function addEventListeners() {
   propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
-    btn.removeEventListener('click', toggleWishlistHandler); // prevent duplicate
-    btn.addEventListener('click', toggleWishlistHandler);
+    btn.addEventListener('click', async e => {
+      e.stopPropagation();
+      await toggleWishlist(btn.dataset.id);
+    });
   });
 
   if (role === 'admin') {
     propertyContainer.querySelectorAll('.delete-btn').forEach(btn => {
-      btn.removeEventListener('click', deletePropertyHandler);
-      btn.addEventListener('click', deletePropertyHandler);
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        if (confirm('Наистина ли искате да изтриете този имот?')) {
+          deleteProperty(id);
+        }
+      });
     });
 
     propertyContainer.querySelectorAll('.edit-btn').forEach(btn => {
-      btn.removeEventListener('click', editPropertyHandler);
-      btn.addEventListener('click', editPropertyHandler);
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        openEditModal(id);
+      });
     });
 
     propertyContainer.querySelectorAll('.toggle-status-btn').forEach(btn => {
-      btn.removeEventListener('click', toggleStatusHandler);
-      btn.addEventListener('click', toggleStatusHandler);
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        toggleRentalStatus(id);
+      });
     });
-  }
-}
-
-async function toggleWishlistHandler(e) {
-  e.stopPropagation();
-  await toggleWishlist(this.dataset.id);
-}
-
-function deletePropertyHandler(e) {
-  e.stopPropagation();
-  const id = this.dataset.id;
-  if (confirm('Наистина ли искате да изтриете този имот?')) deleteProperty(id);
-}
-
-function editPropertyHandler(e) {
-  e.stopPropagation();
-  const id = this.dataset.id;
-  openEditModal(id);
-}
-
-function toggleStatusHandler(e) {
-  e.stopPropagation();
-  const id = this.dataset.id;
-  toggleRentalStatus(id);
-}
-
-// --------------------
-// Property click → fetch and open modal
-// --------------------
-function addPropertyClickListeners() {
-  propertyContainer.querySelectorAll('.property').forEach(div => {
-    div.removeEventListener('click', propertyClickHandler);
-    div.addEventListener('click', propertyClickHandler);
-  });
-}
-
-async function propertyClickHandler() {
-  const id = this.dataset.id;
-  if (!id) return;
-
-  try {
-    const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
-    const res = await fetch(`${API_URL}/properties/${id}`, { headers });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const property = await res.json();
-    openPropertyDetails(property);
-  } catch (err) {
-    console.error("Failed to load property details:", err);
-    showToast("Грешка при зареждане на имота");
   }
 }
 
 // --------------------
 // Wishlist
-// --------------------
 export async function loadWishlist() {
   if (!username || !token) {
     wishlistIds = [];
@@ -220,7 +181,6 @@ export async function toggleWishlist(propertyId) {
 
     const btn = document.querySelector(`.wishlist-btn[data-id="${propertyId}"]`);
     if (btn) btn.textContent = wishlistIds.includes(propertyId) ? '❤️' : '🤍';
-
   } catch (err) {
     console.error(err);
     showToast('Грешка при връзка със сървъра');
@@ -229,7 +189,6 @@ export async function toggleWishlist(propertyId) {
 
 // --------------------
 // Admin actions
-// --------------------
 async function deleteProperty(id) {
   try {
     const res = await fetch(`${API_URL}/properties/${id}`, {
@@ -266,7 +225,6 @@ async function toggleRentalStatus(id) {
 
 // --------------------
 // Filters
-// --------------------
 function setupFilterListeners() {
   const applyBtn = document.getElementById('applyFilters');
   if (!applyBtn) return;
@@ -296,17 +254,42 @@ function setupFilterListeners() {
 }
 
 // --------------------
-// Property Details Modal
-// --------------------
-function openPropertyDetails(property) {
-  const modal = document.getElementById("propertyDetailsModal");
-  if (!modal) return;
+// Property Modal (fetch fresh info)
+function addModalListeners() {
+  propertyContainer.querySelectorAll('.property').forEach(el => {
+    el.addEventListener('click', async () => {
+      const id = el.dataset.id;
+      try {
+        const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+        const res = await fetch(`${API_URL}/properties/${id}`, { headers });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const property = await res.json();
+        openPropertyDetails(property);
+      } catch (err) {
+        console.error('Failed to fetch property details:', err);
+        showToast('Грешка при зареждане на детайли за имота');
+      }
+    });
+  });
 
-  document.getElementById("propTitle").textContent = property.name;
-  document.getElementById("propLocation").textContent = property.location;
-  document.getElementById("propPrice").textContent = property.price + " €";
-  document.getElementById("propType").textContent = property.type;
-  document.getElementById("propCategory").textContent = property.category;
+  // Close modal
+  propertyModal.querySelector(".close")?.addEventListener("click", () => {
+    propertyModal.style.display = "none";
+  });
+
+  propertyModal.addEventListener("click", e => {
+    if (e.target === propertyModal) propertyModal.style.display = "none";
+  });
+}
+
+// --------------------
+// Open property details modal
+function openPropertyDetails(property) {
+  document.getElementById("propTitle").textContent = property.name || '';
+  document.getElementById("propLocation").textContent = property.location || '';
+  document.getElementById("propPrice").textContent = (property.price ? property.price + " €" : '');
+  document.getElementById("propType").textContent = property.type || '';
+  document.getElementById("propCategory").textContent = property.category || '';
   document.getElementById("propStatus").textContent = property.status || 'Свободен';
 
   const imgEl = document.getElementById("propImage");
@@ -317,23 +300,9 @@ function openPropertyDetails(property) {
     imgEl.style.display = "none";
   }
 
-  modal.style.display = "flex";
-
-  // Close modal on click
-  modal.querySelector(".close")?.addEventListener("click", closePropertyDetails);
-  modal.addEventListener("click", e => {
-    if (e.target === modal) closePropertyDetails();
-  });
-}
-
-function closePropertyDetails() {
-  const modal = document.getElementById("propertyDetailsModal");
-  if (modal) modal.style.display = "none";
+  propertyModal.style.display = "flex";
 }
 
 // --------------------
 // Init
-// --------------------
-document.addEventListener('DOMContentLoaded', () => {
-  initProperties();
-});
+document.addEventListener('DOMContentLoaded', initProperties);
