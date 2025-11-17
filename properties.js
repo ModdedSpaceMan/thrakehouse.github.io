@@ -285,7 +285,7 @@ function addModalListeners() {
 function openPropertyDetails(property) {
   document.getElementById("propTitle").textContent = property.name;
   document.getElementById("propLocation").textContent = property.location;
-  document.getElementById("propPrice").textContent = property.price + " €";
+  document.getElementById("propPrice").textContent = property.price + " лева";
   document.getElementById("propType").textContent = property.type;
   document.getElementById("propCategory").textContent = property.category;
   document.getElementById("propStatus").textContent = property.status || 'Свободен';
