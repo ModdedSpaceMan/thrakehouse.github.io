@@ -73,7 +73,7 @@ export function renderProperties(properties) {
         <div class="property-content">
           <h3>${p.name}</h3>
           <p>Локация: ${p.location}</p>
-          <p>Цена: ${p.price}</p>
+          <p>Цена: ${p.price} лева</p>
           <p>Категория: ${isRental ? "Наем" : "Продажба"}</p>
           <p>Тип: ${p.type}</p>
           ${isRental ? `<p>Статус: ${p.status}</p>` : ''}
