@@ -263,3 +263,42 @@ function setupFilterListeners() {
 document.addEventListener('DOMContentLoaded', () => {
   initProperties();
 });
+// --------------------
+// Property Details Modal
+// --------------------
+function openPropertyDetails(property) {
+  const modal = document.getElementById("propertyDetailsModal");
+  document.getElementById("propTitle").textContent = property.name;
+  document.getElementById("propLocation").textContent = property.location;
+  document.getElementById("propPrice").textContent = property.price + " €";
+  document.getElementById("propType").textContent = property.type;
+  document.getElementById("propCategory").textContent = property.category;
+  document.getElementById("propStatus").textContent = property.status || 'Свободен';
+
+  const imgEl = document.getElementById("propImage");
+  if (property.image) {
+    imgEl.src = property.image;
+    imgEl.style.display = "block";
+  } else {
+    imgEl.style.display = "none";
+  }
+
+  modal.style.display = "flex";
+}
+
+function closePropertyDetails() {
+  document.getElementById("propertyDetailsModal").style.display = "none";
+}
+
+// Close modal on clicking outside content
+document.getElementById("propertyDetailsModal")?.addEventListener("click", e => {
+  if (e.target.id === "propertyDetailsModal") closePropertyDetails();
+});
+// Open modal on property card click
+propertyContainer.querySelectorAll('.property').forEach(div => {
+  div.addEventListener('click', () => {
+    const id = div.dataset.id;
+    const property = properties.find(p => p.id == id);
+    if (property) openPropertyDetails(property);
+  });
+});
