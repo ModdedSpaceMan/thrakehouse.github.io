@@ -72,7 +72,6 @@ export function renderProperties(properties) {
         ${p.image ? `<img src="${p.image}" alt="${p.name}">` : ''}
         <div class="property-content">
           <h3>${p.name}</h3>
-          <p>Локация: ${p.location}</p>
           <p>Цена: ${p.price} лева</p>
           <p>Категория: ${isRental ? "Наем" : "Продажба"}</p>
           <p>Тип: ${p.type}</p>
@@ -284,11 +283,28 @@ function addModalListeners() {
 
 function openPropertyDetails(property) {
   document.getElementById("propTitle").textContent = property.name;
-  document.getElementById("propLocation").textContent = property.location;
   document.getElementById("propPrice").textContent = property.price + " лева";
   document.getElementById("propType").textContent = property.type;
   document.getElementById("propCategory").textContent = property.category;
   document.getElementById("propStatus").textContent = property.status || 'Свободен';
+  document.getElementById("propBedrooms")?.textContent = property.bedrooms || '-';
+  document.getElementById("propBathrooms")?.textContent = property.bathrooms || '-';
+  document.getElementById("propArea")?.textContent = property.area ? property.area + " m²" : '-';
+  document.getElementById("propFloor")?.textContent = property.floor || '-';
+  document.getElementById("propYear")?.textContent = property.year || '-';
+  document.getElementById("propDescription")?.textContent = property.description || '-';
+
+  const imgEl = document.getElementById("propImage");
+  if (property.image) {
+    imgEl.src = property.image;
+    imgEl.style.display = "block";
+  } else {
+    imgEl.style.display = "none";
+  }
+
+  propertyModal.style.display = "flex";
+}
+
 
   const imgEl = document.getElementById("propImage");
   if (property.image) {
