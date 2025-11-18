@@ -1,11 +1,10 @@
-// propertyForms.js
+// propertyForms.js (UPDATED: removed location and added new fields)
 import { loadProperties } from './properties.js';
 import { showToast } from './ui.js';
 
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
 document.addEventListener("DOMContentLoaded", () => {
-  // -------------------- ADD PROPERTY --------------------
   const addModal = document.getElementById("addPropertyModal");
   const addForm = document.getElementById("propertyForm");
   const addCategory = document.getElementById("propertyCategory");
@@ -13,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let addBase64Image = "";
 
   if (addForm && addModal && addCategory && addImageInput) {
-    // Dynamically create status select if it doesn't exist
+
     let addStatus = document.getElementById("propertyStatus");
     if (!addStatus) {
       addStatus = document.createElement("select");
@@ -51,18 +50,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
     addForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const name = document.getElementById("propertyName")?.value.trim();
-      const location = document.getElementById("propertyLocation")?.value.trim();
+
+      const title = document.getElementById("propertyName")?.value.trim();
+      const description = document.getElementById("propertyDescription")?.value.trim();
       const price = parseFloat(document.getElementById("propertyPrice")?.value) || 0;
-      const type = document.getElementById("propertyType")?.value;
+      const bedrooms = parseInt(document.getElementById("propertyBedrooms")?.value) || 0;
+      const bathrooms = parseInt(document.getElementById("propertyBathrooms")?.value) || 0;
+      const size = parseFloat(document.getElementById("propertySize")?.value) || 0;
       const category = addCategory?.value;
       const status = category === "rental" ? addStatus?.value : "";
 
-      if (!name || !location || !type || !category) {
+      if (!title || !category) {
         return showToast("Моля, попълнете всички задължителни полета!");
       }
 
-      const newProperty = { name, location, price, type, category, status, image: addBase64Image };
+      const newProperty = {
+        title,
+        description,
+        price,
+        bedrooms,
+        bathrooms,
+        size,
+        images: addBase64Image ? [addBase64Image] : [],
+        amenities: [],
+        category,
+        status
+      };
 
       try {
         const res = await fetch(`${API_URL}/properties`, {
@@ -86,5 +99,5 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast("Грешка при добавяне на имота");
       }
     });
-  } // <-- end of if check
-}); // <-- end of DOMContentLoaded
+  }
+});
