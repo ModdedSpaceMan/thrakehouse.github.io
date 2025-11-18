@@ -236,28 +236,54 @@ function setupFilterListeners() {
   if (!applyBtn) return;
 
   applyBtn.addEventListener('click', async () => {
-    const properties = await loadProperties();
+    const properties = propertiesData; // use already loaded data
     let filtered = properties;
 
     const locationFilter = document.getElementById('filterLocation').value.toLowerCase();
     const minPrice = Number(document.getElementById('filterMinPrice').value);
     const maxPrice = Number(document.getElementById('filterMaxPrice').value);
     const typeFilter = document.getElementById('filterType').value;
+    const categoryFilter = document.getElementById('filterCategory').value;
     const statusFilter = document.getElementById('filterStatus').value;
+
+    const minBedrooms = Number(document.getElementById('filterMinBedrooms').value);
+    const maxBedrooms = Number(document.getElementById('filterMaxBedrooms').value);
+    const minBathrooms = Number(document.getElementById('filterMinBathrooms').value);
+    const maxBathrooms = Number(document.getElementById('filterMaxBathrooms').value);
+    const minSize = Number(document.getElementById('filterMinSize').value);
+    const maxSize = Number(document.getElementById('filterMaxSize').value);
+    const minYear = Number(document.getElementById('filterMinYear').value);
+    const maxYear = Number(document.getElementById('filterMaxYear').value);
 
     filtered = filtered.filter(p => {
       const price = Number(p.price);
-      if (locationFilter && !p.location.toLowerCase().includes(locationFilter)) return false;
+      const bedrooms = Number(p.bedrooms) || 0;
+      const bathrooms = Number(p.bathrooms) || 0;
+      const size = Number(p.size) || 0;
+      const year = Number(p.year) || 0;
+
+      if (locationFilter && !p.location?.toLowerCase().includes(locationFilter)) return false;
       if (!isNaN(minPrice) && price < minPrice) return false;
       if (!isNaN(maxPrice) && price > maxPrice) return false;
       if (typeFilter && p.type !== typeFilter) return false;
+      if (categoryFilter && p.category !== categoryFilter) return false;
       if (p.category === 'rental' && statusFilter && p.status !== statusFilter) return false;
+      if (!isNaN(minBedrooms) && bedrooms < minBedrooms) return false;
+      if (!isNaN(maxBedrooms) && bedrooms > maxBedrooms) return false;
+      if (!isNaN(minBathrooms) && bathrooms < minBathrooms) return false;
+      if (!isNaN(maxBathrooms) && bathrooms > maxBathrooms) return false;
+      if (!isNaN(minSize) && size < minSize) return false;
+      if (!isNaN(maxSize) && size > maxSize) return false;
+      if (!isNaN(minYear) && year < minYear) return false;
+      if (!isNaN(maxYear) && year > maxYear) return false;
+
       return true;
     });
 
     renderProperties(filtered);
   });
 }
+
 
 // --------------------
 // Property Details Modal
