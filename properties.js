@@ -292,28 +292,52 @@ function addModalListeners() {
 }
 
 function openPropertyDetails(property) {
-  document.getElementById("propTitle").textContent = property.name;
-  document.getElementById("propPrice").textContent = property.price + " лева";
-  document.getElementById("propType").textContent = property.type;
-  document.getElementById("propCategory").textContent = property.category;
-  document.getElementById("propStatus").textContent = property.status || 'Свободен';
-  document.getElementById("propBedrooms")?.textContent = property.bedrooms || '-';
-  document.getElementById("propBathrooms")?.textContent = property.bathrooms || '-';
-  document.getElementById("propArea")?.textContent = property.size ? property.size + " m²" : '-';
-  document.getElementById("propFloor")?.textContent = property.floor || '-';
-  document.getElementById("propYear")?.textContent = property.year || '-';
-  document.getElementById("propDescription")?.textContent = property.description || '-';
+  const titleEl = document.getElementById("propTitle");
+  if (titleEl) titleEl.textContent = property.name;
+
+  const priceEl = document.getElementById("propPrice");
+  if (priceEl) priceEl.textContent = property.price + " лева";
+
+  const typeEl = document.getElementById("propType");
+  if (typeEl) typeEl.textContent = property.type;
+
+  const categoryEl = document.getElementById("propCategory");
+  if (categoryEl) categoryEl.textContent = property.category;
+
+  const statusEl = document.getElementById("propStatus");
+  if (statusEl) statusEl.textContent = property.status || 'Свободен';
+
+  const bedroomsEl = document.getElementById("propBedrooms");
+  if (bedroomsEl) bedroomsEl.textContent = property.bedrooms || '-';
+
+  const bathroomsEl = document.getElementById("propBathrooms");
+  if (bathroomsEl) bathroomsEl.textContent = property.bathrooms || '-';
+
+  const areaEl = document.getElementById("propArea");
+  if (areaEl) areaEl.textContent = property.size ? property.size + " m²" : '-';
+
+  const floorEl = document.getElementById("propFloor");
+  if (floorEl) floorEl.textContent = property.floor || '-';
+
+  const yearEl = document.getElementById("propYear");
+  if (yearEl) yearEl.textContent = property.year || '-';
+
+  const descriptionEl = document.getElementById("propDescription");
+  if (descriptionEl) descriptionEl.textContent = property.description || '-';
 
   const imgEl = document.getElementById("propImage");
-  if (property.image) {
-    imgEl.src = property.image;
-    imgEl.style.display = "block";
-  } else {
-    imgEl.style.display = "none";
+  if (imgEl) {
+    if (property.image) {
+      imgEl.src = property.image;
+      imgEl.style.display = "block";
+    } else {
+      imgEl.style.display = "none";
+    }
   }
 
-  propertyModal.style.display = "flex";
+  if (propertyModal) propertyModal.style.display = "flex";
 }
+
 
 // --------------------
 // Init
