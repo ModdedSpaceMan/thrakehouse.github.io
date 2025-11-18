@@ -86,7 +86,7 @@ export function renderProperties(properties) {
   }).join('');
 
   addEventListeners();
-  addModalListeners(); // <-- attach modal click
+  addModalListeners();
 }
 
 // --------------------
@@ -108,14 +108,6 @@ function addEventListeners() {
         if (confirm('Наистина ли искате да изтриете този имот?')) {
           deleteProperty(id);
         }
-      });
-    });
-
-    propertyContainer.querySelectorAll('.edit-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        const id = btn.dataset.id;
-        openEditModal(id);
       });
     });
 
@@ -184,7 +176,6 @@ export async function toggleWishlist(propertyId) {
 
     const btn = document.querySelector(`.wishlist-btn[data-id="${propertyId}"]`);
     if (btn) btn.textContent = wishlistIds.includes(propertyId) ? '❤️' : '🤍';
-
   } catch (err) {
     console.error(err);
     showToast('Грешка при връзка със сървъра');
@@ -235,17 +226,15 @@ function setupFilterListeners() {
   const applyBtn = document.getElementById('applyFilters');
   if (!applyBtn) return;
 
-  applyBtn.addEventListener('click', async () => {
-    const properties = propertiesData; // use already loaded data
-    let filtered = properties;
+  applyBtn.addEventListener('click', () => {
+    let filtered = propertiesData;
 
-    const locationFilter = document.getElementById('filterLocation').value.toLowerCase();
-    const minPrice = Number(document.getElementById('filterMinPrice').value);
-    const maxPrice = Number(document.getElementById('filterMaxPrice').value);
-    const typeFilter = document.getElementById('filterType').value;
-    const categoryFilter = document.getElementById('filterCategory').value;
-    const statusFilter = document.getElementById('filterStatus').value;
-
+    const locationFilter = document.getElementById('filterLocation')?.value.toLowerCase();
+    const minPrice = Number(document.getElementById('filterMinPrice')?.value);
+    const maxPrice = Number(document.getElementById('filterMaxPrice')?.value);
+    const typeFilter = document.getElementById('filterType')?.value;
+    const categoryFilter = document.getElementById('filterCategory')?.value;
+    const statusFilter = document.getElementById('filterStatus')?.value;
     const minBedrooms = Number(document.getElementById('filterMinBedrooms')?.value);
     const minBathrooms = Number(document.getElementById('filterMinBathrooms')?.value);
     const minSize = Number(document.getElementById('filterMinSize')?.value);
@@ -287,7 +276,7 @@ function addModalListeners() {
   propertyContainer.querySelectorAll('.property').forEach(el => {
     el.addEventListener('click', () => {
       const id = el.dataset.id;
-      const property = propertiesData.find(p => p.id == id); // use existing data
+      const property = propertiesData.find(p => p.id == id);
       if (property) openPropertyDetails(property);
       else showToast('Не може да се зареди информация за имота');
     });
@@ -310,7 +299,7 @@ function openPropertyDetails(property) {
   document.getElementById("propStatus").textContent = property.status || 'Свободен';
   document.getElementById("propBedrooms")?.textContent = property.bedrooms || '-';
   document.getElementById("propBathrooms")?.textContent = property.bathrooms || '-';
-  document.getElementById("propArea")?.textContent = property.area ? property.area + " m²" : '-';
+  document.getElementById("propArea")?.textContent = property.size ? property.size + " m²" : '-';
   document.getElementById("propFloor")?.textContent = property.floor || '-';
   document.getElementById("propYear")?.textContent = property.year || '-';
   document.getElementById("propDescription")?.textContent = property.description || '-';
