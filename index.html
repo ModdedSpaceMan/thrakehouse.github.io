@@ -131,30 +131,41 @@
     </div>
   </div>
 
-  <!-- Filters -->
-  <section class="filters">
-    <input type="text" id="filterLocation" placeholder="Локация" />
-    <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
-    <input type="number" id="filterMaxPrice" placeholder="Макс. цена" />
-    <select id="filterType">
-      <option value="">Всички типове</option>
-      <option value="apartment">Апартамент</option>
-      <option value="house">Къща</option>
-      <option value="villa">Вила</option>
-      <option value="farm">Земеделски имот</option>
-    </select>
-    <select id="filterCategory">
-      <option value="">Всички категории</option>
-      <option value="sale">Продажба</option>
-      <option value="rental">Наем</option>
-    </select>
-    <select id="filterStatus">
-      <option value="">Всички статуси</option>
-      <option value="free">Свободен</option>
-      <option value="taken">Зает</option>
-    </select>
-    <button id="applyFilters">Филтрирай</button>
-  </section>
+<section class="filters">
+  <input type="text" id="filterLocation" placeholder="Локация" />
+  <input type="number" id="filterMinPrice" placeholder="Мин. цена" />
+  <input type="number" id="filterMaxPrice" placeholder="Макс. цена" />
+  <select id="filterType">
+    <option value="">Всички типове</option>
+    <option value="apartment">Апартамент</option>
+    <option value="house">Къща</option>
+    <option value="villa">Вила</option>
+    <option value="farm">Земеделски имот</option>
+  </select>
+  <select id="filterCategory">
+    <option value="">Всички категории</option>
+    <option value="sale">Продажба</option>
+    <option value="rental">Наем</option>
+  </select>
+  <select id="filterStatus">
+    <option value="">Всички статуси</option>
+    <option value="free">Свободен</option>
+    <option value="taken">Зает</option>
+  </select>
+
+  <!-- NEW FILTER FIELDS -->
+  <input type="number" id="filterMinBedrooms" placeholder="Мин. спални" />
+  <input type="number" id="filterMaxBedrooms" placeholder="Макс. спални" />
+  <input type="number" id="filterMinBathrooms" placeholder="Мин. бани" />
+  <input type="number" id="filterMaxBathrooms" placeholder="Макс. бани" />
+  <input type="number" id="filterMinSize" placeholder="Мин. квадратура (м²)" />
+  <input type="number" id="filterMaxSize" placeholder="Макс. квадратура (м²)" />
+  <input type="number" id="filterMinYear" placeholder="Мин. година" />
+  <input type="number" id="filterMaxYear" placeholder="Макс. година" />
+
+  <button id="applyFilters">Филтрирай</button>
+</section>
+
 
   <section id="properties" class="properties"></section>
 </main>
