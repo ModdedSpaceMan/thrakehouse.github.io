@@ -246,14 +246,12 @@ function setupFilterListeners() {
     const categoryFilter = document.getElementById('filterCategory').value;
     const statusFilter = document.getElementById('filterStatus').value;
 
-    const minBedrooms = Number(document.getElementById('filterMinBedrooms').value);
-    const maxBedrooms = Number(document.getElementById('filterMaxBedrooms').value);
-    const minBathrooms = Number(document.getElementById('filterMinBathrooms').value);
-    const maxBathrooms = Number(document.getElementById('filterMaxBathrooms').value);
-    const minSize = Number(document.getElementById('filterMinSize').value);
-    const maxSize = Number(document.getElementById('filterMaxSize').value);
-    const minYear = Number(document.getElementById('filterMinYear').value);
-    const maxYear = Number(document.getElementById('filterMaxYear').value);
+    const minBedrooms = Number(document.getElementById('filterMinBedrooms')?.value);
+    const minBathrooms = Number(document.getElementById('filterMinBathrooms')?.value);
+    const minSize = Number(document.getElementById('filterMinSize')?.value);
+    const maxSize = Number(document.getElementById('filterMaxSize')?.value);
+    const minYear = Number(document.getElementById('filterMinYear')?.value);
+    const maxYear = Number(document.getElementById('filterMaxYear')?.value);
 
     filtered = filtered.filter(p => {
       const price = Number(p.price);
@@ -269,9 +267,7 @@ function setupFilterListeners() {
       if (categoryFilter && p.category !== categoryFilter) return false;
       if (p.category === 'rental' && statusFilter && p.status !== statusFilter) return false;
       if (!isNaN(minBedrooms) && bedrooms < minBedrooms) return false;
-      if (!isNaN(maxBedrooms) && bedrooms > maxBedrooms) return false;
       if (!isNaN(minBathrooms) && bathrooms < minBathrooms) return false;
-      if (!isNaN(maxBathrooms) && bathrooms > maxBathrooms) return false;
       if (!isNaN(minSize) && size < minSize) return false;
       if (!isNaN(maxSize) && size > maxSize) return false;
       if (!isNaN(minYear) && year < minYear) return false;
@@ -283,7 +279,6 @@ function setupFilterListeners() {
     renderProperties(filtered);
   });
 }
-
 
 // --------------------
 // Property Details Modal
@@ -319,18 +314,6 @@ function openPropertyDetails(property) {
   document.getElementById("propFloor")?.textContent = property.floor || '-';
   document.getElementById("propYear")?.textContent = property.year || '-';
   document.getElementById("propDescription")?.textContent = property.description || '-';
-
-  const imgEl = document.getElementById("propImage");
-  if (property.image) {
-    imgEl.src = property.image;
-    imgEl.style.display = "block";
-  } else {
-    imgEl.style.display = "none";
-  }
-
-  propertyModal.style.display = "flex";
-}
-
 
   const imgEl = document.getElementById("propImage");
   if (property.image) {
