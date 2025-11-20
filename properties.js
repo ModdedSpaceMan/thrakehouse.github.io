@@ -62,14 +62,13 @@ export function renderProperties(properties) {
     const id = p.id ?? '-';
     const title = p.title || 'Без име';
     const price = p.price ?? '-';
-    const type = p.type || '-';
     const category = p.category || '-';
     const status = p.status || 'Свободен';
     const bedrooms = p.bedrooms ?? '-';
     const bathrooms = p.bathrooms ?? '-';
     const size = p.size ? p.size + ' m²' : '-';
     const image = (p.images && p.images.length > 0) ? p.images[0] : '';
-
+    
     const isRental = category.toLowerCase() === 'rental';
     const inWishlist = wishlistIds.includes(String(id)) ? '❤️' : '🤍';
     const takenClass = isRental && status.toLowerCase() === 'taken' ? 'taken' : '';
@@ -78,23 +77,31 @@ export function renderProperties(properties) {
       <div class="admin-buttons-right">
         <button class="wishlist-btn" data-id="${id}">${inWishlist}</button>
         <button class="delete-btn" data-id="${id}">Изтрий</button>
-        ${isRental ? `<button class="toggle-status-btn" data-id="${id}">${status === "free" ? "Зает" : "Свободен"}</button>` : ''}
+        ${isRental ? `<button class="toggle-status-btn" data-id="${id}">
+          ${status === "free" ? "Зает" : "Свободен"}
+        </button>` : ''}
       </div>
     ` : `<button class="wishlist-btn" data-id="${id}">${inWishlist}</button>`;
 
     return `
       <div class="property ${takenClass}" data-id="${id}">
         ${image ? `<img src="${image}" alt="${title}">` : ''}
+        
         <div class="property-content">
           <h3>${title}</h3>
-          <p>Цена: ${price} лева</p>
-          <p>Категория: ${isRental ? "Наем" : "Продажба"}</p>
-          <p>Тип: ${type}</p>
-          ${isRental ? `<p>Статус: ${status}</p>` : ''}
+
+          <p><strong>Цена:</strong> ${price} лева</p>
+          <p><strong>Категория:</strong> ${isRental ? "Наем" : "Продажба"}</p>
+          ${isRental ? `<p><strong>Статус:</strong> ${status}</p>` : ''}
+          <p><strong>Спални:</strong> ${bedrooms}</p>
+          <p><strong>Бани:</strong> ${bathrooms}</p>
+          <p><strong>Площ:</strong> ${size}</p>
         </div>
+
         <div class="property-actions">
           ${adminButtons}
         </div>
+
         <div class="property-id">ID: ${id}</div>
       </div>
     `;
@@ -103,6 +110,7 @@ export function renderProperties(properties) {
   addEventListeners();
   addModalListeners();
 }
+
 
 // --------------------
 // Event listeners
