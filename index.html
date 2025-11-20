@@ -31,19 +31,32 @@
   <div id="adminFound" class="admin-search-results"></div>
 </div>
 
+
 <!-- Property Details Modal -->
 <div id="propertyDetailsModal" class="modal" aria-hidden="true">
   <div class="modal-content">
-    <button class="close" onclick="closePropertyDetails()">×</button>
+    <button class="close">×</button>
+
     <h2 id="propTitle"></h2>
+
     <img id="propImage" style="width:100%; border-radius:8px; margin:10px 0;">
+
     <p class="detail-row"><strong>Локация:</strong> <span id="propLocation"></span></p>
     <p class="detail-row"><strong>Цена:</strong> <span id="propPrice"></span></p>
     <p class="detail-row"><strong>Тип:</strong> <span id="propType"></span></p>
     <p class="detail-row"><strong>Категория:</strong> <span id="propCategory"></span></p>
     <p class="detail-row"><strong>Статус:</strong> <span id="propStatus"></span></p>
+
+    <p class="detail-row"><strong>Спални:</strong> <span id="propBedrooms"></span></p>
+    <p class="detail-row"><strong>Бани:</strong> <span id="propBathrooms"></span></p>
+    <p class="detail-row"><strong>Квадратура:</strong> <span id="propArea"></span></p>
+    <p class="detail-row"><strong>Година на строеж:</strong> <span id="propYear"></span></p>
+
+    <p class="detail-row"><strong>Описание:</strong></p>
+    <p id="propDescription" style="white-space: pre-line;"></p>
   </div>
 </div>
+
 
 <!-- Updated Add Property Modal with new fields -->
 <div id="addPropertyModal" class="modal" aria-hidden="true">
