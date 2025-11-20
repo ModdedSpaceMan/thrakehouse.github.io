@@ -33,6 +33,10 @@ export async function loadProperties() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();
+
+    // ⚠️ DEBUG: log the actual API data
+    console.log("API properties data:", data);
+
     propertiesData = data; // store globally
     renderProperties(data);
     return data;
@@ -42,6 +46,7 @@ export async function loadProperties() {
     return [];
   }
 }
+
 
 // --------------------
 // Render properties
