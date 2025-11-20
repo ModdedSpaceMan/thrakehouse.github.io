@@ -1,4 +1,4 @@
-// propertyForms.js (UPDATED: removed location and added new fields)
+// propertyForms.js (UPDATED: fixed field values)
 import { loadProperties } from './properties.js';
 import { showToast } from './ui.js';
 
@@ -51,12 +51,14 @@ document.addEventListener("DOMContentLoaded", () => {
     addForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const title = document.getElementById("propertyName")?.value.trim();
+      const title = document.getElementById("propertyTitle")?.value.trim();
       const description = document.getElementById("propertyDescription")?.value.trim();
       const price = parseFloat(document.getElementById("propertyPrice")?.value) || 0;
       const bedrooms = parseInt(document.getElementById("propertyBedrooms")?.value) || 0;
       const bathrooms = parseInt(document.getElementById("propertyBathrooms")?.value) || 0;
       const size = parseFloat(document.getElementById("propertySize")?.value) || 0;
+      const year = parseInt(document.getElementById("propertyYear")?.value) || null;
+      const floor = parseInt(document.getElementById("propertyFloor")?.value) || null;
       const category = addCategory?.value;
       const status = category === "rental" ? addStatus?.value : "";
 
@@ -71,6 +73,8 @@ document.addEventListener("DOMContentLoaded", () => {
         bedrooms,
         bathrooms,
         size,
+        floor,
+        year,
         images: addBase64Image ? [addBase64Image] : [],
         amenities: [],
         category,
