@@ -55,32 +55,48 @@ export function renderProperties(properties) {
   }
 
   propertyContainer.innerHTML = properties.map(p => {
-    const isRental = p.category === 'rental';
-    const inWishlist = wishlistIds.includes(p.id) ? '❤️' : '🤍';
-    const takenClass = isRental && p.status?.toLowerCase() === 'taken' ? 'taken' : '';
+    // Normalize fields with defaults
+    const id = p.id ?? '-';
+    const name = p.name || 'Без име';
+    const price = p.price ?? '-';
+    const type = p.type || '-';
+    const category = p.category || '-';
+    const status = p.status || 'Свободен';
+    const bedrooms = p.bedrooms ?? '-';
+    const bathrooms = p.bathrooms ?? '-';
+    const size = p.size ? p.size + ' m²' : '-';
+    const floor = p.floor ?? '-';
+    const year = p.year ?? '-';
+    const description = p.description || '-';
+    const image = p.image || '';
 
+    const isRental = category.toLowerCase() === 'rental';
+    const inWishlist = wishlistIds.includes(String(id)) ? '❤️' : '🤍';
+    const takenClass = isRental && status.toLowerCase() === 'taken' ? 'taken' : '';
+
+    // Admin buttons
     const adminButtons = role === 'admin' ? `
       <div class="admin-buttons-right">
-        <button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>
-        <button class="delete-btn" data-id="${p.id}">Изтрий</button>
-        ${isRental ? `<button class="toggle-status-btn" data-id="${p.id}">${p.status === "free" ? "Зает" : "Свободен"}</button>` : ''}
+        <button class="wishlist-btn" data-id="${id}">${inWishlist}</button>
+        <button class="delete-btn" data-id="${id}">Изтрий</button>
+        ${isRental ? `<button class="toggle-status-btn" data-id="${id}">${status === "free" ? "Зает" : "Свободен"}</button>` : ''}
       </div>
-    ` : `<button class="wishlist-btn" data-id="${p.id}">${inWishlist}</button>`;
+    ` : `<button class="wishlist-btn" data-id="${id}">${inWishlist}</button>`;
 
     return `
-      <div class="property ${takenClass}" data-id="${p.id}">
-        ${p.image ? `<img src="${p.image}" alt="${p.name}">` : ''}
+      <div class="property ${takenClass}" data-id="${id}">
+        ${image ? `<img src="${image}" alt="${name}">` : ''}
         <div class="property-content">
-          <h3>${p.name}</h3>
-          <p>Цена: ${p.price} лева</p>
+          <h3>${name}</h3>
+          <p>Цена: ${price} лева</p>
           <p>Категория: ${isRental ? "Наем" : "Продажба"}</p>
-          <p>Тип: ${p.type}</p>
-          ${isRental ? `<p>Статус: ${p.status}</p>` : ''}
+          <p>Тип: ${type}</p>
+          ${isRental ? `<p>Статус: ${status}</p>` : ''}
         </div>
         <div class="property-actions">
           ${adminButtons}
         </div>
-        <div class="property-id">ID: ${p.id}</div>
+        <div class="property-id">ID: ${id}</div>
       </div>
     `;
   }).join('');
@@ -88,6 +104,7 @@ export function renderProperties(properties) {
   addEventListeners();
   addModalListeners();
 }
+
 
 // --------------------
 // Event listeners
