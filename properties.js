@@ -47,7 +47,6 @@ export async function loadProperties() {
   }
 }
 
-
 // --------------------
 // Render properties
 // --------------------
@@ -60,9 +59,8 @@ export function renderProperties(properties) {
   }
 
   propertyContainer.innerHTML = properties.map(p => {
-    // Normalize fields with defaults
     const id = p.id ?? '-';
-    const name = p.name || 'Без име';
+    const title = p.title || 'Без име';
     const price = p.price ?? '-';
     const type = p.type || '-';
     const category = p.category || '-';
@@ -70,16 +68,12 @@ export function renderProperties(properties) {
     const bedrooms = p.bedrooms ?? '-';
     const bathrooms = p.bathrooms ?? '-';
     const size = p.size ? p.size + ' m²' : '-';
-    const floor = p.floor ?? '-';
-    const year = p.year ?? '-';
-    const description = p.description || '-';
-    const image = p.image || '';
+    const image = (p.images && p.images.length > 0) ? p.images[0] : '';
 
     const isRental = category.toLowerCase() === 'rental';
     const inWishlist = wishlistIds.includes(String(id)) ? '❤️' : '🤍';
     const takenClass = isRental && status.toLowerCase() === 'taken' ? 'taken' : '';
 
-    // Admin buttons
     const adminButtons = role === 'admin' ? `
       <div class="admin-buttons-right">
         <button class="wishlist-btn" data-id="${id}">${inWishlist}</button>
@@ -90,9 +84,9 @@ export function renderProperties(properties) {
 
     return `
       <div class="property ${takenClass}" data-id="${id}">
-        ${image ? `<img src="${image}" alt="${name}">` : ''}
+        ${image ? `<img src="${image}" alt="${title}">` : ''}
         <div class="property-content">
-          <h3>${name}</h3>
+          <h3>${title}</h3>
           <p>Цена: ${price} лева</p>
           <p>Категория: ${isRental ? "Наем" : "Продажба"}</p>
           <p>Тип: ${type}</p>
@@ -109,7 +103,6 @@ export function renderProperties(properties) {
   addEventListeners();
   addModalListeners();
 }
-
 
 // --------------------
 // Event listeners
@@ -315,42 +308,42 @@ function addModalListeners() {
 
 function openPropertyDetails(property) {
   const titleEl = document.getElementById("propTitle");
-  if (titleEl) titleEl.textContent = property.name;
+  if (titleEl) titleEl.textContent = property.title || 'Без име';
 
   const priceEl = document.getElementById("propPrice");
-  if (priceEl) priceEl.textContent = property.price + " лева";
+  if (priceEl) priceEl.textContent = property.price != null ? property.price + " лева" : '-';
 
   const typeEl = document.getElementById("propType");
-  if (typeEl) typeEl.textContent = property.type;
+  if (typeEl) typeEl.textContent = property.type || '-';
 
   const categoryEl = document.getElementById("propCategory");
-  if (categoryEl) categoryEl.textContent = property.category;
+  if (categoryEl) categoryEl.textContent = property.category || '-';
 
   const statusEl = document.getElementById("propStatus");
   if (statusEl) statusEl.textContent = property.status || 'Свободен';
 
   const bedroomsEl = document.getElementById("propBedrooms");
-  if (bedroomsEl) bedroomsEl.textContent = property.bedrooms || '-';
+  if (bedroomsEl) bedroomsEl.textContent = property.bedrooms != null ? property.bedrooms : '-';
 
   const bathroomsEl = document.getElementById("propBathrooms");
-  if (bathroomsEl) bathroomsEl.textContent = property.bathrooms || '-';
+  if (bathroomsEl) bathroomsEl.textContent = property.bathrooms != null ? property.bathrooms : '-';
 
   const areaEl = document.getElementById("propArea");
-  if (areaEl) areaEl.textContent = property.size ? property.size + " m²" : '-';
+  if (areaEl) areaEl.textContent = property.size != null ? property.size + " m²" : '-';
 
   const floorEl = document.getElementById("propFloor");
-  if (floorEl) floorEl.textContent = property.floor || '-';
+  if (floorEl) floorEl.textContent = property.floor != null ? property.floor : '-';
 
   const yearEl = document.getElementById("propYear");
-  if (yearEl) yearEl.textContent = property.year || '-';
+  if (yearEl) yearEl.textContent = property.year != null ? property.year : '-';
 
   const descriptionEl = document.getElementById("propDescription");
   if (descriptionEl) descriptionEl.textContent = property.description || '-';
 
   const imgEl = document.getElementById("propImage");
   if (imgEl) {
-    if (property.image) {
-      imgEl.src = property.image;
+    if (property.images && property.images.length > 0) {
+      imgEl.src = property.images[0]; // show first image
       imgEl.style.display = "block";
     } else {
       imgEl.style.display = "none";
@@ -359,7 +352,6 @@ function openPropertyDetails(property) {
 
   if (propertyModal) propertyModal.style.display = "flex";
 }
-
 
 // --------------------
 // Init
