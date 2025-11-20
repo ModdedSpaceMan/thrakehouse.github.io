@@ -842,3 +842,8 @@ footer {
   background: #17375d;
   transform: translateY(-2px);
 }
+/* Add Property Modal scroll if content is too tall */
+#addPropertyModal .modal-content {
+  max-height: 90vh;   /* max height relative to viewport */
+  overflow-y: auto;   /* vertical scroll if needed */
+}
