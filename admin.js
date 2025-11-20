@@ -3,6 +3,18 @@ adminSearchBtn?.addEventListener('click', async () => {
   if (!adminSearchInput || !adminFound) return;
   const searchId = adminSearchInput.value.trim();
   if (!searchId) return;
+  
+// Open Add Property modal
+openAddBtn?.addEventListener('click', () => {
+  if (!addPropertyModal) return;
+  addPropertyModal.style.display = 'flex';   // show modal
+});
+
+// Close Add Property modal
+closeAddBtn?.addEventListener('click', () => {
+  if (!addPropertyModal) return;
+  addPropertyModal.style.display = 'none';   // hide modal
+});
 
   try {
     const res = await fetch(`${API_URL}/properties`, {
