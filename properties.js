@@ -315,51 +315,36 @@ function addModalListeners() {
 }
 
 function openPropertyDetails(property) {
-  const titleEl = document.getElementById("propTitle");
-  if (titleEl) titleEl.textContent = property.title || 'Без име';
+  const set = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value ?? '-';
+  };
 
-  const priceEl = document.getElementById("propPrice");
-  if (priceEl) priceEl.textContent = property.price != null ? property.price + " лева" : '-';
-
-  const typeEl = document.getElementById("propType");
-  if (typeEl) typeEl.textContent = property.type || '-';
-
-  const categoryEl = document.getElementById("propCategory");
-  if (categoryEl) categoryEl.textContent = property.category || '-';
-
-  const statusEl = document.getElementById("propStatus");
-  if (statusEl) statusEl.textContent = property.status || 'Свободен';
-
-  const bedroomsEl = document.getElementById("propBedrooms");
-  if (bedroomsEl) bedroomsEl.textContent = property.bedrooms != null ? property.bedrooms : '-';
-
-  const bathroomsEl = document.getElementById("propBathrooms");
-  if (bathroomsEl) bathroomsEl.textContent = property.bathrooms != null ? property.bathrooms : '-';
-
-  const areaEl = document.getElementById("propArea");
-  if (areaEl) areaEl.textContent = property.size != null ? property.size + " m²" : '-';
-
-  const floorEl = document.getElementById("propFloor");
-  if (floorEl) floorEl.textContent = property.floor != null ? property.floor : '-';
-
-  const yearEl = document.getElementById("propYear");
-  if (yearEl) yearEl.textContent = property.year != null ? property.year : '-';
-
-  const descriptionEl = document.getElementById("propDescription");
-  if (descriptionEl) descriptionEl.textContent = property.description || '-';
+  set("propTitle", property.title);
+  set("propPrice", property.price ? property.price + " лева" : "-");
+  set("propType", property.type);
+  set("propCategory", property.category);
+  set("propStatus", property.status || "Свободен");
+  set("propBedrooms", property.bedrooms);
+  set("propBathrooms", property.bathrooms);
+  set("propArea", property.size ? property.size + " m²" : "-");
+  set("propYear", property.year);
+  set("propDescription", property.description || "-");
 
   const imgEl = document.getElementById("propImage");
   if (imgEl) {
     if (property.images && property.images.length > 0) {
-      imgEl.src = property.images[0]; // show first image
+      imgEl.src = property.images[0];
       imgEl.style.display = "block";
     } else {
       imgEl.style.display = "none";
     }
   }
 
-  if (propertyModal) propertyModal.style.display = "flex";
+  const modal = document.getElementById("propertyDetailsModal");
+  if (modal) modal.style.display = "flex";
 }
+
 
 // --------------------
 // Init
