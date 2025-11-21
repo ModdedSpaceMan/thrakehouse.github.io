@@ -1,18 +1,19 @@
 import { showToast } from './ui.js';
 import { loadProperties } from './properties.js';
 
-export let wishlistIds = [];
-
 const wishlistBtn = document.getElementById('wishlistBtn');
 const wishlistModal = document.getElementById('wishlistModal');
 const closeWishlist = document.getElementById('closeWishlist');
 const wishlistContent = document.getElementById('wishlistContent');
+
+export let wishlistIds = [];
 
 // Load wishlist from localStorage
 export async function loadWishlist() {
     const saved = JSON.parse(localStorage.getItem('wishlist')) || [];
     wishlistIds = saved;
     updateTopWishlistBtn();
+    await renderWishlist();
 }
 
 // Toggle wishlist
@@ -48,23 +49,25 @@ export async function renderWishlist() {
         <div class="properties-grid">
             ${savedProps.map(p => `
                 <div class="property-card" data-id="${p.id}">
-                    <img src="${p.images?.[0] || ''}" alt="${p.title}">
+                    <img src="${p.images?.[0] || ''}" alt="${p.title || 'Имот'}">
                     <h3>${p.title}</h3>
-                    <p><strong>Цена:</strong> ${p.price ?? '-'}</p>
-                    <p><strong>Тип:</strong> ${p.type ?? '-'}</p>
-                    <p><strong>Категория:</strong> ${p.category ?? '-'}</p>
+                    <p>${p.category || '-'}</p>
+                    <p><strong>${p.price ?? '-'}</strong></p>
+                    <button class="openWishProperty">Детайли</button>
                 </div>
             `).join('')}
         </div>
     `;
 
-    // Make each property clickable to open modal
-    wishlistContent.querySelectorAll('.property-card')?.forEach(card => {
-        card.addEventListener('click', () => {
+    // Click handler for each property
+    wishlistContent.querySelectorAll('.openWishProperty')?.forEach(btn => {
+        btn.addEventListener('click', e => {
+            const card = e.target.closest('.property-card');
             const id = card.dataset.id;
             const property = savedProps.find(p => p.id == id);
             if (property && window.openPropertyDetails) {
                 window.openPropertyDetails(property);
+                wishlistModal.setAttribute('aria-hidden', 'true');
             } else {
                 showToast('Не може да се зареди информация за имота');
             }
