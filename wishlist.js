@@ -26,10 +26,14 @@ export async function loadWishlist() {
     });
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
     const data = await res.json();
-    const validIds = propertiesData.map(p => String(p.id));
-    wishlistIds = (data.items || []).filter(id => validIds.includes(String(id)));
+
+    // Make sure wishlist IDs are strings
+    wishlistIds = (data.items || []).map(String);
+
+    // Debug
+    console.log('Wishlist backend IDs:', wishlistIds);
+    console.log('All properties IDs:', propertiesData.map(p => String(p.id)));
 
     renderWishlist();
   } catch (err) {
@@ -44,7 +48,11 @@ export async function loadWishlist() {
 export function renderWishlist() {
   if (!wishlistContainer) return;
 
+  // Match wishlist IDs with properties
   const savedProps = propertiesData.filter(p => wishlistIds.includes(String(p.id)));
+
+  // Debug
+  console.log('Saved properties to show in wishlist:', savedProps);
 
   if (!savedProps.length) {
     wishlistContainer.innerHTML = '<p>Вашият списък е празен.</p>';
@@ -53,7 +61,7 @@ export function renderWishlist() {
 
   wishlistContainer.innerHTML = savedProps
     .map(p => {
-      const id = p.id ?? '-';
+      const id = String(p.id);
       const title = p.title ?? 'Без име';
       const price = p.price ?? '-';
       const category = p.category ?? '-';
@@ -62,8 +70,7 @@ export function renderWishlist() {
       const bathrooms = p.bathrooms ?? '-';
       const size = p.size ? p.size + ' m²' : '-';
       const image = p.images?.[0] ?? '';
-
-      const inWishlist = wishlistIds.includes(String(id)) ? '❤️' : '🤍';
+      const inWishlist = wishlistIds.includes(id) ? '❤️' : '🤍';
 
       return `
         <div class="property" data-id="${id}">
@@ -96,7 +103,7 @@ function attachListeners() {
     card.addEventListener('click', e => {
       if (e.target.tagName === 'BUTTON') return;
       const id = card.dataset.id;
-      const property = propertiesData.find(p => p.id == id);
+      const property = propertiesData.find(p => String(p.id) === String(id));
       if (!property) return showToast('Не може да се зареди имотът');
       window.openPropertyDetails(property);
     });
