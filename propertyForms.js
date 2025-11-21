@@ -12,15 +12,28 @@ document.addEventListener("DOMContentLoaded", () => {
   const propertyImageInput = document.getElementById('propertyImage');
   const addMoreImagesBtn = document.getElementById('addMoreImagesBtn');
   const imagePreviews = document.getElementById('imagePreviews');
-
+  const propertyCategory = document.getElementById("propertyCategory");
+  const statusContainer = document.getElementById("statusContainer");
+  
   if (!addForm || !addModal || !addCategory || !propertyImageInput || !addMoreImagesBtn || !imagePreviews) return;
 
   let allImages = [];
 
-  // Show/hide rental status
-  addCategory.addEventListener("change", () => {
-    if (addStatus) addStatus.style.display = addCategory.value === "rental" ? "block" : "none";
+  // Elements
+
+
+// Hide status box by default
+statusContainer.style.display = "none";
+  
+  // Show only when "rental" is selected
+  propertyCategory.addEventListener("change", () => {
+    if (propertyCategory.value === "rent") {
+      statusContainer.style.display = "block";
+    } else {
+      statusContainer.style.display = "none";
+    }
   });
+
 
   // --- Add More Images Button ---
   addMoreImagesBtn.addEventListener('click', () => {
