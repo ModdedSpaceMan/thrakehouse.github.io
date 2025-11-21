@@ -70,6 +70,7 @@ export function renderProperties(properties) {
     villa: "Вила",
     farm: "Земеделски имот",
     regulated: "Земя в регулация",
+    plot: "Парцел",
   };
 
   propertyContainer.innerHTML = properties
