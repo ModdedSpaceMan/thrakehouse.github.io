@@ -76,6 +76,10 @@ export function renderProperties(properties) {
   sale: "Продава",
   rental: "Под наем",
   };
+  const statusTranslations = {
+  free: "Свободен",
+  taken: "Зает",
+};
 
 
   propertyContainer.innerHTML = properties
@@ -116,9 +120,12 @@ export function renderProperties(properties) {
             <p><strong>Площ:</strong> ${p.size} m²</p>
             ${
               p.category === "rental"
-                ? `<p><strong>Статус:</strong> ${p.status}</p>`
+                ? `<button class="toggle-status-btn" data-id="${id}">${
+                    p.status === "free" ? "Свободен" : "Зает"
+                  }</button>`
                 : ""
             }
+
           </div>
           <div class="property-actions">${adminButtons}</div>
         </div>`;
