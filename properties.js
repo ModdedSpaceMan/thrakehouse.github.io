@@ -24,6 +24,9 @@ export async function initProperties() {
   window.addEventListener("propertiesUpdated", loadProperties);
 
   setupModalStaticListeners();
+
+  // Expose globally for wishlist page
+  window.openPropertyDetails = openPropertyDetails;
 }
 
 // ======================================================
@@ -179,8 +182,7 @@ function setupModalStaticListeners() {
       e.stopPropagation();
       if (!currentPropertyImages.length) return;
       currentImageIndex =
-        (currentImageIndex - 1 + currentPropertyImages.length) %
-        currentPropertyImages.length;
+        (currentImageIndex - 1 + currentPropertyImages.length) % currentPropertyImages.length;
       updateModalImage();
     });
 
@@ -230,7 +232,7 @@ function updateModalImage() {
 
   if (!img) return;
 
-  if (currentPropertyImages.length === 0) {
+  if (!currentPropertyImages.length) {
     img.style.display = "none";
     dots.innerHTML = "";
     return;
