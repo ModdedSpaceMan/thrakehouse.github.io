@@ -39,30 +39,108 @@
       <div id="propImageDots" style="position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:6px; z-index:5;"></div>
     </div>
 
-    <!-- Property details -->
-    <div class="property-content">
-        <div class="property-id-box" style="
-          position: absolute;
-          top: 5px;
-          left: 5px;
+    <!-- Property details modal -->
+<div id="propertyDetailsModal" class="modal" style="display:none;">
+  <div class="modal-content" style="
+      position:relative;
+      max-width:800px;
+      margin:auto;
+      padding:20px;
+      background:#111827; /* dark background like main page */
+      color:#fff; /* white text */
+      border-radius:12px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.4);
+  ">
+    
+    <!-- Close button -->
+    <span class="close" style="
+        position:absolute; top:10px; right:15px;
+        font-size:28px; font-weight:bold;
+        cursor:pointer; z-index:10;
+    ">&times;</span>
+
+    <!-- Image wrapper -->
+    <div style="position:relative; text-align:center; margin-top:30px;">
+      <!-- Property image -->
+      <img id="propImage" src="" alt="" style="
+          width:100%;
+          max-height:500px;
+          object-fit:cover;
+          border-radius:12px;
+          z-index:1;
+          position:relative;
+      ">
+
+      <!-- Arrows -->
+      <button id="prevImageBtn" style="
+          position:absolute;
+          top:50%;
+          left:0;
+          transform:translateY(-50%);
+          background:none;
+          border:none;
+          font-size:36px;
+          font-weight:bold;
+          cursor:pointer;
+          z-index:5;
+          color:#fff;
+      ">❮</button>
+      <button id="nextImageBtn" style="
+          position:absolute;
+          top:50%;
+          right:0;
+          transform:translateY(-50%);
+          background:none;
+          border:none;
+          font-size:36px;
+          font-weight:bold;
+          cursor:pointer;
+          z-index:5;
+          color:#fff;
+      ">❯</button>
+
+      <!-- Dots -->
+      <div id="propImageDots" style="
+          position:absolute;
+          bottom:10px;
+          left:50%;
+          transform:translateX(-50%);
+          display:flex;
+          gap:6px;
+          z-index:5;
+      "></div>
+
+      <!-- ID badge -->
+      <div id="propIdBox" style="
+          position:absolute;
+          top:5px;
+          left:5px;
           background: rgba(0,0,0,0.7);
           color: #fff;
           padding: 2px 5px;
           font-size: 12px;
           border-radius: 3px;
-          z-index: 10;
-        ">ID: ${id}</div>
-    <h2 id="propTitle" style="margin-top:20px;"></h2>
-    <p id="propPrice"></p>
-    <p id="propCategory"></p>
-    <p id="propStatus"></p>
-    <p id="propType"></p>
-    <p id="propBedrooms"></p>
-    <p id="propBathrooms"></p>
-    <p id="propArea"></p>
-    <p id="propYear"></p>
-    <p id="propDescription"></p>
+          z-index:10;
+      ">ID: -</div>
+    </div>
+
+    <!-- Property details -->
+    <div class="property-content" style="margin-top:15px; line-height:1.5;">
+        <h2 id="propTitle" style="margin-bottom:10px;"></h2>
+        <p><strong>Цена:</strong> <span id="propPrice"></span></p>
+        <p><strong>Категория:</strong> <span id="propCategory"></span></p>
+        <p><strong>Статус:</strong> <span id="propStatus"></span></p>
+        <p><strong>Тип:</strong> <span id="propType"></span></p>
+        <p><strong>Спални:</strong> <span id="propBedrooms"></span></p>
+        <p><strong>Бани:</strong> <span id="propBathrooms"></span></p>
+        <p><strong>Площ:</strong> <span id="propArea"></span></p>
+        <p><strong>Година на строеж:</strong> <span id="propYear"></span></p>
+        <p><strong>Описание:</strong></p>
+        <p id="propDescription" style="white-space: pre-line;"></p>
+    </div>
   </div>
+</div>
+
 </div>
 
 
