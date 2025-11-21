@@ -15,12 +15,34 @@
   </header>
 
   <main>
-    <section id="wishlistProperties" class="properties"></section>
+    <!-- Wishlist grid container -->
+    <section id="wishlistContent" class="properties"></section>
   </main>
+
+  <!-- Property details modal (from properties.js) -->
+  <div id="propertyDetailsModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <img id="propImage" src="" alt="" style="max-width:90%; border-radius:12px;">
+      <div id="propImageDots"></div>
+      <h2 id="propTitle"></h2>
+      <p id="propPrice"></p>
+      <p id="propCategory"></p>
+      <p id="propStatus"></p>
+      <p id="propType"></p>
+      <p id="propBedrooms"></p>
+      <p id="propBathrooms"></p>
+      <p id="propArea"></p>
+      <p id="propYear"></p>
+      <p id="propDescription"></p>
+      <button id="prevImageBtn">Prev</button>
+      <button id="nextImageBtn">Next</button>
+    </div>
+  </div>
 
   <div id="toast" class="toast"></div>
 
   <script type="module" src="wishlist.js"></script>
-
+  <script type="module" src="properties.js"></script>
 </body>
 </html>
