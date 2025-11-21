@@ -1,5 +1,5 @@
 import { showToast } from './ui.js';
-import { loadProperties, toggleWishlist as mainToggleWishlist } from './properties.js';
+import { toggleWishlist as mainToggleWishlist } from './properties.js';
 
 const wishlistContainer = document.getElementById('wishlistProperties');
 const username = localStorage.getItem('username');
@@ -8,8 +8,21 @@ let propertiesData = [];
 let wishlistIds = [];
 
 // --------------------
-// Load wishlist from backend
+// Fetch properties from backend (no DOM rendering)
+async function fetchProperties() {
+  try {
+    const res = await fetch('https://my-backend.martinmiskata.workers.dev/properties');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error('Failed to fetch properties:', err);
+    return [];
+  }
+}
+
 // --------------------
+// Load wishlist from backend
 export async function loadWishlist() {
   if (!username) {
     wishlistContainer.innerHTML = '<p>Трябва да сте влезли, за да видите wishlist.</p>';
@@ -17,23 +30,21 @@ export async function loadWishlist() {
   }
 
   try {
-    // Load all properties
-    propertiesData = await loadProperties();
+    // Fetch all properties
+    propertiesData = await fetchProperties();
 
-    // Load wishlist for the user from backend
+    // Fetch wishlist for the user
     const res = await fetch(`https://my-backend.martinmiskata.workers.dev/wishlists/${username}`, {
       headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
     });
-
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    // Make sure wishlist IDs are strings
-    wishlistIds = (data.items || []).map(String);
+    const validIds = propertiesData.map(p => String(p.id));
+    wishlistIds = (data.items || []).filter(id => validIds.includes(String(id)));
 
-    // Debug
     console.log('Wishlist backend IDs:', wishlistIds);
-    console.log('All properties IDs:', propertiesData.map(p => String(p.id)));
+    console.log('All properties IDs:', validIds);
 
     renderWishlist();
   } catch (err) {
@@ -44,14 +55,10 @@ export async function loadWishlist() {
 
 // --------------------
 // Render wishlist
-// --------------------
 export function renderWishlist() {
   if (!wishlistContainer) return;
 
-  // Match wishlist IDs with properties
   const savedProps = propertiesData.filter(p => wishlistIds.includes(String(p.id)));
-
-  // Debug
   console.log('Saved properties to show in wishlist:', savedProps);
 
   if (!savedProps.length) {
@@ -61,7 +68,7 @@ export function renderWishlist() {
 
   wishlistContainer.innerHTML = savedProps
     .map(p => {
-      const id = String(p.id);
+      const id = p.id ?? '-';
       const title = p.title ?? 'Без име';
       const price = p.price ?? '-';
       const category = p.category ?? '-';
@@ -70,7 +77,7 @@ export function renderWishlist() {
       const bathrooms = p.bathrooms ?? '-';
       const size = p.size ? p.size + ' m²' : '-';
       const image = p.images?.[0] ?? '';
-      const inWishlist = wishlistIds.includes(id) ? '❤️' : '🤍';
+      const inWishlist = wishlistIds.includes(String(id)) ? '❤️' : '🤍';
 
       return `
         <div class="property" data-id="${id}">
@@ -97,15 +104,14 @@ export function renderWishlist() {
 
 // --------------------
 // Attach click listeners
-// --------------------
 function attachListeners() {
   wishlistContainer.querySelectorAll('.property').forEach(card => {
     card.addEventListener('click', e => {
       if (e.target.tagName === 'BUTTON') return;
       const id = card.dataset.id;
-      const property = propertiesData.find(p => String(p.id) === String(id));
+      const property = propertiesData.find(p => p.id == id);
       if (!property) return showToast('Не може да се зареди имотът');
-      window.openPropertyDetails(property);
+      window.openPropertyDetails(property); // uses global modal
     });
   });
 
@@ -120,5 +126,4 @@ function attachListeners() {
 
 // --------------------
 // Init
-// --------------------
 document.addEventListener('DOMContentLoaded', loadWishlist);
