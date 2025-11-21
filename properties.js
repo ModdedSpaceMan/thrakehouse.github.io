@@ -109,6 +109,11 @@ export function renderProperties(properties) {
             <p><strong>Спални:</strong> ${p.bedrooms}</p>
             <p><strong>Бани:</strong> ${p.bathrooms}</p>
             <p><strong>Площ:</strong> ${p.size} m²</p>
+            ${
+              p.category === "rent"
+                ? `<p><strong>Статус:</strong> ${p.status}</p>`
+                : ""
+            }
           </div>
           <div class="property-actions">${adminButtons}</div>
         </div>`;
