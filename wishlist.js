@@ -14,6 +14,7 @@ let savedProps = [];
 export async function loadWishlist() {
     const username = localStorage.getItem('username');
     const token = localStorage.getItem('token');
+
     if (!username || !token) {
         wishlistIds = [];
         renderWishlist();
@@ -24,15 +25,19 @@ export async function loadWishlist() {
         const res = await fetch(`${API_URL}/wishlists/${username}`, {
             headers: { 'Authorization': 'Bearer ' + token }
         });
+
         if (!res.ok) throw new Error('Failed to fetch wishlist');
 
         const data = await res.json();
-        wishlistIds = (data.items || []).map(String); // ensure strings
+        console.log('Wishlist data from backend:', data);
+
+        // Ensure IDs are strings and trimmed
+        wishlistIds = (data.items || []).map(id => String(id).trim());
 
         updateTopWishlistBtn();
         await renderWishlist();
     } catch (err) {
-        console.error(err);
+        console.error('Error loading wishlist:', err);
         wishlistIds = [];
         renderWishlist();
     }
@@ -50,7 +55,12 @@ export async function renderWishlist() {
     if (!wishlistContent) return;
 
     const allProperties = await loadProperties();
-    savedProps = allProperties.filter(p => wishlistIds.includes(String(p.id)));
+    console.log('All properties:', allProperties);
+    console.log('Wishlist IDs:', wishlistIds);
+
+    // Filter properties that are in wishlist
+    savedProps = allProperties.filter(p => wishlistIds.includes(String(p.id).trim()));
+    console.log('Saved properties:', savedProps);
 
     if (!savedProps.length) {
         wishlistContent.innerHTML = '<p>Вашият списък е празен.</p>';
@@ -77,7 +87,10 @@ export async function renderWishlist() {
         btn.addEventListener('click', e => {
             const id = e.target.closest('.property-card').dataset.id;
             wishlistModal.setAttribute('aria-hidden', 'true');
-            if (window.openPropertyDetails) window.openPropertyDetails(savedProps.find(p => p.id == id));
+            if (window.openPropertyDetails) {
+                const prop = savedProps.find(p => String(p.id).trim() === String(id).trim());
+                window.openPropertyDetails(prop);
+            }
         });
     });
 }
