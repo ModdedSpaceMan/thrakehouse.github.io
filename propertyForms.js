@@ -18,13 +18,91 @@ document.addEventListener("DOMContentLoaded", () => {
     addStatus.style.display = addCategory.value === "rental" ? "block" : "none";
   });
 
-  addImageInput.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => addBase64Image = reader.result;
-    reader.readAsDataURL(file);
+// --- Dynamic image uploads for Add Property Modal ---
+const addImageBtn = document.getElementById('addImageBtn');
+const imageUploads = document.getElementById('imageUploads');
+
+if (addImageBtn && imageUploads) {
+  addImageBtn.addEventListener('click', () => {
+    // Create a wrapper for input + preview + remove button
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'flex';
+    wrapper.style.alignItems = 'center';
+    wrapper.style.marginTop = '5px';
+
+    // New file input
+    const newInput = document.createElement('input');
+    newInput.type = 'file';
+    newInput.name = 'propertyImages[]';
+    newInput.accept = 'image/*';
+    newInput.style.marginRight = '10px';
+
+    // Preview image
+    const preview = document.createElement('img');
+    preview.style.width = '80px';
+    preview.style.height = '80px';
+    preview.style.objectFit = 'cover';
+    preview.style.borderRadius = '4px';
+    preview.style.display = 'none';
+    preview.style.marginRight = '10px';
+
+    // Remove button
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.textContent = '×';
+    removeBtn.style.fontSize = '18px';
+    removeBtn.style.cursor = 'pointer';
+    removeBtn.style.border = 'none';
+    removeBtn.style.background = 'transparent';
+    removeBtn.style.color = '#f00';
+
+    removeBtn.addEventListener('click', () => {
+      wrapper.remove();
+    });
+
+    // Show preview when file is selected
+    newInput.addEventListener('change', () => {
+      if (newInput.files && newInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(newInput.files[0]);
+      }
+    });
+
+    wrapper.appendChild(newInput);
+    wrapper.appendChild(preview);
+    wrapper.appendChild(removeBtn);
+
+    imageUploads.appendChild(wrapper);
   });
+}
+
+// --- Optional: handle initial file input preview if already present ---
+const initialInput = imageUploads.querySelector('input[type="file"]');
+if (initialInput) {
+  const preview = document.createElement('img');
+  preview.style.width = '80px';
+  preview.style.height = '80px';
+  preview.style.objectFit = 'cover';
+  preview.style.borderRadius = '4px';
+  preview.style.display = 'none';
+  preview.style.marginLeft = '10px';
+  initialInput.parentNode.appendChild(preview);
+
+  initialInput.addEventListener('change', () => {
+    if (initialInput.files && initialInput.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(initialInput.files[0]);
+    }
+  });
+}
 
   const closeAddModal = () => {
     addModal.setAttribute("aria-hidden", "true");
