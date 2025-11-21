@@ -228,6 +228,24 @@ function setupModalStaticListeners() {
 // OPEN MODAL
 // ======================================================
 function openPropertyDetails(property) {
+  const categoryTranslations = {
+    sale: "Продажба",
+    rental: "Наем"
+  };
+
+  const statusTranslations = {
+    free: "Свободен",
+    taken: "Зает"
+  };
+
+  const typeTranslations = {
+    apartment: "Апартамент",
+    house: "Къща",
+    villa: "Вила",
+    farm: "Земеделски имот",
+    plot: "Парцел"
+  };
+
   const set = (id, value) => {
     const el = document.getElementById(id);
     if (el) el.textContent = value ?? "-";
@@ -235,9 +253,9 @@ function openPropertyDetails(property) {
 
   set("propTitle", property.title);
   set("propPrice", property.price + " лева");
-  set("propCategory", property.category);
-  set("propStatus", property.status);
-  set("propType", property.type);
+  set("propCategory", categoryTranslations[property.category] || property.category);
+  set("propStatus", statusTranslations[property.status] || property.status);
+  set("propType", typeTranslations[property.type] || property.type);
   set("propBedrooms", property.bedrooms);
   set("propBathrooms", property.bathrooms);
   set("propArea", property.size + " m²");
@@ -251,6 +269,7 @@ function openPropertyDetails(property) {
 
   propertyModal.style.display = "flex";
 }
+
 
 // ======================================================
 // UPDATE IMAGE + DOTS
