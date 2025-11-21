@@ -3,13 +3,23 @@ import { showToast } from './ui.js';
 
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 let wishlistIds = [];
-const propertyContainer = document.getElementById('properties');
+let propertyContainer = document.getElementById('properties');
 const propertyModal = document.getElementById("propertyDetailsModal");
 const username = localStorage.getItem('username');
 const token = localStorage.getItem('token');
 const role = localStorage.getItem('role'); // 'admin' or 'user'
 
 let propertiesData = []; // store loaded properties globally
+
+// --------------------
+// Helper: Clean event listeners by cloning container
+// --------------------
+function cleanContainerListeners() {
+  const newContainer = propertyContainer.cloneNode(false); // empty clone, no listeners
+  propertyContainer.parentNode.replaceChild(newContainer, propertyContainer);
+  propertyContainer = newContainer;
+  return propertyContainer;
+}
 
 // --------------------
 // Initialize
@@ -33,7 +43,7 @@ export async function loadProperties() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();
-    propertiesData = data; // store globally
+    propertiesData = data;
     renderProperties(data);
     return data;
   } catch (err) {
@@ -44,7 +54,7 @@ export async function loadProperties() {
 }
 
 // --------------------
-// Render properties
+// Render Properties (DUPLICATION FIXED)
 // --------------------
 export function renderProperties(properties) {
   if (!propertyContainer) return;
@@ -54,6 +64,9 @@ export function renderProperties(properties) {
     return;
   }
 
+  // CLEAN ALL OLD EVENT LISTENERS
+  let cleanContainer = cleanContainerListeners();
+
   const typeTranslations = {
     apartment: 'Апартамент',
     house: 'Къща',
@@ -62,7 +75,7 @@ export function renderProperties(properties) {
     regulated: 'Земя в регулация'
   };
 
-  propertyContainer.innerHTML = properties.map(p => {
+  cleanContainer.innerHTML = properties.map(p => {
     const id = p.id ?? '-';
     const title = p.title || 'Без име';
     const price = p.price ?? '-';
@@ -117,34 +130,34 @@ export function renderProperties(properties) {
 }
 
 // --------------------
-// Event listeners
+// Event Listeners
 // --------------------
 function addEventListeners() {
-  propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
+  propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn =>
     btn.addEventListener('click', async e => {
       e.stopPropagation();
       await toggleWishlist(btn.dataset.id);
-    });
-  });
+    })
+  );
 
   if (role === 'admin') {
-    propertyContainer.querySelectorAll('.delete-btn').forEach(btn => {
+    propertyContainer.querySelectorAll('.delete-btn').forEach(btn =>
       btn.addEventListener('click', e => {
         e.stopPropagation();
         const id = btn.dataset.id;
         if (confirm('Наистина ли искате да изтриете този имот?')) {
           deleteProperty(id);
         }
-      });
-    });
+      })
+    );
 
-    propertyContainer.querySelectorAll('.toggle-status-btn').forEach(btn => {
+    propertyContainer.querySelectorAll('.toggle-status-btn').forEach(btn =>
       btn.addEventListener('click', e => {
         e.stopPropagation();
         const id = btn.dataset.id;
         toggleRentalStatus(id);
-      });
-    });
+      })
+    );
   }
 }
 
@@ -210,7 +223,7 @@ export async function toggleWishlist(propertyId) {
 }
 
 // --------------------
-// Admin actions
+// Admin Actions
 // --------------------
 async function deleteProperty(id) {
   try {
@@ -295,7 +308,7 @@ function setupFilterListeners() {
 }
 
 // --------------------
-// Property Details Modal with arrows and dots
+// Property Details Modal
 // --------------------
 let currentPropertyImages = [];
 let currentImageIndex = 0;
@@ -310,17 +323,14 @@ function addModalListeners() {
     });
   });
 
-  // Close modal
   propertyModal.querySelector(".close")?.addEventListener("click", () => {
     propertyModal.style.display = "none";
   });
 
-  // Close when clicking outside
   propertyModal.addEventListener("click", e => {
     if (e.target === propertyModal) propertyModal.style.display = "none";
   });
 
-  // Arrows
   const prevBtn = propertyModal.querySelector('#prevImageBtn');
   const nextBtn = propertyModal.querySelector('#nextImageBtn');
   const imgEl = propertyModal.querySelector('#propImage');
@@ -370,7 +380,7 @@ function addModalListeners() {
     });
   }
 
-  // Expose openPropertyDetails globally
+  // Expose globally
   window.openPropertyDetails = function(property) {
     const typeTranslations = {
       apartment: 'Апартамент',
@@ -410,11 +420,9 @@ function addModalListeners() {
     }
 
     updateDots();
-
-    if (propertyModal) propertyModal.style.display = 'flex';
+    propertyModal.style.display = "flex";
   };
 }
-
 
 // --------------------
 // Init
