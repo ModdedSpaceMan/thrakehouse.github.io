@@ -5,7 +5,7 @@ const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
 document.addEventListener("DOMContentLoaded", () => {
   const addModal = document.getElementById("addPropertyModal");
-  const addForm = document.getElementById("propertyForm");
+  const addForm = document.getElementById("addPropertyForm"); // matches your HTML
   const addCategory = document.getElementById("propertyCategory");
   const addStatus = document.getElementById("propertyStatus");
   const propertyImageInput = document.getElementById('propertyImage');
@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Show status only for rentals
   addCategory.addEventListener("change", () => {
-    if (addCategory.value === "rental") {
+    if (addCategory.value === "rent") {
       statusContainer.style.display = "block";
     } else {
       statusContainer.style.display = "none";
@@ -94,16 +94,16 @@ document.addEventListener("DOMContentLoaded", () => {
   addForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const title = document.getElementById("propertyName")?.value.trim();
+    const title = document.getElementById("propertyTitle")?.value.trim();
     const description = document.getElementById("propertyDescription")?.value.trim();
     const price = parseFloat(document.getElementById("propertyPrice")?.value) || 0;
     const type = document.getElementById("propertyType")?.value;
     const bedrooms = parseInt(document.getElementById("propertyBedrooms")?.value) || 0;
     const bathrooms = parseInt(document.getElementById("propertyBathrooms")?.value) || 0;
-    const size = parseFloat(document.getElementById("propertySize")?.value) || 0;
+    const size = parseFloat(document.getElementById("propertyArea")?.value) || 0;
     const year = parseInt(document.getElementById("propertyYear")?.value) || 0;
     const category = addCategory.value;
-    const status = category === "rental" ? addStatus.value : "";
+    const status = category === "rent" ? addStatus.value : "";
 
     if (!title || !type || !category) {
       return showToast("Моля, попълнете всички задължителни полета!");
