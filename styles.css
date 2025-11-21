@@ -847,3 +847,13 @@ footer {
   max-height: 90vh;   /* max height relative to viewport */
   overflow-y: auto;   /* vertical scroll if needed */
 }
+/* Allow the whole modal to scroll if too tall */
+#propertyDetailsModal {
+  overflow-y: auto;
+}
+
+/* Keep the inner content from exceeding the screen height */
+#propertyDetailsModal .modal-content {
+  max-height: 90vh;
+  overflow-y: auto;
+}
