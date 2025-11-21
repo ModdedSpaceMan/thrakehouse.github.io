@@ -33,10 +33,6 @@ export async function loadProperties() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();
-
-    // ⚠️ DEBUG: log the actual API data
-    console.log("API properties data:", data);
-
     propertiesData = data; // store globally
     renderProperties(data);
     return data;
@@ -252,7 +248,6 @@ function setupFilterListeners() {
   applyBtn.addEventListener('click', () => {
     let filtered = propertiesData;
 
-    const locationFilter = document.getElementById('filterLocation')?.value.toLowerCase();
     const minPrice = Number(document.getElementById('filterMinPrice')?.value);
     const maxPrice = Number(document.getElementById('filterMaxPrice')?.value);
     const typeFilter = document.getElementById('filterType')?.value;
@@ -272,7 +267,6 @@ function setupFilterListeners() {
       const size = Number(p.size) || 0;
       const year = Number(p.year) || 0;
 
-      if (locationFilter && !p.location?.toLowerCase().includes(locationFilter)) return false;
       if (!isNaN(minPrice) && price < minPrice) return false;
       if (!isNaN(maxPrice) && price > maxPrice) return false;
       if (typeFilter && p.type !== typeFilter) return false;
