@@ -10,20 +10,29 @@ const wishlistContent = document.getElementById('wishlistContent');
 let wishlistIds = [];
 let savedProps = [];
 
-// Load wishlist from backend
-export async function loadWishlist() {
+// Utility: get user info from localStorage
+function getUser() {
     const username = localStorage.getItem('username');
     const token = localStorage.getItem('token');
+    if (!username || !token) return null;
+    return { username, token };
+}
 
-    if (!username || !token) {
+// Load wishlist from backend
+export async function loadWishlist() {
+    const user = getUser();
+
+    if (!user) {
+        console.log('User not logged in');
         wishlistIds = [];
+        updateTopWishlistBtn();
         renderWishlist();
         return;
     }
 
     try {
-        const res = await fetch(`${API_URL}/wishlists/${username}`, {
-            headers: { 'Authorization': 'Bearer ' + token }
+        const res = await fetch(`${API_URL}/wishlists/${user.username}`, {
+            headers: { 'Authorization': 'Bearer ' + user.token }
         });
 
         if (!res.ok) throw new Error('Failed to fetch wishlist');
@@ -58,7 +67,6 @@ export async function renderWishlist() {
     console.log('All properties:', allProperties);
     console.log('Wishlist IDs:', wishlistIds);
 
-    // Filter properties that are in wishlist
     savedProps = allProperties.filter(p => wishlistIds.includes(String(p.id).trim()));
     console.log('Saved properties:', savedProps);
 
@@ -82,7 +90,6 @@ export async function renderWishlist() {
         </div>
     `;
 
-    // Attach click events for each property
     wishlistContent.querySelectorAll('.openWishProperty')?.forEach(btn => {
         btn.addEventListener('click', e => {
             const id = e.target.closest('.property-card').dataset.id;
@@ -107,4 +114,7 @@ closeWishlist?.addEventListener('click', () => {
 });
 
 // Auto-load on page load
-document.addEventListener('DOMContentLoaded', loadWishlist);
+document.addEventListener('DOMContentLoaded', () => {
+    // Wait a small tick to ensure localStorage is ready
+    setTimeout(loadWishlist, 100);
+});
