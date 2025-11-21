@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!addForm || !addModal || !addCategory || !propertyImageInput || !addMoreImagesBtn || !imagePreviews) return;
 
-  // --- Mobile-safe file input ---
+  // Mobile-friendly file input
   propertyImageInput.style.position = 'absolute';
   propertyImageInput.style.left = '-9999px';
   propertyImageInput.setAttribute('multiple', 'true');
@@ -23,22 +23,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let allImages = [];
 
-  // Hide status box by default
+  // Hide status by default
   statusContainer.style.display = "none";
 
   // Show status only for rentals
   addCategory.addEventListener("change", () => {
-    if (addCategory.value === "rental") {
-      statusContainer.style.display = "block";
-    } else {
-      statusContainer.style.display = "none";
-    }
+    statusContainer.style.display = addCategory.value === "rental" ? "block" : "none";
   });
 
   // --- Add More Images Button ---
-  addMoreImagesBtn.addEventListener('click', () => {
-    propertyImageInput.click();
-  });
+  addMoreImagesBtn.addEventListener('click', () => propertyImageInput.click());
 
   // --- Handle file selection ---
   propertyImageInput.addEventListener('change', () => {
@@ -48,29 +42,26 @@ document.addEventListener("DOMContentLoaded", () => {
       allImages.push(file);
 
       const wrapper = document.createElement('div');
-      wrapper.style.display = 'flex';
+      wrapper.style.display = 'inline-flex';
       wrapper.style.alignItems = 'center';
-      wrapper.style.marginTop = '5px';
+      wrapper.style.margin = '5px';
 
       const preview = document.createElement('img');
-      preview.style.width = '80px';
-      preview.style.height = '80px';
+      preview.src = URL.createObjectURL(file);
+      preview.width = 80;
+      preview.height = 80;
       preview.style.objectFit = 'cover';
       preview.style.borderRadius = '4px';
-      preview.style.marginRight = '10px';
-
-      const reader = new FileReader();
-      reader.onload = e => preview.src = e.target.result;
-      reader.readAsDataURL(file);
+      preview.style.marginRight = '5px';
 
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
       removeBtn.textContent = '×';
-      removeBtn.style.fontSize = '18px';
       removeBtn.style.cursor = 'pointer';
       removeBtn.style.border = 'none';
       removeBtn.style.background = 'transparent';
-      removeBtn.style.color = '#f00';
+      removeBtn.style.color = 'red';
+      removeBtn.style.fontSize = '18px';
 
       removeBtn.addEventListener('click', () => {
         const idx = allImages.indexOf(file);
