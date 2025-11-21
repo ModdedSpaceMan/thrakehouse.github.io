@@ -75,8 +75,9 @@ document.addEventListener("DOMContentLoaded", () => {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + localStorage.getItem('token')
         },
-        body: JSON.stringify(newProperty)
+        body: JSON.stringify({ property: newProperty }) // <-- FIXED
       });
+
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to add property");
