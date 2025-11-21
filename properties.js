@@ -88,8 +88,9 @@ export function renderProperties(properties) {
           <button class="delete-btn" data-id="${id}">Изтрий</button>
           ${
             p.category === "rental"
-              ? `<button class="toggle-status-btn" data-id="${id}">
-              ${p.status === "free" ? "Зает" : "Свободен"}</button>`
+              ? `<button class="toggle-status-btn" data-id="${id}">${
+                  p.status === "free" ? "Зает" : "Свободен"
+                }</button>`
               : ""
           }
         </div>`
@@ -337,7 +338,8 @@ function setupFilterListeners() {
   if (!btn) return;
 
   btn.addEventListener("click", () => {
-    let filtered = propertiesData;
+    // Always start from full properties
+    let filtered = [...propertiesData];
 
     const minPrice = Number(document.getElementById("filterMinPrice").value);
     const maxPrice = Number(document.getElementById("filterMaxPrice").value);
@@ -345,11 +347,10 @@ function setupFilterListeners() {
     const cat = document.getElementById("filterCategory").value;
 
     filtered = filtered.filter((p) => {
-      if (!isNaN(minPrice) && p.price < minPrice) return false;
-      if (!isNaN(maxPrice) && p.price > maxPrice) return false;
-      if (type && p.type !== type) return false;
-      if (cat && p.category !== cat) return false;
-      if (type && p.type !== type) return false;
+      if (!isNaN(minPrice) && minPrice > 0 && p.price < minPrice) return false;
+      if (!isNaN(maxPrice) && maxPrice > 0 && p.price > maxPrice) return false;
+      if (type && type !== "" && p.type !== type) return false;
+      if (cat && cat !== "" && p.category !== cat) return false;
       return true;
     });
 
