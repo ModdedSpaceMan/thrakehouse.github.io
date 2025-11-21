@@ -1,7 +1,6 @@
 import { showToast } from './ui.js';
-import { loadProperties, openPropertyModal } from './properties.js';
+import { loadProperties } from './properties.js';
 
-const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 export let wishlistIds = [];
 
 const wishlistBtn = document.getElementById('wishlistBtn');
@@ -49,22 +48,26 @@ export async function renderWishlist() {
         <div class="properties-grid">
             ${savedProps.map(p => `
                 <div class="property-card" data-id="${p.id}">
-                    <img src="${p.image}" alt="${p.name}">
-                    <h3>${p.name}</h3>
-                    <p>${p.location}</p>
-                    <p><strong>${p.price}</strong></p>
-                    <button class="openWishProperty">Детайли</button>
+                    <img src="${p.images?.[0] || ''}" alt="${p.title}">
+                    <h3>${p.title}</h3>
+                    <p><strong>Цена:</strong> ${p.price ?? '-'}</p>
+                    <p><strong>Тип:</strong> ${p.type ?? '-'}</p>
+                    <p><strong>Категория:</strong> ${p.category ?? '-'}</p>
                 </div>
             `).join('')}
         </div>
     `;
 
-    // Click handler for each property
-    wishlistContent.querySelectorAll('.openWishProperty')?.forEach(btn => {
-        btn.addEventListener('click', e => {
-            const id = e.target.closest('.property-card').dataset.id;
-            wishlistModal.setAttribute('aria-hidden', 'true');
-            openPropertyModal(id, localStorage.getItem('role') === 'admin');
+    // Make each property clickable to open modal
+    wishlistContent.querySelectorAll('.property-card')?.forEach(card => {
+        card.addEventListener('click', () => {
+            const id = card.dataset.id;
+            const property = savedProps.find(p => p.id == id);
+            if (property && window.openPropertyDetails) {
+                window.openPropertyDetails(property);
+            } else {
+                showToast('Не може да се зареди информация за имота');
+            }
         });
     });
 }
