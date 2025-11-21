@@ -1,74 +1,46 @@
 import { showToast } from './ui.js';
-import { loadProperties } from './properties.js';
+import { loadProperties, openPropertyModal } from './properties.js';
 
-const API_URL = 'https://my-backend.martinmiskata.workers.dev';
+export let wishlistIds = [];
+
 const wishlistBtn = document.getElementById('wishlistBtn');
 const wishlistModal = document.getElementById('wishlistModal');
 const closeWishlist = document.getElementById('closeWishlist');
 const wishlistContent = document.getElementById('wishlistContent');
 
-let wishlistIds = [];
-let savedProps = [];
-
-// Utility: get user info from localStorage
-function getUser() {
-    const username = localStorage.getItem('username');
-    const token = localStorage.getItem('token');
-    if (!username || !token) return null;
-    return { username, token };
-}
-
-// Load wishlist from backend
+// Load wishlist from localStorage
 export async function loadWishlist() {
-    const user = getUser();
-
-    if (!user) {
-        console.log('User not logged in');
-        wishlistIds = [];
-        updateTopWishlistBtn();
-        renderWishlist();
-        return;
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/wishlists/${user.username}`, {
-            headers: { 'Authorization': 'Bearer ' + user.token }
-        });
-
-        if (!res.ok) throw new Error('Failed to fetch wishlist');
-
-        const data = await res.json();
-        console.log('Wishlist data from backend:', data);
-
-        // Ensure IDs are strings and trimmed
-        wishlistIds = (data.items || []).map(id => String(id).trim());
-
-        updateTopWishlistBtn();
-        await renderWishlist();
-    } catch (err) {
-        console.error('Error loading wishlist:', err);
-        wishlistIds = [];
-        renderWishlist();
-    }
+    const saved = JSON.parse(localStorage.getItem('wishlist')) || [];
+    // Ensure all IDs are strings for consistency
+    wishlistIds = saved.map(String);
+    updateTopWishlistBtn();
 }
 
-// Update top menu wishlist button
+// Toggle wishlist
+export async function toggleWishlist(id) {
+    id = String(id); // ensure string
+    if (!wishlistIds.includes(id)) wishlistIds.push(id);
+    else wishlistIds = wishlistIds.filter(wid => wid !== id);
+
+    localStorage.setItem('wishlist', JSON.stringify(wishlistIds));
+    updateTopWishlistBtn();
+    await renderWishlist();
+}
+
+// Update main menu wishlist button
 function updateTopWishlistBtn() {
     if (!wishlistBtn) return;
     wishlistBtn.style.display = wishlistIds.length ? 'inline-block' : 'none';
     wishlistBtn.textContent = `Списък ♥ (${wishlistIds.length})`;
 }
 
-// Render wishlist as property cards
+// Render wishlist as property grid
 export async function renderWishlist() {
     if (!wishlistContent) return;
 
     const allProperties = await loadProperties();
-    console.log('All properties:', allProperties);
-    console.log('Wishlist IDs:', wishlistIds);
-
-    savedProps = allProperties.filter(p => wishlistIds.includes(String(p.id).trim()));
-    console.log('Saved properties:', savedProps);
+    // Match IDs as strings
+    const savedProps = allProperties.filter(p => wishlistIds.includes(String(p.id)));
 
     if (!savedProps.length) {
         wishlistContent.innerHTML = '<p>Вашият списък е празен.</p>';
@@ -79,25 +51,22 @@ export async function renderWishlist() {
         <div class="properties-grid">
             ${savedProps.map(p => `
                 <div class="property-card" data-id="${p.id}">
-                    <img src="${p.images?.[0] || ''}" alt="${p.title || 'Имот'}">
-                    <h3>${p.title}</h3>
-                    <p><strong>Цена:</strong> ${p.price} лева</p>
-                    <p><strong>Категория:</strong> ${p.category}</p>
-                    <p><strong>Тип:</strong> ${p.type}</p>
+                    <img src="${p.image}" alt="${p.name}">
+                    <h3>${p.name}</h3>
+                    <p>${p.location}</p>
+                    <p><strong>${p.price}</strong></p>
                     <button class="openWishProperty">Детайли</button>
                 </div>
             `).join('')}
         </div>
     `;
 
+    // Click handler for each property
     wishlistContent.querySelectorAll('.openWishProperty')?.forEach(btn => {
         btn.addEventListener('click', e => {
             const id = e.target.closest('.property-card').dataset.id;
             wishlistModal.setAttribute('aria-hidden', 'true');
-            if (window.openPropertyDetails) {
-                const prop = savedProps.find(p => String(p.id).trim() === String(id).trim());
-                window.openPropertyDetails(prop);
-            }
+            openPropertyModal(id, localStorage.getItem('role') === 'admin');
         });
     });
 }
@@ -114,7 +83,4 @@ closeWishlist?.addEventListener('click', () => {
 });
 
 // Auto-load on page load
-document.addEventListener('DOMContentLoaded', () => {
-    // Wait a small tick to ensure localStorage is ready
-    setTimeout(loadWishlist, 100);
-});
+document.addEventListener('DOMContentLoaded', loadWishlist);
