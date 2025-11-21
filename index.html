@@ -80,10 +80,10 @@
       </select>
 
       <!-- NEW IMAGE UPLOAD -->
-      <div id="imageUploads">
-        <input type="file" name="propertyImages[]" accept="image/*">
-      </div>
-      <button type="button" id="addImageBtn">Добави още изображение</button>
+      <input type="file" id="propertyImage" style="display:none;" multiple>
+      <div id="imagePreviews"></div>
+      <button type="button" id="addMoreImagesBtn">Add More Images</button>
+
 
       <textarea id="propertyDescription" placeholder="Описание"></textarea>
       <input type="number" id="propertyBedrooms" placeholder="Брой спални">
