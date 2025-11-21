@@ -120,10 +120,7 @@ export function renderProperties(properties) {
             <p><strong>Площ:</strong> ${p.size} m²</p>
             ${
               p.category === "rental"
-                ? `<button class="toggle-status-btn" data-id="${id}">${
-                    p.status === "free" ? "Свободен" : "Зает"
-                  }</button>`
-                : ""
+               <p><strong>Статус:</strong> ${p.category === "rental" ? (statusTranslations[p.status] || p.status) : "-"}</p>
             }
 
           </div>
