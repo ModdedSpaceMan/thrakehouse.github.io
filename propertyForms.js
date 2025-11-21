@@ -8,110 +8,92 @@ document.addEventListener("DOMContentLoaded", () => {
   const addModal = document.getElementById("addPropertyModal");
   const addForm = document.getElementById("propertyForm");
   const addCategory = document.getElementById("propertyCategory");
-  const addImageInput = document.getElementById("propertyImage");
-  let addBase64Image = "";
+  const addStatus = document.getElementById("propertyStatus");
+  const imageUploads = document.getElementById('imageUploads');
+  const addImageBtn = document.getElementById('addImageBtn');
 
-  if (!addForm || !addModal || !addCategory || !addImageInput) return;
+  if (!addForm || !addModal || !addCategory || !addStatus || !imageUploads || !addImageBtn) return;
 
-  let addStatus = document.getElementById("propertyStatus");
+  // --------------------
+  // Show/hide status for rental
+  // --------------------
   addCategory.addEventListener("change", () => {
     addStatus.style.display = addCategory.value === "rental" ? "block" : "none";
   });
 
-// --- Dynamic image uploads for Add Property Modal ---
-const addImageBtn = document.getElementById('addImageBtn');
-const imageUploads = document.getElementById('imageUploads');
+  // --------------------
+  // Manage multiple images
+  // --------------------
+  let allImages = [];
 
-if (addImageBtn && imageUploads) {
-  addImageBtn.addEventListener('click', () => {
-    // Create a wrapper for input + preview + remove button
-    const wrapper = document.createElement('div');
-    wrapper.style.display = 'flex';
-    wrapper.style.alignItems = 'center';
-    wrapper.style.marginTop = '5px';
+  // Function to render previews
+  const renderPreviews = () => {
+    imageUploads.innerHTML = '';
+    allImages.forEach((file, idx) => {
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'flex';
+      wrapper.style.alignItems = 'center';
+      wrapper.style.marginTop = '5px';
 
-    // New file input
-    const newInput = document.createElement('input');
-    newInput.type = 'file';
-    newInput.name = 'propertyImages[]';
-    newInput.accept = 'image/*';
-    newInput.style.marginRight = '10px';
+      const preview = document.createElement('img');
+      preview.style.width = '80px';
+      preview.style.height = '80px';
+      preview.style.objectFit = 'cover';
+      preview.style.borderRadius = '4px';
+      preview.style.marginRight = '10px';
+      preview.src = URL.createObjectURL(file);
 
-    // Preview image
-    const preview = document.createElement('img');
-    preview.style.width = '80px';
-    preview.style.height = '80px';
-    preview.style.objectFit = 'cover';
-    preview.style.borderRadius = '4px';
-    preview.style.display = 'none';
-    preview.style.marginRight = '10px';
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.textContent = '×';
+      removeBtn.style.fontSize = '18px';
+      removeBtn.style.cursor = 'pointer';
+      removeBtn.style.border = 'none';
+      removeBtn.style.background = 'transparent';
+      removeBtn.style.color = '#f00';
 
-    // Remove button
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.textContent = '×';
-    removeBtn.style.fontSize = '18px';
-    removeBtn.style.cursor = 'pointer';
-    removeBtn.style.border = 'none';
-    removeBtn.style.background = 'transparent';
-    removeBtn.style.color = '#f00';
+      removeBtn.addEventListener('click', () => {
+        allImages.splice(idx, 1);
+        renderPreviews();
+      });
 
-    removeBtn.addEventListener('click', () => {
-      wrapper.remove();
+      wrapper.appendChild(preview);
+      wrapper.appendChild(removeBtn);
+      imageUploads.appendChild(wrapper);
     });
+  };
 
-    // Show preview when file is selected
-    newInput.addEventListener('change', () => {
-      if (newInput.files && newInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = e => {
-          preview.src = e.target.result;
-          preview.style.display = 'block';
-        };
-        reader.readAsDataURL(newInput.files[0]);
+  // Click "Add Image" -> trigger hidden file input
+  addImageBtn.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+
+    input.addEventListener('change', () => {
+      if (input.files && input.files[0]) {
+        allImages.push(input.files[0]);
+        renderPreviews();
       }
     });
 
-    wrapper.appendChild(newInput);
-    wrapper.appendChild(preview);
-    wrapper.appendChild(removeBtn);
-
-    imageUploads.appendChild(wrapper);
+    input.click();
   });
-}
 
-// --- Optional: handle initial file input preview if already present ---
-const initialInput = imageUploads.querySelector('input[type="file"]');
-if (initialInput) {
-  const preview = document.createElement('img');
-  preview.style.width = '80px';
-  preview.style.height = '80px';
-  preview.style.objectFit = 'cover';
-  preview.style.borderRadius = '4px';
-  preview.style.display = 'none';
-  preview.style.marginLeft = '10px';
-  initialInput.parentNode.appendChild(preview);
-
-  initialInput.addEventListener('change', () => {
-    if (initialInput.files && initialInput.files[0]) {
-      const reader = new FileReader();
-      reader.onload = e => {
-        preview.src = e.target.result;
-        preview.style.display = 'block';
-      };
-      reader.readAsDataURL(initialInput.files[0]);
-    }
-  });
-}
-
+  // --------------------
+  // Close modal
+  // --------------------
   const closeAddModal = () => {
     addModal.setAttribute("aria-hidden", "true");
     addForm.reset();
-    addBase64Image = "";
+    allImages = [];
+    imageUploads.innerHTML = '';
     addStatus.style.display = "none";
   };
   addModal.querySelector(".close")?.addEventListener("click", closeAddModal);
 
+  // --------------------
+  // Submit form
+  // --------------------
   addForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -130,32 +112,31 @@ if (initialInput) {
       return showToast("Моля, попълнете всички задължителни полета!");
     }
 
-    const newProperty = {
-      title,
-      name: title,      // match properties.js display
-      description,
-      price,
-      type,
-      bedrooms,
-      bathrooms,
-      size,
-      year,
-      category,
-      status,
-      images: addBase64Image ? [addBase64Image] : [],
-      amenities: []
-    };
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('name', title); // match properties.js display
+    formData.append('description', description);
+    formData.append('price', price);
+    formData.append('type', type);
+    formData.append('bedrooms', bedrooms);
+    formData.append('bathrooms', bathrooms);
+    formData.append('size', size);
+    formData.append('year', year);
+    formData.append('category', category);
+    formData.append('status', status);
+
+    allImages.forEach(file => {
+      formData.append('images', file);
+    });
 
     try {
       const res = await fetch(`${API_URL}/properties`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + localStorage.getItem('token')
         },
-        body: JSON.stringify({ property: newProperty }) // <-- FIXED
+        body: formData
       });
-
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to add property");
