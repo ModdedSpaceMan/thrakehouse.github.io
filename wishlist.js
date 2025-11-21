@@ -1,33 +1,40 @@
 import { showToast } from './ui.js';
-import { loadProperties, toggleWishlist as mainToggleWishlist, wishlistIds as mainWishlistIds } from './properties.js';
+import { loadProperties, toggleWishlist as mainToggleWishlist } from './properties.js';
 
 const wishlistContainer = document.getElementById('wishlistProperties');
+const username = localStorage.getItem('username');
 
 let propertiesData = [];
-let username = localStorage.getItem('username');
-let role = localStorage.getItem('role');
 let wishlistIds = [];
 
 // --------------------
-// Load wishlist for logged-in user
+// Load wishlist from backend
 // --------------------
 export async function loadWishlist() {
   if (!username) {
-    wishlistIds = [];
-    renderWishlist();
+    wishlistContainer.innerHTML = '<p>Трябва да сте влезли, за да видите wishlist.</p>';
     return;
   }
 
   try {
-    // Fetch all properties
+    // Load all properties
     propertiesData = await loadProperties();
 
-    // Filter wishlist
-    wishlistIds = mainWishlistIds; // get from properties.js global
+    // Load wishlist for the user from backend
+    const res = await fetch(`https://my-backend.martinmiskata.workers.dev/wishlists/${username}`, {
+      headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+    const validIds = propertiesData.map(p => String(p.id));
+    wishlistIds = (data.items || []).filter(id => validIds.includes(String(id)));
+
     renderWishlist();
   } catch (err) {
     console.error(err);
-    wishlistContainer.innerHTML = "<p>Грешка при зареждане на wishlist.</p>";
+    wishlistContainer.innerHTML = '<p>Грешка при зареждане на wishlist.</p>';
   }
 }
 
@@ -58,16 +65,6 @@ export function renderWishlist() {
 
       const inWishlist = wishlistIds.includes(String(id)) ? '❤️' : '🤍';
 
-      const adminButtons = role === 'admin' ? `
-        <div class="admin-buttons-right">
-          <button class="wishlist-btn" data-id="${id}">${inWishlist}</button>
-          <button class="delete-btn" data-id="${id}">Изтрий</button>
-          ${category === 'rental' ? `<button class="toggle-status-btn" data-id="${id}">
-            ${status === "free" ? "Зает" : "Свободен"}
-          </button>` : ''}
-        </div>
-      ` : `<button class="wishlist-btn" data-id="${id}">${inWishlist}</button>`;
-
       return `
         <div class="property" data-id="${id}">
           ${image ? `<img src="${image}" alt="${title}">` : ''}
@@ -81,7 +78,7 @@ export function renderWishlist() {
             <p><strong>Площ:</strong> ${size}</p>
           </div>
           <div class="property-actions">
-            ${adminButtons}
+            <button class="wishlist-btn" data-id="${id}">${inWishlist}</button>
           </div>
         </div>
       `;
@@ -95,12 +92,9 @@ export function renderWishlist() {
 // Attach click listeners
 // --------------------
 function attachListeners() {
-  // Open modal on card click
   wishlistContainer.querySelectorAll('.property').forEach(card => {
     card.addEventListener('click', e => {
-      // Ignore clicks on buttons
       if (e.target.tagName === 'BUTTON') return;
-
       const id = card.dataset.id;
       const property = propertiesData.find(p => p.id == id);
       if (!property) return showToast('Не може да се зареди имотът');
@@ -108,46 +102,13 @@ function attachListeners() {
     });
   });
 
-  // Wishlist buttons
   wishlistContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
     btn.addEventListener('click', async e => {
       e.stopPropagation();
-      const id = btn.dataset.id;
-      await mainToggleWishlist(id);
-      loadWishlist();
+      await mainToggleWishlist(btn.dataset.id);
+      loadWishlist(); // reload after toggle
     });
   });
-
-  // Admin buttons
-  if (role === 'admin') {
-    wishlistContainer.querySelectorAll('.delete-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        const id = btn.dataset.id;
-        if (confirm('Наистина ли искате да изтриете този имот?')) {
-          fetch(`${loadProperties.API_URL}/properties/${id}`, {
-            method: 'DELETE',
-            headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-          }).then(() => loadWishlist());
-        }
-      });
-    });
-
-    wishlistContainer.querySelectorAll('.toggle-status-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        const id = btn.dataset.id;
-        fetch(`${loadProperties.API_URL}/properties/${id}/status`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer ' + localStorage.getItem('token')
-          },
-          body: JSON.stringify({ status: 'toggle' })
-        }).then(() => loadWishlist());
-      });
-    });
-  }
 }
 
 // --------------------
