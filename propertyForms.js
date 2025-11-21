@@ -9,91 +9,89 @@ document.addEventListener("DOMContentLoaded", () => {
   const addForm = document.getElementById("propertyForm");
   const addCategory = document.getElementById("propertyCategory");
   const addStatus = document.getElementById("propertyStatus");
-  const imageUploads = document.getElementById('imageUploads');
-  const addImageBtn = document.getElementById('addImageBtn');
+  const imageUploads = document.getElementById("imageUploads");
+  const addImageBtn = document.getElementById("addImageBtn");
 
-  if (!addForm || !addModal || !addCategory || !addStatus || !imageUploads || !addImageBtn) return;
+  if (!addForm || !addModal || !addCategory || !imageUploads || !addImageBtn) return;
 
-  // --------------------
-  // Show/hide status for rental
-  // --------------------
+  let allImages = []; // store all uploaded images
+
+  // Show/hide status for rental category
   addCategory.addEventListener("change", () => {
     addStatus.style.display = addCategory.value === "rental" ? "block" : "none";
   });
 
-  // --------------------
-  // Manage multiple images
-  // --------------------
-  let allImages = [];
+  // --- Dynamic Image Uploads ---
+  addImageBtn.addEventListener("click", () => {
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'flex';
+    wrapper.style.alignItems = 'center';
+    wrapper.style.marginTop = '5px';
 
-  // Function to render previews
-  const renderPreviews = () => {
-    imageUploads.innerHTML = '';
-    allImages.forEach((file, idx) => {
-      const wrapper = document.createElement('div');
-      wrapper.style.display = 'flex';
-      wrapper.style.alignItems = 'center';
-      wrapper.style.marginTop = '5px';
-
-      const preview = document.createElement('img');
-      preview.style.width = '80px';
-      preview.style.height = '80px';
-      preview.style.objectFit = 'cover';
-      preview.style.borderRadius = '4px';
-      preview.style.marginRight = '10px';
-      preview.src = URL.createObjectURL(file);
-
-      const removeBtn = document.createElement('button');
-      removeBtn.type = 'button';
-      removeBtn.textContent = '×';
-      removeBtn.style.fontSize = '18px';
-      removeBtn.style.cursor = 'pointer';
-      removeBtn.style.border = 'none';
-      removeBtn.style.background = 'transparent';
-      removeBtn.style.color = '#f00';
-
-      removeBtn.addEventListener('click', () => {
-        allImages.splice(idx, 1);
-        renderPreviews();
-      });
-
-      wrapper.appendChild(preview);
-      wrapper.appendChild(removeBtn);
-      imageUploads.appendChild(wrapper);
-    });
-  };
-
-  // Click "Add Image" -> trigger hidden file input
-  addImageBtn.addEventListener('click', () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
+    input.style.display = 'none'; // hidden
 
+    const preview = document.createElement('img');
+    preview.style.width = '80px';
+    preview.style.height = '80px';
+    preview.style.objectFit = 'cover';
+    preview.style.borderRadius = '4px';
+    preview.style.marginRight = '10px';
+    preview.style.display = 'none';
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.textContent = '×';
+    removeBtn.style.fontSize = '18px';
+    removeBtn.style.cursor = 'pointer';
+    removeBtn.style.border = 'none';
+    removeBtn.style.background = 'transparent';
+    removeBtn.style.color = '#f00';
+
+    let file;
     input.addEventListener('change', () => {
       if (input.files && input.files[0]) {
-        allImages.push(input.files[0]);
-        renderPreviews();
+        file = input.files[0];
+        allImages.push(file);
+
+        const reader = new FileReader();
+        reader.onload = e => {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
       }
     });
 
-    input.click();
+    removeBtn.addEventListener('click', () => {
+      if (file) {
+        const idx = allImages.indexOf(file);
+        if (idx > -1) allImages.splice(idx, 1);
+      }
+      wrapper.remove();
+    });
+
+    wrapper.appendChild(input);
+    wrapper.appendChild(preview);
+    wrapper.appendChild(removeBtn);
+    imageUploads.appendChild(wrapper);
+
+    input.click(); // trigger file selection
   });
 
-  // --------------------
-  // Close modal
-  // --------------------
+  // --- Close modal ---
   const closeAddModal = () => {
     addModal.setAttribute("aria-hidden", "true");
     addForm.reset();
     allImages = [];
-    imageUploads.innerHTML = '';
     addStatus.style.display = "none";
+    imageUploads.innerHTML = ""; // clear previews
   };
   addModal.querySelector(".close")?.addEventListener("click", closeAddModal);
 
-  // --------------------
-  // Submit form
-  // --------------------
+  // --- Submit form ---
   addForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -112,30 +110,45 @@ document.addEventListener("DOMContentLoaded", () => {
       return showToast("Моля, попълнете всички задължителни полета!");
     }
 
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('name', title); // match properties.js display
-    formData.append('description', description);
-    formData.append('price', price);
-    formData.append('type', type);
-    formData.append('bedrooms', bedrooms);
-    formData.append('bathrooms', bathrooms);
-    formData.append('size', size);
-    formData.append('year', year);
-    formData.append('category', category);
-    formData.append('status', status);
+    // Convert all selected images to base64
+    const imagePromises = allImages.map(file => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.onerror = e => reject(e);
+      reader.readAsDataURL(file);
+    }));
 
-    allImages.forEach(file => {
-      formData.append('images', file);
-    });
+    let base64Images = [];
+    try {
+      base64Images = await Promise.all(imagePromises);
+    } catch (err) {
+      console.error("Failed to read images:", err);
+    }
+
+    const newProperty = {
+      title,
+      name: title,      // match properties.js display
+      description,
+      price,
+      type,
+      bedrooms,
+      bathrooms,
+      size,
+      year,
+      category,
+      status,
+      images: base64Images,
+      amenities: []
+    };
 
     try {
       const res = await fetch(`${API_URL}/properties`, {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + localStorage.getItem('token')
         },
-        body: formData
+        body: JSON.stringify({ property: newProperty })
       });
 
       const data = await res.json();
