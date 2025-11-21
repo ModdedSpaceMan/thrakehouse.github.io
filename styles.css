@@ -857,3 +857,30 @@ footer {
   max-height: 90vh;
   overflow-y: auto;
 }
+#adminSidebar {
+  max-height: 100vh;
+  overflow-y: auto;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #3498db #f0f0f0; /* thumb | track */
+}
+
+/* WebKit (Chrome, Edge, Safari) */
+#adminSidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+#adminSidebar::-webkit-scrollbar-track {
+  background: #f0f0f0;  /* track color */
+  border-radius: 4px;
+}
+
+#adminSidebar::-webkit-scrollbar-thumb {
+  background-color: #3498db; /* scrollbar color */
+  border-radius: 4px;
+}
+
+#adminSidebar::-webkit-scrollbar-thumb:hover {
+  background-color: #21618c; /* darker on hover */
+}
