@@ -110,7 +110,7 @@ export function renderProperties(properties) {
             <p><strong>Бани:</strong> ${p.bathrooms}</p>
             <p><strong>Площ:</strong> ${p.size} m²</p>
             ${
-              p.category === "rent"
+              p.category === "rental"
                 ? `<p><strong>Статус:</strong> ${p.status}</p>`
                 : ""
             }
