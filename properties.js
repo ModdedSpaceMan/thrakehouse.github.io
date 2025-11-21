@@ -349,6 +349,7 @@ function setupFilterListeners() {
       if (!isNaN(maxPrice) && p.price > maxPrice) return false;
       if (type && p.type !== type) return false;
       if (cat && p.category !== cat) return false;
+      if (type && p.type !== type) return false;
       return true;
     });
 
