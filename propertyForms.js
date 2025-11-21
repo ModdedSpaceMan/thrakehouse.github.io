@@ -1,4 +1,3 @@
-// propertyForms.js
 import { loadProperties } from './properties.js';
 import { showToast } from './ui.js';
 
@@ -12,35 +11,36 @@ document.addEventListener("DOMContentLoaded", () => {
   const propertyImageInput = document.getElementById('propertyImage');
   const addMoreImagesBtn = document.getElementById('addMoreImagesBtn');
   const imagePreviews = document.getElementById('imagePreviews');
-  const propertyCategory = document.getElementById("propertyCategory");
   const statusContainer = document.getElementById("statusContainer");
-  
+
   if (!addForm || !addModal || !addCategory || !propertyImageInput || !addMoreImagesBtn || !imagePreviews) return;
+
+  // --- Mobile-safe file input ---
+  propertyImageInput.style.position = 'absolute';
+  propertyImageInput.style.left = '-9999px';
+  propertyImageInput.setAttribute('multiple', 'true');
+  propertyImageInput.setAttribute('accept', 'image/*');
 
   let allImages = [];
 
-  // Elements
+  // Hide status box by default
+  statusContainer.style.display = "none";
 
-
-// Hide status box by default
-statusContainer.style.display = "none";
-  
-  // Show only when "rental" is selected
-  propertyCategory.addEventListener("change", () => {
-    if (propertyCategory.value === "rent") {
+  // Show status only for rentals
+  addCategory.addEventListener("change", () => {
+    if (addCategory.value === "rental") {
       statusContainer.style.display = "block";
     } else {
       statusContainer.style.display = "none";
     }
   });
 
-
   // --- Add More Images Button ---
   addMoreImagesBtn.addEventListener('click', () => {
     propertyImageInput.click();
   });
 
-  // Handle file selection
+  // --- Handle file selection ---
   propertyImageInput.addEventListener('change', () => {
     if (!propertyImageInput.files) return;
 
@@ -83,7 +83,7 @@ statusContainer.style.display = "none";
       imagePreviews.appendChild(wrapper);
     });
 
-    propertyImageInput.value = ''; // allow selecting same files again
+    propertyImageInput.value = ''; // allow re-selection
   });
 
   // --- Close Modal ---
@@ -92,7 +92,7 @@ statusContainer.style.display = "none";
     addForm.reset();
     allImages = [];
     imagePreviews.innerHTML = '';
-    if (addStatus) addStatus.style.display = "none";
+    statusContainer.style.display = "none";
   };
   addModal.querySelector(".close")?.addEventListener("click", closeAddModal);
 
@@ -126,7 +126,6 @@ statusContainer.style.display = "none";
 
     const newProperty = {
       title,
-      name: title,
       description,
       price,
       type,
