@@ -108,7 +108,7 @@ export function renderProperties(properties) {
             }</button>`;
 
       return `
-        <div class="property" data-id="${id}">
+      <div class="property" data-id="${id}">
         ${image ? `<img src="${image}">` : ""}
         <div class="property-content">
           <h3>${p.title}</h3>
@@ -125,7 +125,8 @@ export function renderProperties(properties) {
           }
         </div>
         <div class="property-actions">${adminButtons}</div>
-      </div>
+      </div>`;
+
     })
     .join("");
 
