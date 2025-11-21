@@ -10,6 +10,7 @@ const role = localStorage.getItem('role'); // 'admin' or 'user'
 
 export let propertiesData = []; // global store
 export let wishlistIds = [];    // global wishlist store
+export { initProperties };
 
 // --------------------
 // Load wishlist from backend or localStorage fallback
