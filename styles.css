@@ -929,5 +929,25 @@ header, main, footer, section, div, {
   padding: 22px;
   box-sizing: border-box;
 }
+#ticketModal select#ticketStatus {
+  padding: 4px 8px;             /* small padding */
+  border: 1px solid #88c0f7;
+  border-radius: 5px;
+  background-color: #f0f8ff;
+  color: #333;
+  font-size: 14px;
+  width: auto;                  /* shrink to content */
+  display: inline-block;        /* keep it inline */
+  min-width: 100px;             /* optional: ensure it’s not too tiny */
+  appearance: none;
+  cursor: pointer;
+}
+
+#ticketModal select#ticketStatus:hover,
+#ticketModal select#ticketStatus:focus {
+  border-color: #5a9be0;
+  outline: none;
+  background-color: #e6f2fc;
+}
 
 
