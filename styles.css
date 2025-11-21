@@ -884,10 +884,27 @@ footer {
 #adminSidebar::-webkit-scrollbar-thumb:hover {
   background-color: #21618c; /* darker on hover */
 }
-.hero {
-  background-image: url('https://image2url.com/images/1763707556223-11633b71-f0d0-4e6b-bb2b-4dbe56e98d2b.jpg'); /* replace with your image path */
-  background-size: cover;      /* cover the entire section */
-  background-position: center; /* center the image */
-  background-repeat: no-repeat;
-  height: 400px;               /* adjust the height as needed */
+/* Make body take full height */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: Arial, sans-serif;
 }
+
+/* Parallax background */
+body {
+  background-image: url('https://image2url.com/images/1763707556223-11633b71-f0d0-4e6b-bb2b-4dbe56e98d2b.jpg'); /* replace with your image */
+  background-attachment: fixed; /* parallax effect */
+  background-size: cover;       /* cover the screen */
+  background-position: center;  /* center the image */
+  background-repeat: no-repeat;
+  transition: background-position 0.3s ease-out; /* smooth transition */
+}
+/* Apply slight transparency to all page content except the background */
+header, main, footer, section, div, {
+  background-color: #2c5da000; /* remove any solid background */
+  opacity: .97; /* slightly transparent (1 = fully opaque) */
+}
+
+
