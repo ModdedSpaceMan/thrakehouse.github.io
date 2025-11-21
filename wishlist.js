@@ -67,37 +67,53 @@ export function renderWishlist() {
   }
 
   wishlistContainer.innerHTML = savedProps
-    .map(p => {
-      const id = p.id ?? '-';
-      const title = p.title ?? 'Без име';
-      const price = p.price ?? '-';
-      const category = p.category ?? '-';
-      const status = p.status ?? '';
-      const bedrooms = p.bedrooms ?? '-';
-      const bathrooms = p.bathrooms ?? '-';
-      const size = p.size ? p.size + ' m²' : '-';
-      const image = p.images?.[0] ?? '';
-      const inWishlist = wishlistIds.includes(String(id)) ? '❤️' : '🤍';
+    wishlistContainer.innerHTML = savedProps
+  .map(p => {
+    const id = p.id ?? '-';
+    const title = p.title ?? 'Без име';
+    const price = p.price ?? '-';
+    const category = p.category ?? '-';
+    const status = p.status ?? '';
+    const bedrooms = p.bedrooms ?? '-';
+    const bathrooms = p.bathrooms ?? '-';
+    const size = p.size ? p.size + ' m²' : '-';
+    const image = p.images?.[0] ?? '';
+    const inWishlist = wishlistIds.includes(String(id)) ? '❤️' : '🤍';
 
-      return `
-        <div class="property" data-id="${id}">
-          ${image ? `<img src="${image}" alt="${title}">` : ''}
-          <div class="property-content">
-            <h3>${title}</h3>
-            <p><strong>Цена:</strong> ${price} лева</p>
-            <p><strong>Категория:</strong> ${category}</p>
-            ${category === 'rental' ? `<p><strong>Статус:</strong> ${status}</p>` : ''}
-            <p><strong>Спални:</strong> ${bedrooms}</p>
-            <p><strong>Бани:</strong> ${bathrooms}</p>
-            <p><strong>Площ:</strong> ${size}</p>
-          </div>
-          <div class="property-actions">
-            <button class="wishlist-btn" data-id="${id}">${inWishlist}</button>
-          </div>
+    return `
+      <div class="property" data-id="${id}" style="position:relative;">
+        ${image ? `<img src="${image}" alt="${title}">` : ''}
+
+        <!-- ID badge -->
+        <div style="
+            position:absolute;
+            top:5px;
+            left:5px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding:2px 5px;
+            font-size:12px;
+            border-radius:3px;
+            z-index:10;
+        ">ID: ${id}</div>
+
+        <div class="property-content">
+          <h3>${title}</h3>
+          <p><strong>Цена:</strong> ${price} лева</p>
+          <p><strong>Категория:</strong> ${category}</p>
+          ${category === 'rental' ? `<p><strong>Статус:</strong> ${status}</p>` : ''}
+          <p><strong>Спални:</strong> ${bedrooms}</p>
+          <p><strong>Бани:</strong> ${bathrooms}</p>
+          <p><strong>Площ:</strong> ${size}</p>
         </div>
-      `;
-    })
-    .join('');
+        <div class="property-actions">
+          <button class="wishlist-btn" data-id="${id}">${inWishlist}</button>
+        </div>
+      </div>
+    `;
+  })
+  .join('');
+
 
   attachListeners();
 }
