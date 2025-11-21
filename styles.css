@@ -884,3 +884,10 @@ footer {
 #adminSidebar::-webkit-scrollbar-thumb:hover {
   background-color: #21618c; /* darker on hover */
 }
+.hero {
+  background-image: url('https://image2url.com/images/1763707556223-11633b71-f0d0-4e6b-bb2b-4dbe56e98d2b.jpg'); /* replace with your image path */
+  background-size: cover;      /* cover the entire section */
+  background-position: center; /* center the image */
+  background-repeat: no-repeat;
+  height: 400px;               /* adjust the height as needed */
+}
