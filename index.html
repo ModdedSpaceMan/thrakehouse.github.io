@@ -71,15 +71,28 @@
 
 
 
-<!-- Updated Add Property Modal with new fields -->
-<div id="addPropertyModal" class="modal" aria-hidden="true">
+<!-- ADD PROPERTY MODAL -->
+<div id="addPropertyModal" class="modal">
   <div class="modal-content">
-    <button class="close" onclick="closeAddModal()">×</button>
+    <span id="closeAddModal" class="close">&times;</span>
     <h2>Добави имот</h2>
-    <form id="propertyForm">
-      <input type="text" id="propertyName" placeholder="Име" required>
-      <input type="number" id="propertyPrice" placeholder="Цена" required>
 
+    <form id="addPropertyForm">
+
+      <label>Заглавие</label>
+      <input type="text" id="propertyTitle" required>
+
+      <label>Цена</label>
+      <input type="number" id="propertyPrice" required>
+
+      <label>Продажба или Наем</label>
+      <select id="propertyCategory" required>
+        <option value="">Изберете категория</option>
+        <option value="sale">Продажба</option>
+        <option value="rent">Наем</option>
+      </select>
+
+      <label>Тип имот</label>
       <select id="propertyType" required>
         <option value="">Изберете тип</option>
         <option value="apartment">Апартамент</option>
@@ -89,34 +102,41 @@
         <option value="plot">Парцел</option>
       </select>
 
-      <select id="propertyCategory" required>
-        <option value="">Изберете категория</option>
-        <option value="sale">Продажба</option>
-        <option value="rental">Наем</option>
-      </select>
-      <div id="statusContainer">
+      <!-- STATUS SHOWN ONLY FOR RENT -->
+      <div id="statusContainer" style="display:none;">
+        <label>Статус</label>
         <select id="propertyStatus">
+          <option value="">Изберете статус</option>
           <option value="free">Свободен</option>
           <option value="taken">Зает</option>
         </select>
       </div>
+
+      <label>Стаи</label>
+      <input type="number" id="propertyBedrooms">
+
+      <label>Бани</label>
+      <input type="number" id="propertyBathrooms">
+
+      <label>Площ (кв.м)</label>
+      <input type="number" id="propertyArea">
+
+      <label>Година на строеж</label>
+      <input type="number" id="propertyYear">
+
+      <label>Описание</label>
+      <textarea id="propertyDescription"></textarea>
 
       <!-- NEW IMAGE UPLOAD -->
       <input type="file" id="propertyImage" style="display:none;" multiple>
       <div id="imagePreviews"></div>
       <button type="button" id="addMoreImagesBtn">Add More Images</button>
 
-
-      <textarea id="propertyDescription" placeholder="Описание"></textarea>
-      <input type="number" id="propertyBedrooms" placeholder="Брой спални">
-      <input type="number" id="propertyBathrooms" placeholder="Брой бани">
-      <input type="number" id="propertySize" placeholder="Квадратура (м²)">
-      <input type="number" id="propertyYear" placeholder="Година на строеж">
-
-      <button type="submit">Добави имот</button>
+      <button type="submit">Добави</button>
     </form>
   </div>
 </div>
+
 
 
 
