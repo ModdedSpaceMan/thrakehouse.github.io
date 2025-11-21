@@ -111,6 +111,18 @@ export function renderProperties(properties) {
       <div class="property" data-id="${id}">
         ${image ? `<img src="${image}">` : ""}
         <div class="property-content">
+        <div class="property-id-box" style="
+          position: absolute;
+          top: 5px;
+          left: 5px;
+          background: rgba(0,0,0,0.7);
+          color: #fff;
+          padding: 2px 5px;
+          font-size: 12px;
+          border-radius: 3px;
+          z-index: 10;
+        ">ID: ${id}</div>
+        <div class="property-content">
           <h3>${p.title}</h3>
           <p><strong>Цена:</strong> ${p.price} лв</p>
           <p><strong>Категория:</strong> ${categoryTranslations[p.category] || p.category}</p>
