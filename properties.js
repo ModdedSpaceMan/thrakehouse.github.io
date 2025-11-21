@@ -72,6 +72,11 @@ export function renderProperties(properties) {
     regulated: "Земя в регулация",
     plot: "Парцел",
   };
+  const categoryTranslations = {
+  sale: "Продава",
+  rental: "Под наем",
+  };
+
 
   propertyContainer.innerHTML = properties
     .map((p) => {
@@ -104,7 +109,7 @@ export function renderProperties(properties) {
           <div class="property-content">
             <h3>${p.title}</h3>
             <p><strong>Цена:</strong> ${p.price} лв</p>
-            <p><strong>Категория:</strong> ${p.category}</p>
+            <p><strong>Категория:</strong> ${categoryTranslations[p.category] || p.category}</p>
             <p><strong>Тип:</strong> ${typeTranslations[p.type] || p.type}</p>
             <p><strong>Спални:</strong> ${p.bedrooms}</p>
             <p><strong>Бани:</strong> ${p.bathrooms}</p>
