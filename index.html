@@ -36,18 +36,22 @@
 <div id="propertyDetailsModal" class="modal" aria-hidden="true">
   <div class="modal-content">
     <button class="close">×</button>
-    
+
     <h2 id="propTitle"></h2>
 
-    <!-- Image container with arrows -->
-    <div id="propertyImageContainer" style="position: relative; width: 100%; text-align: center; margin: 10px 0;">
-      <button id="prevImageBtn" 
-              style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); font-size: 24px; background: none; border: none; cursor: pointer;">◀</button>
-      <img id="propImage" src="" alt="Property Image" 
-           style="max-width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px;">
-      <button id="nextImageBtn" 
-              style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 24px; background: none; border: none; cursor: pointer;">▶</button>
+    <div style="position: relative; text-align: center;">
+      <!-- Previous arrow -->
+      <button id="prevImageBtn" style="position:absolute; top:50%; left:0; transform:translateY(-50%); background:none; border:none; font-size:24px; cursor:pointer;">&#10094;</button>
+      
+      <!-- Property image -->
+      <img id="propImage" style="width:100%; border-radius:8px; margin:10px 0;">
+
+      <!-- Next arrow -->
+      <button id="nextImageBtn" style="position:absolute; top:50%; right:0; transform:translateY(-50%); background:none; border:none; font-size:24px; cursor:pointer;">&#10095;</button>
     </div>
+
+    <!-- Dots -->
+    <div id="propImageDots" style="text-align:center; margin-bottom:10px;"></div>
 
     <p class="detail-row"><strong>Цена:</strong> <span id="propPrice"></span></p>
     <p class="detail-row"><strong>Тип:</strong> <span id="propType"></span></p>
@@ -63,6 +67,7 @@
     <p id="propDescription" style="white-space: pre-line;"></p>
   </div>
 </div>
+
 
 
 
