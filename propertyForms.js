@@ -9,76 +9,68 @@ document.addEventListener("DOMContentLoaded", () => {
   const addForm = document.getElementById("propertyForm");
   const addCategory = document.getElementById("propertyCategory");
   const addStatus = document.getElementById("propertyStatus");
-  const imageUploads = document.getElementById("imageUploads");
-  const addImageBtn = document.getElementById("addImageBtn");
+  const imageUploads = document.getElementById('imageUploads');
+  const addImageBtn = document.getElementById('addImageBtn');
 
-  if (!addForm || !addModal || !addCategory || !imageUploads || !addImageBtn) return;
+  if (!addForm || !addModal || !addCategory || !addStatus || !imageUploads || !addImageBtn) return;
 
-  let allImages = []; // store all uploaded images
+  let allImages = []; // store all File objects
 
-  // Show/hide status for rental category
+  // Show/hide status for rentals
   addCategory.addEventListener("change", () => {
     addStatus.style.display = addCategory.value === "rental" ? "block" : "none";
   });
 
-  // --- Dynamic Image Uploads ---
+  // --- Multi-image upload ---
   addImageBtn.addEventListener("click", () => {
-    const wrapper = document.createElement('div');
-    wrapper.style.display = 'flex';
-    wrapper.style.alignItems = 'center';
-    wrapper.style.marginTop = '5px';
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.multiple = true;
 
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.style.display = 'none'; // hidden
+    input.addEventListener("change", () => {
+      if (!input.files) return;
 
-    const preview = document.createElement('img');
-    preview.style.width = '80px';
-    preview.style.height = '80px';
-    preview.style.objectFit = 'cover';
-    preview.style.borderRadius = '4px';
-    preview.style.marginRight = '10px';
-    preview.style.display = 'none';
-
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.textContent = '×';
-    removeBtn.style.fontSize = '18px';
-    removeBtn.style.cursor = 'pointer';
-    removeBtn.style.border = 'none';
-    removeBtn.style.background = 'transparent';
-    removeBtn.style.color = '#f00';
-
-    let file;
-    input.addEventListener('change', () => {
-      if (input.files && input.files[0]) {
-        file = input.files[0];
+      Array.from(input.files).forEach(file => {
         allImages.push(file);
 
+        const wrapper = document.createElement("div");
+        wrapper.style.display = 'flex';
+        wrapper.style.alignItems = 'center';
+        wrapper.style.marginTop = '5px';
+
+        const preview = document.createElement("img");
+        preview.style.width = '80px';
+        preview.style.height = '80px';
+        preview.style.objectFit = 'cover';
+        preview.style.borderRadius = '4px';
+        preview.style.marginRight = '10px';
+
         const reader = new FileReader();
-        reader.onload = e => {
-          preview.src = e.target.result;
-          preview.style.display = 'block';
-        };
+        reader.onload = e => preview.src = e.target.result;
         reader.readAsDataURL(file);
-      }
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.textContent = '×';
+        removeBtn.style.fontSize = '18px';
+        removeBtn.style.cursor = 'pointer';
+        removeBtn.style.border = 'none';
+        removeBtn.style.background = 'transparent';
+        removeBtn.style.color = '#f00';
+        removeBtn.addEventListener("click", () => {
+          const idx = allImages.indexOf(file);
+          if (idx > -1) allImages.splice(idx, 1);
+          wrapper.remove();
+        });
+
+        wrapper.appendChild(preview);
+        wrapper.appendChild(removeBtn);
+        imageUploads.appendChild(wrapper);
+      });
     });
 
-    removeBtn.addEventListener('click', () => {
-      if (file) {
-        const idx = allImages.indexOf(file);
-        if (idx > -1) allImages.splice(idx, 1);
-      }
-      wrapper.remove();
-    });
-
-    wrapper.appendChild(input);
-    wrapper.appendChild(preview);
-    wrapper.appendChild(removeBtn);
-    imageUploads.appendChild(wrapper);
-
-    input.click(); // trigger file selection
+    input.click();
   });
 
   // --- Close modal ---
@@ -86,8 +78,8 @@ document.addEventListener("DOMContentLoaded", () => {
     addModal.setAttribute("aria-hidden", "true");
     addForm.reset();
     allImages = [];
+    imageUploads.innerHTML = '';
     addStatus.style.display = "none";
-    imageUploads.innerHTML = ""; // clear previews
   };
   addModal.querySelector(".close")?.addEventListener("click", closeAddModal);
 
@@ -110,24 +102,17 @@ document.addEventListener("DOMContentLoaded", () => {
       return showToast("Моля, попълнете всички задължителни полета!");
     }
 
-    // Convert all selected images to base64
-    const imagePromises = allImages.map(file => new Promise((resolve, reject) => {
+    // Convert all images to base64
+    const base64Images = await Promise.all(allImages.map(file => new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = e => resolve(e.target.result);
-      reader.onerror = e => reject(e);
+      reader.onerror = reject;
       reader.readAsDataURL(file);
-    }));
-
-    let base64Images = [];
-    try {
-      base64Images = await Promise.all(imagePromises);
-    } catch (err) {
-      console.error("Failed to read images:", err);
-    }
+    })));
 
     const newProperty = {
       title,
-      name: title,      // match properties.js display
+      name: title,
       description,
       price,
       type,
