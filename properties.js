@@ -109,23 +109,23 @@ export function renderProperties(properties) {
 
       return `
         <div class="property" data-id="${id}">
-          ${image ? `<img src="${image}">` : ""}
-          <div class="property-content">
-            <h3>${p.title}</h3>
-            <p><strong>Цена:</strong> ${p.price} лв</p>
-            <p><strong>Категория:</strong> ${categoryTranslations[p.category] || p.category}</p>
-            <p><strong>Тип:</strong> ${typeTranslations[p.type] || p.type}</p>
-            <p><strong>Спални:</strong> ${p.bedrooms}</p>
-            <p><strong>Бани:</strong> ${p.bathrooms}</p>
-            <p><strong>Площ:</strong> ${p.size} m²</p>
-            ${
-              p.category === "rental"
-               <p><strong>Статус:</strong> ${p.category === "rental" ? (statusTranslations[p.status] || p.status) : "-"}</p>
-            }
-
-          </div>
-          <div class="property-actions">${adminButtons}</div>
-        </div>`;
+        ${image ? `<img src="${image}">` : ""}
+        <div class="property-content">
+          <h3>${p.title}</h3>
+          <p><strong>Цена:</strong> ${p.price} лв</p>
+          <p><strong>Категория:</strong> ${categoryTranslations[p.category] || p.category}</p>
+          <p><strong>Тип:</strong> ${typeTranslations[p.type] || p.type}</p>
+          <p><strong>Спални:</strong> ${p.bedrooms}</p>
+          <p><strong>Бани:</strong> ${p.bathrooms}</p>
+          <p><strong>Площ:</strong> ${p.size} m²</p>
+          ${
+            p.category === "rental"
+              ? `<p><strong>Статус:</strong> ${statusTranslations[p.status] || p.status}</p>`
+              : ""
+          }
+        </div>
+        <div class="property-actions">${adminButtons}</div>
+      </div>
     })
     .join("");
 
