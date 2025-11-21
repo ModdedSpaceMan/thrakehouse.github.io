@@ -91,10 +91,9 @@ export function renderProperties(properties) {
     return `
       <div class="property ${takenClass}" data-id="${id}">
         ${image ? `<img src="${image}" alt="${title}">` : ''}
-        
+
         <div class="property-content">
           <h3>${title}</h3>
-
           <p><strong>Цена:</strong> ${price} лева</p>
           <p><strong>Категория:</strong> ${isRental ? "Наем" : "Продажба"}</p>
           ${isRental ? `<p><strong>Статус:</strong> ${status}</p>` : ''}
@@ -296,8 +295,11 @@ function setupFilterListeners() {
 }
 
 // --------------------
-// Property Details Modal
+// Property Details Modal with arrows
 // --------------------
+let currentPropertyImages = [];
+let currentImageIndex = 0;
+
 function addModalListeners() {
   propertyContainer.querySelectorAll('.property').forEach(el => {
     el.addEventListener('click', () => {
@@ -308,13 +310,36 @@ function addModalListeners() {
     });
   });
 
+  // Close modal
   propertyModal.querySelector(".close")?.addEventListener("click", () => {
     propertyModal.style.display = "none";
   });
 
+  // Close when clicking outside
   propertyModal.addEventListener("click", e => {
     if (e.target === propertyModal) propertyModal.style.display = "none";
   });
+
+  // Gallery arrows
+  const prevBtn = propertyModal.querySelector('#prevImageBtn');
+  const nextBtn = propertyModal.querySelector('#nextImageBtn');
+  const imgEl = propertyModal.querySelector('#propImage');
+
+  if (prevBtn && nextBtn && imgEl) {
+    prevBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (currentPropertyImages.length === 0) return;
+      currentImageIndex = (currentImageIndex - 1 + currentPropertyImages.length) % currentPropertyImages.length;
+      imgEl.src = currentPropertyImages[currentImageIndex];
+    });
+
+    nextBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (currentPropertyImages.length === 0) return;
+      currentImageIndex = (currentImageIndex + 1) % currentPropertyImages.length;
+      imgEl.src = currentPropertyImages[currentImageIndex];
+    });
+  }
 }
 
 function openPropertyDetails(property) {
@@ -343,10 +368,13 @@ function openPropertyDetails(property) {
   set("propYear", property.year);
   set("propDescription", property.description || "-");
 
+  currentPropertyImages = property.images || [];
+  currentImageIndex = 0;
+
   const imgEl = document.getElementById("propImage");
   if (imgEl) {
-    if (property.images && property.images.length > 0) {
-      imgEl.src = property.images[0];
+    if (currentPropertyImages.length > 0) {
+      imgEl.src = currentPropertyImages[0];
       imgEl.style.display = "block";
     } else {
       imgEl.style.display = "none";
