@@ -251,19 +251,24 @@
 <!-- Session Timer -->
 <div id="sessionTimer" style="
   position: fixed;
-  bottom: 16px;
-  right: 16px;
-  background: #111827;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(17,24,39,0.8);
   color: #fff;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
   font-family: sans-serif;
-  font-size: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  font-size: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   z-index: 1000;
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 ">
   ⏱ Време до излизане: <span id="timerValue">--:--</span>
 </div>
+
 <script type="module" src="sessionTimer.js" defer></script>
 
 </body>
