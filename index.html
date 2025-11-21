@@ -63,7 +63,6 @@
     <h2>Добави имот</h2>
     <form id="propertyForm">
       <input type="text" id="propertyName" placeholder="Име" required>
-
       <input type="number" id="propertyPrice" placeholder="Цена" required>
 
       <select id="propertyType" required>
@@ -72,7 +71,6 @@
         <option value="house">Къща</option>
         <option value="villa">Вила</option>
         <option value="farm">Земеделски имот</option>
-        <option value="regulated">Земя в регулация</option>
       </select>
 
       <select id="propertyCategory" required>
@@ -81,26 +79,23 @@
         <option value="rental">Наем</option>
       </select>
 
-      <!-- Status appears only for rental -->
-      <select id="propertyStatus" style="display:none;">
-        <option value="">Изберете статус</option>
-        <option value="free">Свободен</option>
-        <option value="taken">Зает</option>
-      </select>
+      <!-- NEW IMAGE UPLOAD -->
+      <div id="imageUploads">
+        <input type="file" name="propertyImages[]" accept="image/*">
+      </div>
+      <button type="button" id="addImageBtn">Добави още изображение</button>
 
-      <!-- NEW FIELDS -->
       <textarea id="propertyDescription" placeholder="Описание"></textarea>
       <input type="number" id="propertyBedrooms" placeholder="Брой спални">
       <input type="number" id="propertyBathrooms" placeholder="Брой бани">
       <input type="number" id="propertySize" placeholder="Квадратура (м²)">
       <input type="number" id="propertyYear" placeholder="Година на строеж">
 
-      <input type="file" id="propertyImage">
-
       <button type="submit">Добави имот</button>
     </form>
   </div>
 </div>
+
 
 
 
