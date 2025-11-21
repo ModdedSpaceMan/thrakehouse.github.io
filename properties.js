@@ -3,21 +3,28 @@ import { showToast } from './ui.js';
 
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 let propertyContainer = document.getElementById('properties');
-const propertyModal = document.getElementById("propertyDetailsModal");
 const username = localStorage.getItem('username');
 const token = localStorage.getItem('token');
 const role = localStorage.getItem('role'); // 'admin' or 'user'
 
-export let propertiesData = []; // global store
-export let wishlistIds = [];    // global wishlist store
-export { initProperties };
+// GLOBAL STORES
+export let propertiesData = [];
+export let wishlistIds = [];
 
-// --------------------
-// Load wishlist from backend or localStorage fallback
-// --------------------
+// ======================================================
+// INIT
+// ======================================================
+export async function initProperties() {
+    await loadWishlist();
+    await loadProperties();
+}
+
+// ======================================================
+// LOAD WISHLIST
+// ======================================================
 export async function loadWishlist() {
     if (!username || !token) {
-        wishlistIds = JSON.parse(localStorage.getItem('wishlist') || '[]').map(String);
+        wishlistIds = [];
         return;
     }
 
@@ -27,26 +34,23 @@ export async function loadWishlist() {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        const validIds = (await loadProperties()).map(p => p.id);
-        wishlistIds = (data.items || []).filter(id => validIds.includes(id)).map(String);
+        wishlistIds = (data.items || []).map(String);
     } catch (err) {
         console.error("Failed to load wishlist:", err);
         wishlistIds = [];
     }
 }
 
-// --------------------
-// Toggle wishlist
-// --------------------
+// ======================================================
+// TOGGLE WISHLIST
+// ======================================================
 export async function toggleWishlist(propertyId) {
-    propertyId = String(propertyId);
-
     if (!username || !token) {
         showToast('Трябва да сте влезли!');
         return;
     }
 
-    const action = wishlistIds.includes(propertyId) ? 'remove' : 'add';
+    const action = wishlistIds.includes(String(propertyId)) ? 'remove' : 'add';
 
     try {
         const res = await fetch(`${API_URL}/wishlists/${username}/${action}`, {
@@ -61,22 +65,23 @@ export async function toggleWishlist(propertyId) {
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || 'Грешка при wishlist');
 
-        if (action === 'add') wishlistIds.push(propertyId);
-        else wishlistIds = wishlistIds.filter(id => id !== propertyId);
+        if (action === 'add') wishlistIds.push(String(propertyId));
+        else wishlistIds = wishlistIds.filter(id => id !== String(propertyId));
 
         showToast(action === 'add' ? 'Добавено в wishlist!' : 'Премахнато от wishlist');
 
+        // Update button if exists
         const btn = document.querySelector(`.wishlist-btn[data-id="${propertyId}"]`);
-        if (btn) btn.textContent = wishlistIds.includes(propertyId) ? '❤️' : '🤍';
+        if (btn) btn.textContent = wishlistIds.includes(String(propertyId)) ? '❤️' : '🤍';
     } catch (err) {
         console.error(err);
         showToast('Грешка при връзка със сървъра');
     }
 }
 
-// --------------------
-// Load properties
-// --------------------
+// ======================================================
+// LOAD PROPERTIES
+// ======================================================
 export async function loadProperties() {
     if (!propertyContainer) return [];
 
@@ -95,9 +100,9 @@ export async function loadProperties() {
     }
 }
 
-// --------------------
-// Render properties
-// --------------------
+// ======================================================
+// RENDER PROPERTIES
+// ======================================================
 export function renderProperties(properties) {
     if (!propertyContainer) return;
 
@@ -127,9 +132,9 @@ export function renderProperties(properties) {
     addPropertyListeners();
 }
 
-// --------------------
-// Property event listeners
-// --------------------
+// ======================================================
+// PROPERTY EVENT LISTENERS
+// ======================================================
 function addPropertyListeners() {
     propertyContainer.querySelectorAll('.wishlist-btn').forEach(btn =>
         btn.addEventListener('click', e => {
@@ -147,9 +152,9 @@ function addPropertyListeners() {
     );
 }
 
-// --------------------
-// Property Modal
-// --------------------
+// ======================================================
+// PROPERTY MODAL
+// ======================================================
 let currentPropertyImages = [];
 let currentImageIndex = 0;
 
@@ -178,7 +183,7 @@ export function openPropertyModal(property) {
     if (imgEl) imgEl.src = currentPropertyImages[0] || '';
     modal.style.display = "flex";
 
-    // Modal close
+    // Close modal
     modal.querySelector(".close")?.addEventListener('click', () => modal.style.display = 'none');
     modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
 }
