@@ -4,8 +4,10 @@ import { showToast } from './ui.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("propertyForms.js loaded");
+
   const addModal = document.getElementById("addPropertyModal");
-  const addForm = document.getElementById("addPropertyForm"); // matches your HTML
+  const addForm = document.getElementById("addPropertyForm");
   const addCategory = document.getElementById("propertyCategory");
   const addStatus = document.getElementById("propertyStatus");
   const propertyImageInput = document.getElementById('propertyImage');
@@ -13,30 +15,43 @@ document.addEventListener("DOMContentLoaded", () => {
   const imagePreviews = document.getElementById('imagePreviews');
   const statusContainer = document.getElementById("statusContainer");
 
-  if (!addForm || !addModal || !addCategory || !propertyImageInput || !addMoreImagesBtn || !imagePreviews) return;
+  // Check that all elements exist
+  if (!addForm) console.error("Add Form not found!");
+  if (!addModal) console.error("Add Modal not found!");
+  if (!addCategory) console.error("Category select not found!");
+  if (!addStatus) console.error("Status select not found!");
+  if (!propertyImageInput) console.error("Image input not found!");
+  if (!addMoreImagesBtn) console.error("Add More Images button not found!");
+  if (!imagePreviews) console.error("Image previews container not found!");
+  if (!addForm || !addModal || !addCategory || !propertyImageInput || !addMoreImagesBtn || !imagePreviews) {
+    console.error("One or more required elements are missing. Stopping initialization.");
+    return;
+  }
 
   let allImages = [];
 
-  // Hide status box by default
   statusContainer.style.display = "none";
 
-  // Show status only for rentals
   addCategory.addEventListener("change", () => {
-    if (addCategory.value === "rent") {
-      statusContainer.style.display = "block";
+    statusContainer.style.display = addCategory.value === "rent" ? "block" : "none";
+  });
+
+  // Add More Images Button
+  addMoreImagesBtn.addEventListener('click', () => {
+    if (propertyImageInput) {
+      console.log("Add More Images button clicked, triggering file input");
+      propertyImageInput.click();
     } else {
-      statusContainer.style.display = "none";
+      console.error("Cannot click file input: propertyImageInput is null");
     }
   });
 
-  // --- Add More Images Button ---
-  addMoreImagesBtn.addEventListener('click', () => {
-    propertyImageInput.click();
-  });
-
-  // --- Handle file selection ---
+  // Handle file selection
   propertyImageInput.addEventListener('change', () => {
-    if (!propertyImageInput.files) return;
+    if (!propertyImageInput.files) {
+      console.error("No files selected or input is missing files property");
+      return;
+    }
 
     Array.from(propertyImageInput.files).forEach(file => {
       allImages.push(file);
@@ -77,10 +92,10 @@ document.addEventListener("DOMContentLoaded", () => {
       imagePreviews.appendChild(wrapper);
     });
 
-    propertyImageInput.value = ''; // allow re-selection of same files
+    propertyImageInput.value = ''; 
   });
 
-  // --- Close Modal ---
+  // Close Modal
   const closeAddModal = () => {
     addModal.setAttribute("aria-hidden", "true");
     addForm.reset();
@@ -90,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   addModal.querySelector(".close")?.addEventListener("click", closeAddModal);
 
-  // --- Form Submission ---
+  // Form submission
   addForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -109,7 +124,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return showToast("Моля, попълнете всички задължителни полета!");
     }
 
-    // Convert all selected files to base64
     const base64Images = await Promise.all(
       allImages.map(file => new Promise(resolve => {
         const reader = new FileReader();
@@ -118,31 +132,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }))
     );
 
-    const newProperty = {
-      title,
-      description,
-      price,
-      type,
-      bedrooms,
-      bathrooms,
-      size,
-      year,
-      category,
-      status,
-      images: base64Images,
-      amenities: []
-    };
+    const newProperty = { title, description, price, type, bedrooms, bathrooms, size, year, category, status, images: base64Images, amenities: [] };
 
     try {
       const res = await fetch(`${API_URL}/properties`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + localStorage.getItem('token')
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
         body: JSON.stringify({ property: newProperty })
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to add property");
 
