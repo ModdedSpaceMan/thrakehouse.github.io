@@ -9,81 +9,81 @@ document.addEventListener("DOMContentLoaded", () => {
   const addForm = document.getElementById("propertyForm");
   const addCategory = document.getElementById("propertyCategory");
   const addStatus = document.getElementById("propertyStatus");
-  const imageUploads = document.getElementById('imageUploads');
-  const addImageBtn = document.getElementById('addImageBtn');
+  const propertyImageInput = document.getElementById('propertyImage');
+  const addMoreImagesBtn = document.getElementById('addMoreImagesBtn');
+  const imagePreviews = document.getElementById('imagePreviews');
 
-  if (!addForm || !addModal || !addCategory || !addStatus || !imageUploads || !addImageBtn) return;
+  if (!addForm || !addModal || !addCategory || !propertyImageInput || !addMoreImagesBtn || !imagePreviews) return;
 
-  let allImages = []; // store all File objects
+  let allImages = [];
 
-  // Show/hide status for rentals
+  // Show/hide rental status
   addCategory.addEventListener("change", () => {
-    addStatus.style.display = addCategory.value === "rental" ? "block" : "none";
+    if (addStatus) addStatus.style.display = addCategory.value === "rental" ? "block" : "none";
   });
 
-  // --- Multi-image upload ---
-  addImageBtn.addEventListener("click", () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.multiple = true;
+  // --- Add More Images Button ---
+  addMoreImagesBtn.addEventListener('click', () => {
+    propertyImageInput.click();
+  });
 
-    input.addEventListener("change", () => {
-      if (!input.files) return;
+  // Handle file selection
+  propertyImageInput.addEventListener('change', () => {
+    if (!propertyImageInput.files) return;
 
-      Array.from(input.files).forEach(file => {
-        allImages.push(file);
+    Array.from(propertyImageInput.files).forEach(file => {
+      allImages.push(file);
 
-        const wrapper = document.createElement("div");
-        wrapper.style.display = 'flex';
-        wrapper.style.alignItems = 'center';
-        wrapper.style.marginTop = '5px';
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'flex';
+      wrapper.style.alignItems = 'center';
+      wrapper.style.marginTop = '5px';
 
-        const preview = document.createElement("img");
-        preview.style.width = '80px';
-        preview.style.height = '80px';
-        preview.style.objectFit = 'cover';
-        preview.style.borderRadius = '4px';
-        preview.style.marginRight = '10px';
+      const preview = document.createElement('img');
+      preview.style.width = '80px';
+      preview.style.height = '80px';
+      preview.style.objectFit = 'cover';
+      preview.style.borderRadius = '4px';
+      preview.style.marginRight = '10px';
 
-        const reader = new FileReader();
-        reader.onload = e => preview.src = e.target.result;
-        reader.readAsDataURL(file);
+      const reader = new FileReader();
+      reader.onload = e => preview.src = e.target.result;
+      reader.readAsDataURL(file);
 
-        const removeBtn = document.createElement("button");
-        removeBtn.type = "button";
-        removeBtn.textContent = '×';
-        removeBtn.style.fontSize = '18px';
-        removeBtn.style.cursor = 'pointer';
-        removeBtn.style.border = 'none';
-        removeBtn.style.background = 'transparent';
-        removeBtn.style.color = '#f00';
-        removeBtn.addEventListener("click", () => {
-          const idx = allImages.indexOf(file);
-          if (idx > -1) allImages.splice(idx, 1);
-          wrapper.remove();
-        });
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.textContent = '×';
+      removeBtn.style.fontSize = '18px';
+      removeBtn.style.cursor = 'pointer';
+      removeBtn.style.border = 'none';
+      removeBtn.style.background = 'transparent';
+      removeBtn.style.color = '#f00';
 
-        wrapper.appendChild(preview);
-        wrapper.appendChild(removeBtn);
-        imageUploads.appendChild(wrapper);
+      removeBtn.addEventListener('click', () => {
+        const idx = allImages.indexOf(file);
+        if (idx > -1) allImages.splice(idx, 1);
+        wrapper.remove();
       });
+
+      wrapper.appendChild(preview);
+      wrapper.appendChild(removeBtn);
+      imagePreviews.appendChild(wrapper);
     });
 
-    input.click();
+    propertyImageInput.value = ''; // allow selecting same files again
   });
 
-  // --- Close modal ---
+  // --- Close Modal ---
   const closeAddModal = () => {
     addModal.setAttribute("aria-hidden", "true");
     addForm.reset();
     allImages = [];
-    imageUploads.innerHTML = '';
-    addStatus.style.display = "none";
+    imagePreviews.innerHTML = '';
+    if (addStatus) addStatus.style.display = "none";
   };
   addModal.querySelector(".close")?.addEventListener("click", closeAddModal);
 
-  // --- Submit form ---
+  // --- Form Submission ---
   addForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -102,13 +102,14 @@ document.addEventListener("DOMContentLoaded", () => {
       return showToast("Моля, попълнете всички задължителни полета!");
     }
 
-    // Convert all images to base64
-    const base64Images = await Promise.all(allImages.map(file => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = e => resolve(e.target.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    })));
+    // Convert all selected files to base64
+    const base64Images = await Promise.all(
+      allImages.map(file => new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = e => resolve(e.target.result);
+        reader.readAsDataURL(file);
+      }))
+    );
 
     const newProperty = {
       title,
