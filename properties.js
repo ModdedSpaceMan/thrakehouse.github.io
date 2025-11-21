@@ -295,7 +295,7 @@ function setupFilterListeners() {
 }
 
 // --------------------
-// Property Details Modal with arrows
+// Property Details Modal with arrows and dots
 // --------------------
 let currentPropertyImages = [];
 let currentImageIndex = 0;
@@ -320,70 +320,101 @@ function addModalListeners() {
     if (e.target === propertyModal) propertyModal.style.display = "none";
   });
 
-  // Gallery arrows
+  // Arrows
   const prevBtn = propertyModal.querySelector('#prevImageBtn');
   const nextBtn = propertyModal.querySelector('#nextImageBtn');
   const imgEl = propertyModal.querySelector('#propImage');
+  const dotsContainer = propertyModal.querySelector('#propImageDots');
 
-  if (prevBtn && nextBtn && imgEl) {
+  function updateModalImage() {
+    if (!imgEl) return;
+    imgEl.src = currentPropertyImages[currentImageIndex] || '';
+    updateDots();
+  }
+
+  function updateDots() {
+    if (!dotsContainer) return;
+    dotsContainer.innerHTML = '';
+    currentPropertyImages.forEach((_, idx) => {
+      const dot = document.createElement('span');
+      dot.style.display = 'inline-block';
+      dot.style.width = '10px';
+      dot.style.height = '10px';
+      dot.style.margin = '0 5px';
+      dot.style.background = idx === currentImageIndex ? '#333' : '#bbb';
+      dot.style.borderRadius = '50%';
+      dot.style.cursor = 'pointer';
+      dot.addEventListener('click', () => {
+        currentImageIndex = idx;
+        updateModalImage();
+      });
+      dotsContainer.appendChild(dot);
+    });
+  }
+
+  if (prevBtn) {
     prevBtn.addEventListener('click', e => {
       e.stopPropagation();
-      if (currentPropertyImages.length === 0) return;
+      if (!currentPropertyImages.length) return;
       currentImageIndex = (currentImageIndex - 1 + currentPropertyImages.length) % currentPropertyImages.length;
-      imgEl.src = currentPropertyImages[currentImageIndex];
+      updateModalImage();
     });
+  }
 
+  if (nextBtn) {
     nextBtn.addEventListener('click', e => {
       e.stopPropagation();
-      if (currentPropertyImages.length === 0) return;
+      if (!currentPropertyImages.length) return;
       currentImageIndex = (currentImageIndex + 1) % currentPropertyImages.length;
-      imgEl.src = currentPropertyImages[currentImageIndex];
+      updateModalImage();
     });
   }
-}
 
-function openPropertyDetails(property) {
-  const typeTranslations = {
-    apartment: 'Апартамент',
-    house: 'Къща',
-    villa: 'Вила',
-    farm: 'Земеделски имот',
-    regulated: 'Земя в регулация'
-  };
-  const displayType = typeTranslations[property.type] || property.type;
+  // Expose openPropertyDetails globally
+  window.openPropertyDetails = function(property) {
+    const typeTranslations = {
+      apartment: 'Апартамент',
+      house: 'Къща',
+      villa: 'Вила',
+      farm: 'Земеделски имот',
+      regulated: 'Земя в регулация'
+    };
+    const displayType = typeTranslations[property.type] || property.type;
 
-  const set = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value ?? '-';
-  };
+    const set = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value ?? '-';
+    };
 
-  set("propTitle", property.title);
-  set("propPrice", property.price ? property.price + " лева" : "-");
-  set("propType", displayType);
-  set("propCategory", property.category);
-  set("propStatus", property.status || "Свободен");
-  set("propBedrooms", property.bedrooms);
-  set("propBathrooms", property.bathrooms);
-  set("propArea", property.size ? property.size + " m²" : "-");
-  set("propYear", property.year);
-  set("propDescription", property.description || "-");
+    set("propTitle", property.title);
+    set("propPrice", property.price ? property.price + " лева" : "-");
+    set("propType", displayType);
+    set("propCategory", property.category);
+    set("propStatus", property.status || "Свободен");
+    set("propBedrooms", property.bedrooms);
+    set("propBathrooms", property.bathrooms);
+    set("propArea", property.size ? property.size + " m²" : "-");
+    set("propYear", property.year);
+    set("propDescription", property.description || "-");
 
-  currentPropertyImages = property.images || [];
-  currentImageIndex = 0;
+    currentPropertyImages = property.images || [];
+    currentImageIndex = 0;
 
-  const imgEl = document.getElementById("propImage");
-  if (imgEl) {
-    if (currentPropertyImages.length > 0) {
-      imgEl.src = currentPropertyImages[0];
-      imgEl.style.display = "block";
-    } else {
-      imgEl.style.display = "none";
+    if (imgEl) {
+      if (currentPropertyImages.length > 0) {
+        imgEl.src = currentPropertyImages[0];
+        imgEl.style.display = 'block';
+      } else {
+        imgEl.style.display = 'none';
+      }
     }
-  }
 
-  const modal = document.getElementById("propertyDetailsModal");
-  if (modal) modal.style.display = "flex";
+    updateDots();
+
+    if (propertyModal) propertyModal.style.display = 'flex';
+  };
 }
+
 
 // --------------------
 // Init
