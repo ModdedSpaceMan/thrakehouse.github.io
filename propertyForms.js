@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
     statusContainer.style.display = addCategory.value === "rent" ? "block" : "none";
   });
 
-  // ---- IMAGE UPLOAD ----
+  // ---- IMAGE UPLOAD PREVIEW ----
   addMoreImagesBtn.addEventListener("click", () => propertyImageInput.click());
 
   propertyImageInput.addEventListener("change", () => {
@@ -80,8 +80,58 @@ document.addEventListener("DOMContentLoaded", () => {
     imagePreviews.innerHTML = "";
     statusContainer.style.display = "none";
   };
-
   document.getElementById("closeAddModal").addEventListener("click", closeAddModal);
+
+  // ---- IMAGE RESIZE FUNCTION ----
+  async function resizeImage(file, maxWidth = 1200, maxHeight = 1200) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width: w, height: h } = img;
+        if (w > maxWidth) { h = (maxWidth / w) * h; w = maxWidth; }
+        if (h > maxHeight) { w = (maxHeight / h) * w; h = maxHeight; }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+
+        canvas.toBlob(resolve, file.type, 0.8);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  // ---- UPLOAD IMAGES IN BATCHES ----
+  async function uploadImagesInBatches(files, batchSize = 3) {
+    const uploadedKeys = [];
+
+    for (let i = 0; i < files.length; i += batchSize) {
+      const batch = files.slice(i, i + batchSize);
+
+      const results = await Promise.all(batch.map(async (file) => {
+        const resizedBlob = await resizeImage(file);
+        const formData = new FormData();
+        formData.append("image", resizedBlob, file.name);
+        formData.append("propertyId", crypto.randomUUID());
+
+        const res = await fetch(`${API_URL}/upload-image`, {
+          method: "POST",
+          headers: { Authorization: "Bearer " + localStorage.getItem("token") },
+          body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Image upload failed");
+        return data.key;
+      }));
+
+      uploadedKeys.push(...results);
+    }
+
+    return uploadedKeys;
+  }
 
   // ---- FORM SUBMIT ----
   addForm.addEventListener("submit", async (e) => {
@@ -102,35 +152,15 @@ document.addEventListener("DOMContentLoaded", () => {
       return showToast("Моля, попълнете всички задължителни полета!");
     }
 
-    // ---- Upload images one by one to Worker KV ----
-    const uploadedImageKeys = [];
-    for (let i = 0; i < allImages.length; i++) {
-      const file = allImages[i];
-      const formData = new FormData();
-      formData.append("image", file);
-      formData.append("propertyId", crypto.randomUUID()); // unique ID for this property
-
-      try {
-        const res = await fetch(`${API_URL}/upload-image`, {
-          method: "POST",
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("token")
-          },
-          body: formData
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Image upload failed");
-
-        uploadedImageKeys.push(data.key); // KV key returned from Worker
-      } catch (err) {
-        console.error("Failed to upload image:", err);
-        showToast("Грешка при качване на изображение");
-        return;
-      }
+    let uploadedImageKeys = [];
+    try {
+      uploadedImageKeys = await uploadImagesInBatches(allImages, 3);
+    } catch (err) {
+      console.error("Failed to upload images:", err);
+      showToast("Грешка при качване на изображения");
+      return;
     }
 
-    // ---- Save property metadata ----
     const newProperty = {
       title,
       description,
@@ -163,7 +193,6 @@ document.addEventListener("DOMContentLoaded", () => {
       closeAddModal();
       window.dispatchEvent(new Event("propertiesUpdated"));
       await loadProperties();
-
     } catch (err) {
       console.error(err);
       showToast("Грешка при добавяне на имота");
