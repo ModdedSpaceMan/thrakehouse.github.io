@@ -15,10 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const imagePreviews = document.getElementById("imagePreviews");
   const statusContainer = document.getElementById("statusContainer");
 
-  if (!addForm || !addModal) {
-    console.error("Modal or form missing.");
-    return;
-  }
+  if (!addForm || !addModal) return console.error("Modal or form missing.");
 
   let allImages = [];
 
@@ -80,10 +77,9 @@ document.addEventListener("DOMContentLoaded", () => {
     imagePreviews.innerHTML = "";
     statusContainer.style.display = "none";
   };
-
   document.getElementById("closeAddModal").addEventListener("click", closeAddModal);
 
-  // ---- HELPER: COMPRESS AND CONVERT TO BASE64 ----
+  // ---- HELPER: FILE → BASE64 (compressed) ----
   async function compressToBase64(file, maxDim = 1024, quality = 0.7) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -95,40 +91,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         const base64 = canvas.toDataURL('image/jpeg', quality);
-        resolve(base64.split(',')[1]); // remove "data:image/jpeg;base64,"
+        resolve(base64); // full Data URL
       };
       img.onerror = () => reject(new Error("Failed to load image"));
       img.src = URL.createObjectURL(file);
     });
-  }
-
-  // ---- UPLOAD IMAGES IN BATCHES ----
-  async function uploadImagesInBatches(images, batchSize = 3) {
-    const uploadedKeys = [];
-    for (let i = 0; i < images.length; i += batchSize) {
-      const batch = images.slice(i, i + batchSize);
-      const promises = batch.map(async (file) => {
-        const base64 = await compressToBase64(file);
-        const body = JSON.stringify({ image: base64, propertyId: crypto.randomUUID() });
-
-        const res = await fetch(`${API_URL}/upload-image`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token")
-          },
-          body
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Failed to store image");
-        return data.key;
-      });
-
-      const results = await Promise.all(promises);
-      uploadedKeys.push(...results);
-    }
-    return uploadedKeys;
   }
 
   // ---- FORM SUBMIT ----
@@ -150,18 +117,28 @@ document.addEventListener("DOMContentLoaded", () => {
       return showToast("Моля, попълнете всички задължителни полета!");
     }
 
-    let uploadedImageKeys = [];
+    // Convert all images to Base64
+    let imagesBase64 = [];
     try {
-      uploadedImageKeys = await uploadImagesInBatches(allImages, 3);
+      imagesBase64 = await Promise.all(allImages.map(file => compressToBase64(file)));
     } catch (err) {
-      console.error("Failed to upload images:", err);
-      showToast("Грешка при качване на изображения");
-      return;
+      console.error("Failed to process images:", err);
+      return showToast("Грешка при обработка на изображения");
     }
 
     const newProperty = {
-      title, description, price, type, bedrooms, bathrooms, size, year,
-      category, status, images: uploadedImageKeys, amenities: []
+      title,
+      description,
+      price,
+      type,
+      bedrooms,
+      bathrooms,
+      size,
+      year,
+      category,
+      status,
+      images: imagesBase64,
+      amenities: []
     };
 
     try {
