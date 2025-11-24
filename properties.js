@@ -57,91 +57,65 @@ export async function loadProperties() {
 // RENDER PROPERTIES
 // ======================================================
 export function renderProperties(properties) {
-  if (!propertyContainer) return;
-
-  if (!properties.length) {
-    propertyContainer.innerHTML = "<p>Няма налични имоти.</p>";
-    return;
-  }
-
-  const typeTranslations = {
-    apartment: "Апартамент",
-    house: "Къща",
-    villa: "Вила",
-    farm: "Земеделски имот",
-    regulated: "Земя в регулация",
-    plot: "Парцел",
-  };
-  const categoryTranslations = {
-    sale: "Продава",
-    rental: "Под наем",
-  };
-  const statusTranslations = {
-    free: "Свободен",
-    taken: "Зает",
-  };
-
   propertyContainer.innerHTML = properties
-    .map((p) => {
-      const id = p.id ?? "-";
-      // ONLY use images; ignore videos completely
-      const image = (p.images?.find((img) => /\.(jpe?g|png|webp|gif)$/i.test(img))) || "";
+  .map((p) => {
+    const id = p.id ?? "-";
+    const firstImageKey = p.images?.[0] || ""; // first image KV key
 
-      const adminButtons =
-        role === "admin"
-          ? `
-        <div class="admin-buttons-right">
-          <button class="wishlist-btn" data-id="${id}">${
-              wishlistIds.includes(String(id)) ? "❤️" : "🤍"
-            }</button>
-          <button class="delete-btn" data-id="${id}">Изтрий</button>
-          ${
-            p.category === "rental"
-              ? `<button class="toggle-status-btn" data-id="${id}">${
-                  p.status === "free" ? "Зает" : "Свободен"
-                }</button>`
-              : ""
-          }
-        </div>`
-          : `<button class="wishlist-btn" data-id="${id}">${
-              wishlistIds.includes(String(id)) ? "❤️" : "🤍"
-            }</button>`;
+    const adminButtons =
+      role === "admin"
+        ? `
+      <div class="admin-buttons-right">
+        <button class="wishlist-btn" data-id="${id}">${
+            wishlistIds.includes(String(id)) ? "❤️" : "🤍"
+          }</button>
+        <button class="delete-btn" data-id="${id}">Изтрий</button>
+        ${
+          p.category === "rental"
+            ? `<button class="toggle-status-btn" data-id="${id}">${
+                p.status === "free" ? "Зает" : "Свободен"
+              }</button>`
+            : ""
+        }
+      </div>`
+        : `<button class="wishlist-btn" data-id="${id}">${
+            wishlistIds.includes(String(id)) ? "❤️" : "🤍"
+          }</button>`;
 
-      return `
-      <div class="property" data-id="${id}">
-        ${image ? `<img src="${image}" alt="Property image">` : ""}
-        <div class="property-content">
-          <div class="property-id-box" style="
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            background: rgba(0,0,0,0.7);
-            color: #fff;
-            padding: 2px 5px;
-            font-size: 12px;
-            border-radius: 3px;
-            z-index: 10;
-          ">ID: ${id}</div>
-          <h3>${p.title}</h3>
-          <p><strong>Цена:</strong> ${p.price}€</p>
-          <p><strong>Категория:</strong> ${categoryTranslations[p.category] || p.category}</p>
-          <p><strong>Тип:</strong> ${typeTranslations[p.type] || p.type}</p>
-          <p><strong>Спални:</strong> ${p.bedrooms}</p>
-          <p><strong>Бани:</strong> ${p.bathrooms}</p>
-          <p><strong>Площ:</strong> ${p.size} m²</p>
-          ${
-            p.category === "rental"
-              ? `<p><strong>Статус:</strong> ${statusTranslations[p.status] || p.status}</p>`
-              : ""
-          }
-          <div class="property-actions">${adminButtons}</div>
-        </div>
-      </div>`;
-    })
-    .join("");
+    return `
+    <div class="property" data-id="${id}">
+      ${
+        firstImageKey
+          ? `<img src="${API_URL}/image/${encodeURIComponent(firstImageKey)}" alt="Property image">`
+          : ""
+      }
+      <div class="property-content">
+        <div class="property-id-box" style="
+          position: absolute;
+          top: 5px;
+          left: 5px;
+          background: rgba(0,0,0,0.7);
+          color: #fff;
+          padding: 2px 5px;
+          font-size: 12px;
+          border-radius: 3px;
+          z-index: 10;
+        ">ID: ${id}</div>
+        <h3>${p.title}</h3>
+        <p><strong>Цена:</strong> ${p.price}€</p>
+        <p><strong>Категория:</strong> ${p.category}</p>
+        <p><strong>Тип:</strong> ${p.type}</p>
+        <p><strong>Спални:</strong> ${p.bedrooms}</p>
+        <p><strong>Бани:</strong> ${p.bathrooms}</p>
+        <p><strong>Площ:</strong> ${p.size} m²</p>
+        <div class="property-actions">${adminButtons}</div>
+      </div>
+    </div>`;
+  })
+  .join("");
 
-  attachPropertyCardListeners();
-  attachAdminListeners();
+attachPropertyCardListeners();
+attachAdminListeners();
 }
 
 
@@ -227,24 +201,6 @@ function setupModalStaticListeners() {
 // OPEN MODAL
 // ======================================================
 function openPropertyDetails(property) {
-  const categoryTranslations = {
-    sale: "Продажба",
-    rental: "Наем"
-  };
-
-  const statusTranslations = {
-    free: "Свободен",
-    taken: "Зает"
-  };
-
-  const typeTranslations = {
-    apartment: "Апартамент",
-    house: "Къща",
-    villa: "Вила",
-    farm: "Земеделски имот",
-    plot: "Парцел"
-  };
-
   const set = (id, value) => {
     const el = document.getElementById(id);
     if (el) el.textContent = value ?? "-";
@@ -252,22 +208,22 @@ function openPropertyDetails(property) {
 
   set("propTitle", property.title);
   set("propPrice", property.price + "€");
-  set("propCategory", categoryTranslations[property.category] || property.category);
-  set("propStatus", statusTranslations[property.status] || property.status);
-  set("propType", typeTranslations[property.type] || property.type);
+  set("propType", property.type);
   set("propBedrooms", property.bedrooms);
   set("propBathrooms", property.bathrooms);
   set("propArea", property.size + " m²");
-  set("propYear", property.year);
   set("propDescription", property.description);
 
-  currentPropertyImages = property.images || [];
+  // Fetch images individually
+  currentPropertyImages = property.images?.map(
+    (key) => `${API_URL}/image/${encodeURIComponent(key)}`
+  ) || [];
   currentImageIndex = 0;
 
   updateModalImage();
-
   propertyModal.style.display = "flex";
 }
+
 
 
 // ======================================================
