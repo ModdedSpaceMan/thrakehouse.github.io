@@ -65,7 +65,7 @@ export function renderProperties(properties) {
   propertyContainer.innerHTML = properties
     .map((p) => {
       const id = p.id ?? "-";
-      const firstImageKey = p.images?.[0] || "";
+      const firstImageKey = p.images?.[0] || ""; 
 
       const adminButtons =
         role === "admin"
@@ -91,12 +91,7 @@ export function renderProperties(properties) {
       <div class="property" data-id="${id}">
         ${
           firstImageKey
-            ? `<img 
-                 src="${API_URL}/image/${encodeURIComponent(firstImageKey)}" 
-                 alt="Property image" 
-                 loading="lazy"
-                 onerror="this.src='/images/placeholder.png';"
-               >`
+            ? `<img src="${API_URL}/image/${encodeURIComponent(firstImageKey)}" alt="Property image" loading="lazy">`
             : ""
         }
         <div class="property-content">
@@ -173,8 +168,11 @@ function attachAdminListeners() {
 }
 
 // ======================================================
-// MODAL (STATIC LISTENERS — KEEP AS IS)
+// MODAL (STATIC LISTENERS — ADD ONCE!)
 // ======================================================
+let currentPropertyImages = [];
+let currentImageIndex = 0;
+
 function setupModalStaticListeners() {
   const closeBtn = propertyModal.querySelector(".close");
   const prevBtn = propertyModal.querySelector("#prevImageBtn");
@@ -220,17 +218,18 @@ function openPropertyDetails(property) {
   set("propArea", property.size + " m²");
   set("propDescription", property.description);
 
-  currentPropertyImages = property.images?.map(
-    (key) => `${API_URL}/image/${encodeURIComponent(key)}`
-  ) || [];
+  // Store only keys for lazy-loading modal images
+  currentPropertyImages = property.images || [];
   currentImageIndex = 0;
 
+  // Load only first image immediately
   updateModalImage();
+
   propertyModal.style.display = "flex";
 }
 
 // ======================================================
-// UPDATE IMAGE + DOTS
+// UPDATE IMAGE + DOTS (LAZY FETCH)
 // ======================================================
 function updateModalImage() {
   const img = document.getElementById("propImage");
@@ -245,7 +244,11 @@ function updateModalImage() {
   }
 
   img.style.display = "block";
-  img.src = currentPropertyImages[currentImageIndex];
+
+  // Only fetch current image
+  const key = currentPropertyImages[currentImageIndex];
+  img.src = `${API_URL}/image/${encodeURIComponent(key)}`;
+  img.loading = "lazy";
 
   dots.innerHTML = "";
   currentPropertyImages.forEach((_, i) => {
@@ -272,7 +275,12 @@ export async function loadWishlist() {
     });
 
     const data = await res.json();
-    wishlistIds = data.items || [];
+
+    const propsRes = await fetch(`${API_URL}/properties`);
+    const props = await propsRes.json();
+
+    const valid = props.map((p) => p.id);
+    wishlistIds = (data.items || []).filter((id) => valid.includes(id));
   } catch {
     wishlistIds = [];
   }
