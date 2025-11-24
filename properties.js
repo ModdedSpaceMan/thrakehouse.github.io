@@ -124,7 +124,7 @@ export function renderProperties(properties) {
         ">ID: ${id}</div>
         <div class="property-content">
           <h3>${p.title}</h3>
-          <p><strong>Цена:</strong> ${p.price} лв</p>
+          <p><strong>Цена:</strong> ${p.price}€</p>
           <p><strong>Категория:</strong> ${categoryTranslations[p.category] || p.category}</p>
           <p><strong>Тип:</strong> ${typeTranslations[p.type] || p.type}</p>
           <p><strong>Спални:</strong> ${p.bedrooms}</p>
@@ -252,7 +252,7 @@ function openPropertyDetails(property) {
   };
 
   set("propTitle", property.title);
-  set("propPrice", property.price + " лева");
+  set("propPrice", property.price + "€");
   set("propCategory", categoryTranslations[property.category] || property.category);
   set("propStatus", statusTranslations[property.status] || property.status);
   set("propType", typeTranslations[property.type] || property.type);
