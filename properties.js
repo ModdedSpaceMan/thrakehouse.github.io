@@ -20,8 +20,12 @@ export async function initProperties() {
   await loadWishlist();
   await loadProperties();
   setupFilterListeners();
+
   window.addEventListener("propertiesUpdated", loadProperties);
+
   setupModalStaticListeners();
+
+  // Expose globally for wishlist page
   window.openPropertyDetails = openPropertyDetails;
 }
 
@@ -34,10 +38,12 @@ export async function loadProperties() {
   try {
     const headers = token ? { Authorization: "Bearer " + token } : {};
     const res = await fetch(`${API_URL}/properties`, { headers });
+
     if (!res.ok) throw new Error("HTTP " + res.status);
 
     const data = await res.json();
     propertiesData = data;
+
     renderProperties(data);
     return data;
   } catch (err) {
@@ -59,19 +65,7 @@ export function renderProperties(properties) {
   propertyContainer.innerHTML = properties
     .map((p) => {
       const id = p.id ?? "-";
-
-      // Handle both old key format and new Base64 format
-      let firstImageSrc = "";
-      if (p.images?.length) {
-        const img = p.images[0];
-        if (typeof img === "string") {
-          // Old key-only format
-          firstImageSrc = `${API_URL}/image/${encodeURIComponent(img)}`;
-        } else if (img.data) {
-          // New {key, data} format
-          firstImageSrc = `data:image/jpeg;base64,${img.data}`;
-        }
-      }
+      const firstImageKey = p.images?.[0]?.key || ""; // <-- FIX
 
       const adminButtons =
         role === "admin"
@@ -96,8 +90,8 @@ export function renderProperties(properties) {
       return `
       <div class="property" data-id="${id}">
         ${
-          firstImageSrc
-            ? `<img src="${firstImageSrc}" alt="Property image" loading="lazy">`
+          firstImageKey
+            ? `<img src="${API_URL}/image/${encodeURIComponent(firstImageKey)}" alt="Property image" loading="lazy">`
             : ""
         }
         <div class="property-content">
@@ -137,7 +131,9 @@ function attachPropertyCardListeners() {
     el.addEventListener("click", () => {
       const id = el.dataset.id;
       const property = propertiesData.find((p) => p.id == id);
+
       if (!property) return showToast("Не е намерен имот!");
+
       openPropertyDetails(property);
     });
   });
@@ -172,7 +168,7 @@ function attachAdminListeners() {
 }
 
 // ======================================================
-// MODAL
+// MODAL (STATIC LISTENERS — ADD ONCE!)
 // ======================================================
 let currentPropertyImages = [];
 let currentImageIndex = 0;
@@ -222,19 +218,22 @@ function openPropertyDetails(property) {
   set("propArea", property.size + " m²");
   set("propDescription", property.description);
 
-  currentPropertyImages = property.images || [];
+  // Extract keys for modal
+  currentPropertyImages = (property.images || []).map(img => img.key); // <-- FIX
   currentImageIndex = 0;
+
   updateModalImage();
 
   propertyModal.style.display = "flex";
 }
 
 // ======================================================
-// UPDATE MODAL IMAGE
+// UPDATE IMAGE + DOTS (LAZY FETCH)
 // ======================================================
 function updateModalImage() {
   const img = document.getElementById("propImage");
   const dots = document.getElementById("propImageDots");
+
   if (!img) return;
 
   if (!currentPropertyImages.length) {
@@ -245,16 +244,8 @@ function updateModalImage() {
 
   img.style.display = "block";
 
-  const current = currentPropertyImages[currentImageIndex];
-
-  if (typeof current === "string") {
-    // Old key-only format
-    img.src = `${API_URL}/image/${encodeURIComponent(current)}`;
-  } else if (current.data) {
-    // New Base64 format
-    img.src = `data:image/jpeg;base64,${current.data}`;
-  }
-
+  const key = currentPropertyImages[currentImageIndex];
+  img.src = `${API_URL}/image/${encodeURIComponent(key)}`;
   img.loading = "lazy";
 
   dots.innerHTML = "";
@@ -280,9 +271,12 @@ export async function loadWishlist() {
     const res = await fetch(`${API_URL}/wishlists/${username}`, {
       headers: { Authorization: "Bearer " + token },
     });
+
     const data = await res.json();
+
     const propsRes = await fetch(`${API_URL}/properties`);
     const props = await propsRes.json();
+
     const valid = props.map((p) => p.id);
     wishlistIds = (data.items || []).filter((id) => valid.includes(id));
   } catch {
@@ -292,6 +286,7 @@ export async function loadWishlist() {
 
 export async function toggleWishlist(id) {
   if (!username || !token) return showToast("Трябва да сте влезли!");
+
   const action = wishlistIds.includes(id) ? "remove" : "add";
 
   const res = await fetch(`${API_URL}/wishlists/${username}/${action}`, {
@@ -304,6 +299,7 @@ export async function toggleWishlist(id) {
   });
 
   const data = await res.json();
+
   if (!data.success) return showToast("Грешка");
 
   if (action === "add") wishlistIds.push(id);
@@ -320,6 +316,7 @@ async function deleteProperty(id) {
     method: "DELETE",
     headers: { Authorization: "Bearer " + token },
   });
+
   showToast("Изтрито!");
   loadProperties();
 }
@@ -333,6 +330,7 @@ async function toggleRentalStatus(id) {
     },
     body: JSON.stringify({ status: "toggle" }),
   });
+
   showToast("Статус обновен!");
   loadProperties();
 }
