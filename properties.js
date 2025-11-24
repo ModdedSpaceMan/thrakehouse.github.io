@@ -73,19 +73,19 @@ export function renderProperties(properties) {
     plot: "Парцел",
   };
   const categoryTranslations = {
-  sale: "Продава",
-  rental: "Под наем",
+    sale: "Продава",
+    rental: "Под наем",
   };
   const statusTranslations = {
-  free: "Свободен",
-  taken: "Зает",
-};
-
+    free: "Свободен",
+    taken: "Зает",
+  };
 
   propertyContainer.innerHTML = properties
     .map((p) => {
       const id = p.id ?? "-";
-      const image = p.images?.length ? p.images[0] : "";
+      // ONLY use images; ignore videos completely
+      const image = (p.images?.find((img) => /\.(jpe?g|png|webp|gif)$/i.test(img))) || "";
 
       const adminButtons =
         role === "admin"
@@ -109,20 +109,19 @@ export function renderProperties(properties) {
 
       return `
       <div class="property" data-id="${id}">
-        ${image ? `<img src="${image}">` : ""}
+        ${image ? `<img src="${image}" alt="Property image">` : ""}
         <div class="property-content">
-        <div class="property-id-box" style="
-          position: absolute;
-          top: 5px;
-          left: 5px;
-          background: rgba(0,0,0,0.7);
-          color: #fff;
-          padding: 2px 5px;
-          font-size: 12px;
-          border-radius: 3px;
-          z-index: 10;
-        ">ID: ${id}</div>
-        <div class="property-content">
+          <div class="property-id-box" style="
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding: 2px 5px;
+            font-size: 12px;
+            border-radius: 3px;
+            z-index: 10;
+          ">ID: ${id}</div>
           <h3>${p.title}</h3>
           <p><strong>Цена:</strong> ${p.price}€</p>
           <p><strong>Категория:</strong> ${categoryTranslations[p.category] || p.category}</p>
@@ -135,16 +134,16 @@ export function renderProperties(properties) {
               ? `<p><strong>Статус:</strong> ${statusTranslations[p.status] || p.status}</p>`
               : ""
           }
+          <div class="property-actions">${adminButtons}</div>
         </div>
-        <div class="property-actions">${adminButtons}</div>
       </div>`;
-
     })
     .join("");
 
   attachPropertyCardListeners();
   attachAdminListeners();
 }
+
 
 // ======================================================
 // PROPERTY CARD → OPEN MODAL
