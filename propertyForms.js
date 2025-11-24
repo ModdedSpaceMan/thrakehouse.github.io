@@ -102,15 +102,35 @@ document.addEventListener("DOMContentLoaded", () => {
       return showToast("Моля, попълнете всички задължителни полета!");
     }
 
-    // ---- Convert images to Base64 ----
-    const base64Images = await Promise.all(
-      allImages.map(file => new Promise(resolve => {
-        const reader = new FileReader();
-        reader.onload = e => resolve(e.target.result);
-        reader.readAsDataURL(file);
-      }))
-    );
+    // ---- Upload images one by one to Worker KV ----
+    const uploadedImageKeys = [];
+    for (let i = 0; i < allImages.length; i++) {
+      const file = allImages[i];
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("propertyId", crypto.randomUUID()); // unique ID for this property
 
+      try {
+        const res = await fetch(`${API_URL}/upload-image`, {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token")
+          },
+          body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Image upload failed");
+
+        uploadedImageKeys.push(data.key); // KV key returned from Worker
+      } catch (err) {
+        console.error("Failed to upload image:", err);
+        showToast("Грешка при качване на изображение");
+        return;
+      }
+    }
+
+    // ---- Save property metadata ----
     const newProperty = {
       title,
       description,
@@ -122,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
       year,
       category,
       status,
-      images: base64Images,
+      images: uploadedImageKeys,
       amenities: []
     };
 
