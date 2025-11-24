@@ -362,4 +362,4 @@ function setupFilterListeners() {
 // ======================================================
 // READY
 // ======================================================
-document.addEventListener("DOMContentLoaded", initProperties);
+initProperties();
