@@ -65,7 +65,7 @@ export function renderProperties(properties) {
   propertyContainer.innerHTML = properties
     .map((p) => {
       const id = p.id ?? "-";
-      const firstImageKey = p.images?.[0] || ""; 
+      const firstImageKey = p.images?.[0] || "";
 
       const adminButtons =
         role === "admin"
@@ -91,7 +91,12 @@ export function renderProperties(properties) {
       <div class="property" data-id="${id}">
         ${
           firstImageKey
-            ? `<img src="${API_URL}/image/${encodeURIComponent(firstImageKey)}" alt="Property image">`
+            ? `<img 
+                 src="${API_URL}/image/${encodeURIComponent(firstImageKey)}" 
+                 alt="Property image" 
+                 loading="lazy"
+                 onerror="this.src='/images/placeholder.png';"
+               >`
             : ""
         }
         <div class="property-content">
@@ -122,8 +127,6 @@ export function renderProperties(properties) {
   attachPropertyCardListeners();
   attachAdminListeners();
 }
-
-
 
 // ======================================================
 // PROPERTY CARD → OPEN MODAL
@@ -170,11 +173,8 @@ function attachAdminListeners() {
 }
 
 // ======================================================
-// MODAL (STATIC LISTENERS — ADD ONCE!)
+// MODAL (STATIC LISTENERS — KEEP AS IS)
 // ======================================================
-let currentPropertyImages = [];
-let currentImageIndex = 0;
-
 function setupModalStaticListeners() {
   const closeBtn = propertyModal.querySelector(".close");
   const prevBtn = propertyModal.querySelector("#prevImageBtn");
@@ -220,7 +220,6 @@ function openPropertyDetails(property) {
   set("propArea", property.size + " m²");
   set("propDescription", property.description);
 
-  // Fetch images individually
   currentPropertyImages = property.images?.map(
     (key) => `${API_URL}/image/${encodeURIComponent(key)}`
   ) || [];
@@ -229,8 +228,6 @@ function openPropertyDetails(property) {
   updateModalImage();
   propertyModal.style.display = "flex";
 }
-
-
 
 // ======================================================
 // UPDATE IMAGE + DOTS
@@ -275,12 +272,7 @@ export async function loadWishlist() {
     });
 
     const data = await res.json();
-
-    const propsRes = await fetch(`${API_URL}/properties`);
-    const props = await propsRes.json();
-
-    const valid = props.map((p) => p.id);
-    wishlistIds = (data.items || []).filter((id) => valid.includes(id));
+    wishlistIds = data.items || [];
   } catch {
     wishlistIds = [];
   }
@@ -345,7 +337,6 @@ function setupFilterListeners() {
   if (!btn) return;
 
   btn.addEventListener("click", () => {
-    // Always start from full properties
     let filtered = [...propertiesData];
 
     const minPrice = Number(document.getElementById("filterMinPrice").value);
