@@ -57,14 +57,19 @@ export async function loadProperties() {
 // RENDER PROPERTIES
 // ======================================================
 export function renderProperties(properties) {
-  propertyContainer.innerHTML = properties
-  .map((p) => {
-    const id = p.id ?? "-";
-    const firstImageKey = p.images?.[0] || ""; // first image KV key
+  if (!properties || properties.length === 0) {
+    propertyContainer.innerHTML = "<p>Няма намерени имоти.</p>";
+    return;
+  }
 
-    const adminButtons =
-      role === "admin"
-        ? `
+  propertyContainer.innerHTML = properties
+    .map((p) => {
+      const id = p.id ?? "-";
+      const firstImageKey = p.images?.[0] || ""; 
+
+      const adminButtons =
+        role === "admin"
+          ? `
       <div class="admin-buttons-right">
         <button class="wishlist-btn" data-id="${id}">${
             wishlistIds.includes(String(id)) ? "❤️" : "🤍"
@@ -78,45 +83,46 @@ export function renderProperties(properties) {
             : ""
         }
       </div>`
-        : `<button class="wishlist-btn" data-id="${id}">${
-            wishlistIds.includes(String(id)) ? "❤️" : "🤍"
-          }</button>`;
+          : `<button class="wishlist-btn" data-id="${id}">${
+              wishlistIds.includes(String(id)) ? "❤️" : "🤍"
+            }</button>`;
 
-    return `
-    <div class="property" data-id="${id}">
-      ${
-        firstImageKey
-          ? `<img src="${API_URL}/image/${encodeURIComponent(firstImageKey)}" alt="Property image">`
-          : ""
-      }
-      <div class="property-content">
-        <div class="property-id-box" style="
-          position: absolute;
-          top: 5px;
-          left: 5px;
-          background: rgba(0,0,0,0.7);
-          color: #fff;
-          padding: 2px 5px;
-          font-size: 12px;
-          border-radius: 3px;
-          z-index: 10;
-        ">ID: ${id}</div>
-        <h3>${p.title}</h3>
-        <p><strong>Цена:</strong> ${p.price}€</p>
-        <p><strong>Категория:</strong> ${p.category}</p>
-        <p><strong>Тип:</strong> ${p.type}</p>
-        <p><strong>Спални:</strong> ${p.bedrooms}</p>
-        <p><strong>Бани:</strong> ${p.bathrooms}</p>
-        <p><strong>Площ:</strong> ${p.size} m²</p>
-        <div class="property-actions">${adminButtons}</div>
-      </div>
-    </div>`;
-  })
-  .join("");
+      return `
+      <div class="property" data-id="${id}">
+        ${
+          firstImageKey
+            ? `<img src="${API_URL}/image/${encodeURIComponent(firstImageKey)}" alt="Property image">`
+            : ""
+        }
+        <div class="property-content">
+          <div class="property-id-box" style="
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding: 2px 5px;
+            font-size: 12px;
+            border-radius: 3px;
+            z-index: 10;
+          ">ID: ${id}</div>
+          <h3>${p.title}</h3>
+          <p><strong>Цена:</strong> ${p.price}€</p>
+          <p><strong>Категория:</strong> ${p.category}</p>
+          <p><strong>Тип:</strong> ${p.type}</p>
+          <p><strong>Спални:</strong> ${p.bedrooms}</p>
+          <p><strong>Бани:</strong> ${p.bathrooms}</p>
+          <p><strong>Площ:</strong> ${p.size} m²</p>
+          <div class="property-actions">${adminButtons}</div>
+        </div>
+      </div>`;
+    })
+    .join("");
 
-attachPropertyCardListeners();
-attachAdminListeners();
+  attachPropertyCardListeners();
+  attachAdminListeners();
 }
+
 
 
 // ======================================================
