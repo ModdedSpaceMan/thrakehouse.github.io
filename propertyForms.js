@@ -5,8 +5,6 @@ import { showToast } from './ui.js';
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("propertyForms.js loaded");
-
   const addModal = document.getElementById("addPropertyModal");
   const addForm = document.getElementById("addPropertyForm");
   const addCategory = document.getElementById("propertyCategory");
@@ -16,10 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const imagePreviews = document.getElementById("imagePreviews");
   const statusContainer = document.getElementById("statusContainer");
 
-  if (!addForm || !addModal) {
-    console.error("Modal or form missing.");
-    return;
-  }
+  if (!addForm || !addModal) return;
 
   let allImages = [];
 
@@ -31,7 +26,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---- IMAGE UPLOAD ----
   addMoreImagesBtn.addEventListener("click", () => propertyImageInput.click());
-
   propertyImageInput.addEventListener("change", () => {
     Array.from(propertyImageInput.files).forEach(file => {
       allImages.push(file);
@@ -49,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
       img.style.marginRight = "10px";
 
       const reader = new FileReader();
-      reader.onload = e => (img.src = e.target.result);
+      reader.onload = e => img.src = e.target.result;
       reader.readAsDataURL(file);
 
       const removeBtn = document.createElement("button");
@@ -81,7 +75,6 @@ document.addEventListener("DOMContentLoaded", () => {
     imagePreviews.innerHTML = "";
     statusContainer.style.display = "none";
   };
-
   document.getElementById("closeAddModal").addEventListener("click", closeAddModal);
 
   // ---- HELPER: COMPRESS AND CONVERT TO BASE64 ----
@@ -138,11 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const category = addCategory.value;
     const status = category === "rent" ? addStatus.value : "";
 
-    if (!title || !type || !category) {
-      return showToast("Моля, попълнете всички задължителни полета!");
-    }
-
-    const tempId = crypto.randomUUID(); // temporary property ID for image upload
+    if (!title || !type || !category) return showToast("Моля, попълнете всички задължителни полета!");
 
     const newProperty = {
       title, description, price, type, bedrooms, bathrooms, size, year,
@@ -150,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     try {
-      // First create property without images
+      // 1️⃣ Create property without images
       const res = await fetch(`${API_URL}/properties`, {
         method: "POST",
         headers: {
@@ -164,26 +153,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const propertyId = data.property.id;
 
-      // Then upload images
-      const uploadedKeys = await uploadImages(allImages, propertyId);
-
-      if (uploadedKeys.length > 0) {
-        // Update property with image keys
-        await fetch(`${API_URL}/properties/${propertyId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + localStorage.getItem("token")
-          },
-          body: JSON.stringify({ property: { images: uploadedKeys } })
-        });
+      // 2️⃣ Upload images and get keys
+      if (allImages.length) {
+        const uploadedKeys = await uploadImages(allImages, propertyId);
+        if (uploadedKeys.length) {
+          // 3️⃣ Update property with image keys
+          await fetch(`${API_URL}/properties/${propertyId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + localStorage.getItem("token")
+            },
+            body: JSON.stringify({ property: { images: uploadedKeys } })
+          });
+        }
       }
 
       showToast("Имотът беше добавен успешно!");
       closeAddModal();
       window.dispatchEvent(new Event("propertiesUpdated"));
       await loadProperties();
-
     } catch (err) {
       console.error(err);
       showToast("Грешка при добавяне на имота");
