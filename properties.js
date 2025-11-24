@@ -20,8 +20,9 @@ export async function initProperties() {
   await loadWishlist();
   await loadProperties();
   setupFilterListeners();
-  window.addEventListener("propertiesUpdated", loadProperties);
   setupModalStaticListeners();
+
+  window.addEventListener("propertiesUpdated", loadProperties);
   window.openPropertyDetails = openPropertyDetails;
 }
 
@@ -35,15 +36,13 @@ export async function loadProperties() {
     const headers = token ? { Authorization: "Bearer " + token } : {};
     const res = await fetch(`${API_URL}/properties`, { headers });
     if (!res.ok) throw new Error("HTTP " + res.status);
-
     const data = await res.json();
     propertiesData = data;
-
     renderProperties(data);
     return data;
   } catch (err) {
     console.error("Error loading properties:", err);
-    propertyContainer.innerHTML = "<p>Грешка при зареждане.</p>";
+    propertyContainer.innerHTML = "<p>Error loading properties.</p>";
     return [];
   }
 }
@@ -53,7 +52,7 @@ export async function loadProperties() {
 // ======================================================
 export function renderProperties(properties) {
   if (!properties || properties.length === 0) {
-    propertyContainer.innerHTML = "<p>Няма намерени имоти.</p>";
+    propertyContainer.innerHTML = "<p>No properties found.</p>";
     return;
   }
 
@@ -65,49 +64,25 @@ export function renderProperties(properties) {
       const adminButtons =
         role === "admin"
           ? `
-        <div class="admin-buttons-right">
-          <button class="wishlist-btn" data-id="${id}">${
-            wishlistIds.includes(String(id)) ? "❤️" : "🤍"
-          }</button>
-          <button class="delete-btn" data-id="${id}">Изтрий</button>
-          ${
-            p.category === "rent"
-              ? `<button class="toggle-status-btn" data-id="${id}">${
-                  p.status === "free" ? "Зает" : "Свободен"
-                }</button>`
-              : ""
-          }
-        </div>`
-          : `<button class="wishlist-btn" data-id="${id}">${
-              wishlistIds.includes(String(id)) ? "❤️" : "🤍"
-            }</button>`;
+      <div class="admin-buttons-right">
+        <button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>
+        <button class="delete-btn" data-id="${id}">Delete</button>
+        ${p.category === "rental" ? `<button class="toggle-status-btn" data-id="${id}">${p.status === "free" ? "Occupied" : "Free"}</button>` : ""}
+      </div>`
+          : `<button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>`;
 
       return `
       <div class="property" data-id="${id}">
-        ${
-          firstImageKey
-            ? `<img src="${API_URL}/image/${encodeURIComponent(firstImageKey)}" alt="Property image" loading="lazy">`
-            : ""
-        }
+        ${firstImageKey ? `<img src="${API_URL}/image/${encodeURIComponent(firstImageKey)}" alt="Property image" loading="lazy">` : ""}
         <div class="property-content">
-          <div class="property-id-box" style="
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            background: rgba(0,0,0,0.7);
-            color: #fff;
-            padding: 2px 5px;
-            font-size: 12px;
-            border-radius: 3px;
-            z-index: 10;
-          ">ID: ${id}</div>
+          <div class="property-id-box">ID: ${id}</div>
           <h3>${p.title}</h3>
-          <p><strong>Цена:</strong> ${p.price}€</p>
-          <p><strong>Категория:</strong> ${p.category}</p>
-          <p><strong>Тип:</strong> ${p.type}</p>
-          <p><strong>Спални:</strong> ${p.bedrooms}</p>
-          <p><strong>Бани:</strong> ${p.bathrooms}</p>
-          <p><strong>Площ:</strong> ${p.size} m²</p>
+          <p><strong>Price:</strong> ${p.price}€</p>
+          <p><strong>Category:</strong> ${p.category}</p>
+          <p><strong>Type:</strong> ${p.type}</p>
+          <p><strong>Bedrooms:</strong> ${p.bedrooms}</p>
+          <p><strong>Bathrooms:</strong> ${p.bathrooms}</p>
+          <p><strong>Size:</strong> ${p.size} m²</p>
           <div class="property-actions">${adminButtons}</div>
         </div>
       </div>`;
@@ -126,7 +101,7 @@ function attachPropertyCardListeners() {
     el.addEventListener("click", () => {
       const id = el.dataset.id;
       const property = propertiesData.find((p) => p.id == id);
-      if (!property) return showToast("Не е намерен имот!");
+      if (!property) return showToast("Property not found!");
       openPropertyDetails(property);
     });
   });
@@ -147,7 +122,7 @@ function attachAdminListeners() {
     propertyContainer.querySelectorAll(".delete-btn").forEach((btn) =>
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (confirm("Изтриване?")) deleteProperty(btn.dataset.id);
+        if (confirm("Delete property?")) deleteProperty(btn.dataset.id);
       })
     );
 
@@ -161,7 +136,7 @@ function attachAdminListeners() {
 }
 
 // ======================================================
-// MODAL (STATIC LISTENERS — ADD ONCE!)
+// MODAL (STATIC LISTENERS — ADD ONCE)
 // ======================================================
 let currentPropertyImages = [];
 let currentImageIndex = 0;
@@ -180,8 +155,7 @@ function setupModalStaticListeners() {
     prevBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       if (!currentPropertyImages.length) return;
-      currentImageIndex =
-        (currentImageIndex - 1 + currentPropertyImages.length) % currentPropertyImages.length;
+      currentImageIndex = (currentImageIndex - 1 + currentPropertyImages.length) % currentPropertyImages.length;
       updateModalImage();
     });
 
@@ -213,18 +187,17 @@ function openPropertyDetails(property) {
 
   currentPropertyImages = property.images || [];
   currentImageIndex = 0;
-  updateModalImage();
 
+  updateModalImage();
   propertyModal.style.display = "flex";
 }
 
 // ======================================================
-// UPDATE IMAGE + DOTS (LAZY FETCH)
+// UPDATE MODAL IMAGE
 // ======================================================
 function updateModalImage() {
   const img = document.getElementById("propImage");
   const dots = document.getElementById("propImageDots");
-
   if (!img) return;
 
   if (!currentPropertyImages.length) {
@@ -263,28 +236,23 @@ export async function loadWishlist() {
     });
     const data = await res.json();
 
-    const propsRes = await fetch(`${API_URL}/properties`);
-    const props = await propsRes.json();
-    const valid = props.map((p) => p.id);
-
-    wishlistIds = (data.items || []).filter((id) => valid.includes(id));
+    wishlistIds = data.items || [];
   } catch {
     wishlistIds = [];
   }
 }
 
 export async function toggleWishlist(id) {
-  if (!username || !token) return showToast("Трябва да сте влезли!");
-
+  if (!username || !token) return showToast("You must be logged in!");
   const action = wishlistIds.includes(id) ? "remove" : "add";
+
   const res = await fetch(`${API_URL}/wishlists/${username}/${action}`, {
     method: "POST",
     headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
     body: JSON.stringify({ propertyId: id }),
   });
-
   const data = await res.json();
-  if (!data.success) return showToast("Грешка");
+  if (!data.success) return showToast("Error updating wishlist");
 
   if (action === "add") wishlistIds.push(id);
   else wishlistIds = wishlistIds.filter((x) => x !== id);
@@ -296,11 +264,8 @@ export async function toggleWishlist(id) {
 // ADMIN
 // ======================================================
 async function deleteProperty(id) {
-  await fetch(`${API_URL}/properties/${id}`, {
-    method: "DELETE",
-    headers: { Authorization: "Bearer " + token },
-  });
-  showToast("Изтрито!");
+  await fetch(`${API_URL}/properties/${id}`, { method: "DELETE", headers: { Authorization: "Bearer " + token } });
+  showToast("Deleted!");
   loadProperties();
 }
 
@@ -310,7 +275,7 @@ async function toggleRentalStatus(id) {
     headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
     body: JSON.stringify({ status: "toggle" }),
   });
-  showToast("Статус обновен!");
+  showToast("Status updated!");
   loadProperties();
 }
 
@@ -343,4 +308,6 @@ function setupFilterListeners() {
 // ======================================================
 // READY
 // ======================================================
-document.addEventListener("DOMContentLoaded", () => initProperties());
+document.addEventListener("DOMContentLoaded", () => {
+  initProperties();
+});
