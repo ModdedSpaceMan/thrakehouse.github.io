@@ -1,3 +1,4 @@
+// propertyForms.js
 import { loadProperties } from './properties.js';
 import { showToast } from './ui.js';
 
@@ -102,6 +103,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ---- UPLOAD IMAGES ----
+  async function uploadImages(images, propertyId) {
+    const keys = [];
+    for (const file of images) {
+      const base64 = await compressToBase64(file);
+      const res = await fetch(`${API_URL}/upload-image`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + localStorage.getItem("token")
+        },
+        body: JSON.stringify({ image: base64, propertyId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to upload image");
+      keys.push(data.key);
+    }
+    return keys;
+  }
+
   // ---- FORM SUBMIT ----
   addForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -121,32 +142,15 @@ document.addEventListener("DOMContentLoaded", () => {
       return showToast("Моля, попълнете всички задължителни полета!");
     }
 
-    // Convert all images to Base64
-    let imagesBase64 = [];
-    try {
-      imagesBase64 = await Promise.all(allImages.map(f => compressToBase64(f)));
-    } catch (err) {
-      console.error("Failed to process images:", err);
-      showToast("Грешка при обработка на изображения");
-      return;
-    }
+    const tempId = crypto.randomUUID(); // temporary property ID for image upload
 
     const newProperty = {
-      title,
-      description,
-      price,
-      type,
-      bedrooms,
-      bathrooms,
-      size,
-      year,
-      category,
-      status,
-      amenities: [],
-      images: imagesBase64.map(data => ({ key: crypto.randomUUID(), data }))
+      title, description, price, type, bedrooms, bathrooms, size, year,
+      category, status, amenities: [], images: []
     };
 
     try {
+      // First create property without images
       const res = await fetch(`${API_URL}/properties`, {
         method: "POST",
         headers: {
@@ -155,14 +159,31 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         body: JSON.stringify({ property: newProperty })
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to add property");
+
+      const propertyId = data.property.id;
+
+      // Then upload images
+      const uploadedKeys = await uploadImages(allImages, propertyId);
+
+      if (uploadedKeys.length > 0) {
+        // Update property with image keys
+        await fetch(`${API_URL}/properties/${propertyId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("token")
+          },
+          body: JSON.stringify({ property: { images: uploadedKeys } })
+        });
+      }
 
       showToast("Имотът беше добавен успешно!");
       closeAddModal();
       window.dispatchEvent(new Event("propertiesUpdated"));
       await loadProperties();
+
     } catch (err) {
       console.error(err);
       showToast("Грешка при добавяне на имота");
