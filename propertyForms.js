@@ -83,9 +83,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("closeAddModal").addEventListener("click", closeAddModal);
 
-  // ---- HELPER: COMPRESS IMAGE ----
-  async function compressImage(file, maxDim = 1024, quality = 0.7) {
-    return new Promise((resolve) => {
+  // ---- HELPER: COMPRESS AND CONVERT TO BASE64 ----
+  async function compressToBase64(file, maxDim = 1024, quality = 0.7) {
+    return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
         const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
@@ -94,9 +94,10 @@ document.addEventListener("DOMContentLoaded", () => {
         canvas.height = img.height * scale;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(blob => resolve(blob), 'image/jpeg', quality);
+        const base64 = canvas.toDataURL('image/jpeg', quality);
+        resolve(base64.split(',')[1]); // remove "data:image/jpeg;base64,"
       };
-      img.onerror = () => resolve(file); // fallback: original
+      img.onerror = () => reject(new Error("Failed to load image"));
       img.src = URL.createObjectURL(file);
     });
   }
@@ -107,15 +108,16 @@ document.addEventListener("DOMContentLoaded", () => {
     for (let i = 0; i < images.length; i += batchSize) {
       const batch = images.slice(i, i + batchSize);
       const promises = batch.map(async (file) => {
-        const compressed = await compressImage(file);
-        const formData = new FormData();
-        formData.append('image', compressed);
-        formData.append('propertyId', crypto.randomUUID());
+        const base64 = await compressToBase64(file);
+        const body = JSON.stringify({ image: base64, propertyId: crypto.randomUUID() });
 
         const res = await fetch(`${API_URL}/upload-image`, {
           method: "POST",
-          headers: { Authorization: "Bearer " + localStorage.getItem("token") },
-          body: formData
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("token")
+          },
+          body
         });
 
         const data = await res.json();
