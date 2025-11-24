@@ -13,12 +13,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const propertyImageInput = document.getElementById("propertyImage");
   const addMoreImagesBtn = document.getElementById("addMoreImagesBtn");
   const imagePreviews = document.getElementById("imagePreviews");
-
-  // VIDEO ELEMENTS
-  const uploadVideoBtn = document.getElementById("uploadVideoBtn");
-  const propertyVideoInput = document.getElementById("propertyVideo");
-  const videoPreviewContainer = document.getElementById("videoPreview");
-
   const statusContainer = document.getElementById("statusContainer");
 
   if (!addForm || !addModal) {
@@ -27,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   let allImages = [];
-  let allVideos = [];
 
   // ---- CATEGORY LOGIC ----
   statusContainer.style.display = "none";
@@ -79,67 +72,12 @@ document.addEventListener("DOMContentLoaded", () => {
     propertyImageInput.value = "";
   });
 
-  // ---- VIDEO UPLOAD ----
-  uploadVideoBtn.addEventListener("click", () => propertyVideoInput.click());
-
-  propertyVideoInput.addEventListener("change", () => {
-    Array.from(propertyVideoInput.files).forEach(file => {
-      allVideos.push(file);
-
-      const wrapper = document.createElement("div");
-      wrapper.style.marginTop = "10px";
-      wrapper.style.padding = "8px";
-      wrapper.style.background = "#f3f3f3";
-      wrapper.style.borderRadius = "6px";
-
-      const video = document.createElement("video");
-      video.src = URL.createObjectURL(file);
-      video.muted = true;
-      video.width = 200;
-      video.style.borderRadius = "6px";
-      video.style.display = "block";
-
-      const durationText = document.createElement("p");
-      durationText.style.margin = "4px 0";
-
-      video.addEventListener("loadedmetadata", () => {
-        const mins = Math.floor(video.duration / 60);
-        const secs = Math.floor(video.duration % 60).toString().padStart(2, "0");
-        durationText.textContent = `Duration: ${mins}:${secs}`;
-      });
-
-      const removeBtn = document.createElement("button");
-      removeBtn.textContent = "Remove";
-      removeBtn.style.marginTop = "6px";
-      removeBtn.style.background = "#ff4d4d";
-      removeBtn.style.color = "#fff";
-      removeBtn.style.border = "none";
-      removeBtn.style.padding = "6px 10px";
-      removeBtn.style.cursor = "pointer";
-      removeBtn.style.borderRadius = "4px";
-
-      removeBtn.addEventListener("click", () => {
-        allVideos = allVideos.filter(v => v !== file);
-        wrapper.remove();
-      });
-
-      wrapper.appendChild(video);
-      wrapper.appendChild(durationText);
-      wrapper.appendChild(removeBtn);
-      videoPreviewContainer.appendChild(wrapper);
-    });
-
-    propertyVideoInput.value = "";
-  });
-
   // ---- CLOSE MODAL ----
   const closeAddModal = () => {
     addModal.setAttribute("aria-hidden", "true");
     addForm.reset();
     allImages = [];
-    allVideos = [];
     imagePreviews.innerHTML = "";
-    videoPreviewContainer.innerHTML = "";
     statusContainer.style.display = "none";
   };
 
@@ -173,17 +111,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }))
     );
 
-    // ---- Convert videos to Base64 ----
-    const base64Videos = await Promise.all(
-      allVideos.map(file =>
-        new Promise(resolve => {
-          const reader = new FileReader();
-          reader.onload = e => resolve(e.target.result);
-          reader.readAsDataURL(file);
-        })
-      )
-    );
-
     const newProperty = {
       title,
       description,
@@ -196,7 +123,6 @@ document.addEventListener("DOMContentLoaded", () => {
       category,
       status,
       images: base64Images,
-      videos: base64Videos,
       amenities: []
     };
 
