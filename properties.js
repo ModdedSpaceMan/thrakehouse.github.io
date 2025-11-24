@@ -20,12 +20,8 @@ export async function initProperties() {
   await loadWishlist();
   await loadProperties();
   setupFilterListeners();
-
   window.addEventListener("propertiesUpdated", loadProperties);
-
   setupModalStaticListeners();
-
-  // Expose globally for wishlist page
   window.openPropertyDetails = openPropertyDetails;
 }
 
@@ -38,7 +34,6 @@ export async function loadProperties() {
   try {
     const headers = token ? { Authorization: "Bearer " + token } : {};
     const res = await fetch(`${API_URL}/properties`, { headers });
-
     if (!res.ok) throw new Error("HTTP " + res.status);
 
     const data = await res.json();
@@ -47,7 +42,7 @@ export async function loadProperties() {
     renderProperties(data);
     return data;
   } catch (err) {
-    console.error("Грешка при зареждане на имоти:", err);
+    console.error("Error loading properties:", err);
     propertyContainer.innerHTML = "<p>Грешка при зареждане.</p>";
     return [];
   }
@@ -65,24 +60,24 @@ export function renderProperties(properties) {
   propertyContainer.innerHTML = properties
     .map((p) => {
       const id = p.id ?? "-";
-      const firstImageKey = p.images?.[0]?.key || ""; // <-- FIX
+      const firstImageKey = p.images?.[0] || "";
 
       const adminButtons =
         role === "admin"
           ? `
-      <div class="admin-buttons-right">
-        <button class="wishlist-btn" data-id="${id}">${
+        <div class="admin-buttons-right">
+          <button class="wishlist-btn" data-id="${id}">${
             wishlistIds.includes(String(id)) ? "❤️" : "🤍"
           }</button>
-        <button class="delete-btn" data-id="${id}">Изтрий</button>
-        ${
-          p.category === "rental"
-            ? `<button class="toggle-status-btn" data-id="${id}">${
-                p.status === "free" ? "Зает" : "Свободен"
-              }</button>`
-            : ""
-        }
-      </div>`
+          <button class="delete-btn" data-id="${id}">Изтрий</button>
+          ${
+            p.category === "rent"
+              ? `<button class="toggle-status-btn" data-id="${id}">${
+                  p.status === "free" ? "Зает" : "Свободен"
+                }</button>`
+              : ""
+          }
+        </div>`
           : `<button class="wishlist-btn" data-id="${id}">${
               wishlistIds.includes(String(id)) ? "❤️" : "🤍"
             }</button>`;
@@ -131,9 +126,7 @@ function attachPropertyCardListeners() {
     el.addEventListener("click", () => {
       const id = el.dataset.id;
       const property = propertiesData.find((p) => p.id == id);
-
       if (!property) return showToast("Не е намерен имот!");
-
       openPropertyDetails(property);
     });
   });
@@ -218,10 +211,8 @@ function openPropertyDetails(property) {
   set("propArea", property.size + " m²");
   set("propDescription", property.description);
 
-  // Extract keys for modal
-  currentPropertyImages = (property.images || []).map(img => img.key); // <-- FIX
+  currentPropertyImages = property.images || [];
   currentImageIndex = 0;
-
   updateModalImage();
 
   propertyModal.style.display = "flex";
@@ -243,7 +234,6 @@ function updateModalImage() {
   }
 
   img.style.display = "block";
-
   const key = currentPropertyImages[currentImageIndex];
   img.src = `${API_URL}/image/${encodeURIComponent(key)}`;
   img.loading = "lazy";
@@ -271,13 +261,12 @@ export async function loadWishlist() {
     const res = await fetch(`${API_URL}/wishlists/${username}`, {
       headers: { Authorization: "Bearer " + token },
     });
-
     const data = await res.json();
 
     const propsRes = await fetch(`${API_URL}/properties`);
     const props = await propsRes.json();
-
     const valid = props.map((p) => p.id);
+
     wishlistIds = (data.items || []).filter((id) => valid.includes(id));
   } catch {
     wishlistIds = [];
@@ -288,18 +277,13 @@ export async function toggleWishlist(id) {
   if (!username || !token) return showToast("Трябва да сте влезли!");
 
   const action = wishlistIds.includes(id) ? "remove" : "add";
-
   const res = await fetch(`${API_URL}/wishlists/${username}/${action}`, {
     method: "POST",
-    headers: {
-      Authorization: "Bearer " + token,
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
     body: JSON.stringify({ propertyId: id }),
   });
 
   const data = await res.json();
-
   if (!data.success) return showToast("Грешка");
 
   if (action === "add") wishlistIds.push(id);
@@ -316,7 +300,6 @@ async function deleteProperty(id) {
     method: "DELETE",
     headers: { Authorization: "Bearer " + token },
   });
-
   showToast("Изтрито!");
   loadProperties();
 }
@@ -324,13 +307,9 @@ async function deleteProperty(id) {
 async function toggleRentalStatus(id) {
   await fetch(`${API_URL}/properties/${id}/status`, {
     method: "POST",
-    headers: {
-      Authorization: "Bearer " + token,
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
     body: JSON.stringify({ status: "toggle" }),
   });
-
   showToast("Статус обновен!");
   loadProperties();
 }
@@ -344,7 +323,6 @@ function setupFilterListeners() {
 
   btn.addEventListener("click", () => {
     let filtered = [...propertiesData];
-
     const minPrice = Number(document.getElementById("filterMinPrice").value);
     const maxPrice = Number(document.getElementById("filterMaxPrice").value);
     const type = document.getElementById("filterType").value;
@@ -365,6 +343,4 @@ function setupFilterListeners() {
 // ======================================================
 // READY
 // ======================================================
-document.addEventListener("DOMContentLoaded", () => {
-  initProperties();
-});
+document.addEventListener("DOMContentLoaded", () => initProperties());
