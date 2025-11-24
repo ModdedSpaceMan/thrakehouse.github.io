@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
     statusContainer.style.display = addCategory.value === "rent" ? "block" : "none";
   });
 
-  // ---- IMAGE UPLOAD PREVIEW ----
+  // ---- IMAGE UPLOAD ----
   addMoreImagesBtn.addEventListener("click", () => propertyImageInput.click());
 
   propertyImageInput.addEventListener("change", () => {
@@ -80,41 +80,37 @@ document.addEventListener("DOMContentLoaded", () => {
     imagePreviews.innerHTML = "";
     statusContainer.style.display = "none";
   };
+
   document.getElementById("closeAddModal").addEventListener("click", closeAddModal);
 
-  // ---- IMAGE RESIZE FUNCTION ----
-  async function resizeImage(file, maxWidth = 1200, maxHeight = 1200) {
+  // ---- HELPER: COMPRESS IMAGE ----
+  async function compressImage(file, maxDim = 1024, quality = 0.7) {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
-        let { width: w, height: h } = img;
-        if (w > maxWidth) { h = (maxWidth / w) * h; w = maxWidth; }
-        if (h > maxHeight) { w = (maxHeight / h) * w; h = maxHeight; }
-
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, w, h);
-
-        canvas.toBlob(resolve, file.type, 0.8);
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(blob => resolve(blob), 'image/jpeg', quality);
       };
+      img.onerror = () => resolve(file); // fallback: original
       img.src = URL.createObjectURL(file);
     });
   }
 
   // ---- UPLOAD IMAGES IN BATCHES ----
-  async function uploadImagesInBatches(files, batchSize = 3) {
+  async function uploadImagesInBatches(images, batchSize = 3) {
     const uploadedKeys = [];
-
-    for (let i = 0; i < files.length; i += batchSize) {
-      const batch = files.slice(i, i + batchSize);
-
-      const results = await Promise.all(batch.map(async (file) => {
-        const resizedBlob = await resizeImage(file);
+    for (let i = 0; i < images.length; i += batchSize) {
+      const batch = images.slice(i, i + batchSize);
+      const promises = batch.map(async (file) => {
+        const compressed = await compressImage(file);
         const formData = new FormData();
-        formData.append("image", resizedBlob, file.name);
-        formData.append("propertyId", crypto.randomUUID());
+        formData.append('image', compressed);
+        formData.append('propertyId', crypto.randomUUID());
 
         const res = await fetch(`${API_URL}/upload-image`, {
           method: "POST",
@@ -123,13 +119,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Image upload failed");
+        if (!res.ok) throw new Error(data.message || "Failed to store image");
         return data.key;
-      }));
+      });
 
+      const results = await Promise.all(promises);
       uploadedKeys.push(...results);
     }
-
     return uploadedKeys;
   }
 
@@ -162,18 +158,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const newProperty = {
-      title,
-      description,
-      price,
-      type,
-      bedrooms,
-      bathrooms,
-      size,
-      year,
-      category,
-      status,
-      images: uploadedImageKeys,
-      amenities: []
+      title, description, price, type, bedrooms, bathrooms, size, year,
+      category, status, images: uploadedImageKeys, amenities: []
     };
 
     try {
@@ -193,6 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
       closeAddModal();
       window.dispatchEvent(new Event("propertiesUpdated"));
       await loadProperties();
+
     } catch (err) {
       console.error(err);
       showToast("Грешка при добавяне на имота");
