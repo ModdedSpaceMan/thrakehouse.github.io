@@ -15,7 +15,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const imagePreviews = document.getElementById("imagePreviews");
   const statusContainer = document.getElementById("statusContainer");
 
-  if (!addForm || !addModal) return console.error("Modal or form missing.");
+  if (!addForm || !addModal) {
+    console.error("Modal or form missing.");
+    return;
+  }
 
   let allImages = [];
 
@@ -77,9 +80,10 @@ document.addEventListener("DOMContentLoaded", () => {
     imagePreviews.innerHTML = "";
     statusContainer.style.display = "none";
   };
+
   document.getElementById("closeAddModal").addEventListener("click", closeAddModal);
 
-  // ---- HELPER: FILE → BASE64 (compressed) ----
+  // ---- HELPER: COMPRESS AND CONVERT TO BASE64 ----
   async function compressToBase64(file, maxDim = 1024, quality = 0.7) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -91,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         const base64 = canvas.toDataURL('image/jpeg', quality);
-        resolve(base64); // full Data URL
+        resolve(base64.split(',')[1]); // remove "data:image/jpeg;base64,"
       };
       img.onerror = () => reject(new Error("Failed to load image"));
       img.src = URL.createObjectURL(file);
@@ -120,10 +124,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // Convert all images to Base64
     let imagesBase64 = [];
     try {
-      imagesBase64 = await Promise.all(allImages.map(file => compressToBase64(file)));
+      imagesBase64 = await Promise.all(allImages.map(f => compressToBase64(f)));
     } catch (err) {
       console.error("Failed to process images:", err);
-      return showToast("Грешка при обработка на изображения");
+      showToast("Грешка при обработка на изображения");
+      return;
     }
 
     const newProperty = {
@@ -137,8 +142,8 @@ document.addEventListener("DOMContentLoaded", () => {
       year,
       category,
       status,
-      images: imagesBase64,
-      amenities: []
+      amenities: [],
+      images: imagesBase64.map(data => ({ key: crypto.randomUUID(), data }))
     };
 
     try {
@@ -158,7 +163,6 @@ document.addEventListener("DOMContentLoaded", () => {
       closeAddModal();
       window.dispatchEvent(new Event("propertiesUpdated"));
       await loadProperties();
-
     } catch (err) {
       console.error(err);
       showToast("Грешка при добавяне на имота");
