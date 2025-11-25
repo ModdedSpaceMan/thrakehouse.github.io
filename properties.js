@@ -199,24 +199,27 @@ async function openPropertyDetails(property) {
   };
 
   // TRANSLATIONS & FALLBACKS
-  const category = CATEGORY_LABELS_BG[property.category] || property.category || "-";
-  const type = TYPE_LABELS_BG[property.type] || property.type || "-";
-  const title = property.title || "-";
-  const price = property.price != null ? property.price + "€" : "-";
-  const bedrooms = property.bedrooms != null ? property.bedrooms : "-";
-  const bathrooms = property.bathrooms != null ? property.bathrooms : "-";
-  const size = property.size != null ? property.size + " м²" : "-";
-  const description = property.description || "-";
+const category = CATEGORY_LABELS_BG[property.category] || property.category || "-";
+const type = TYPE_LABELS_BG[property.type] || property.type || "-";
+const title = property.title || "-";
+const price = property.price != null ? property.price + "€" : "-";
+const bedrooms = property.bedrooms != null ? property.bedrooms : "-";
+const bathrooms = property.bathrooms != null ? property.bathrooms : "-";
+const size = property.size != null ? property.size + " м²" : "-";
+const description = property.description || "-";
+const year = property.year ?? "-";
 
-  set("propTitle", title);
-  set("propPrice", price);
-  set("propType", type);
-  set("propBedrooms", bedrooms);
-  set("propBathrooms", bathrooms);
-  set("propArea", size);
-  set("propDescription", description);
-  set("propCategory", category);
-  set("propStatus", property.status || "-");
+set("propTitle", title);
+set("propPrice", price);
+set("propType", type);
+set("propBedrooms", bedrooms);
+set("propBathrooms", bathrooms);
+set("propArea", size);
+set("propDescription", description);
+set("propCategory", category);
+set("propStatus", property.status || "-");
+set("propYear", year);
+
 
 
   currentPropertyImages = [];
