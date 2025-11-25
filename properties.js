@@ -283,13 +283,13 @@ export async function toggleWishlist(id) {
 // ADMIN
 // ======================================================
 async function deleteProperty(id) {
-  await fetch(`${API_URL}/property/${id}`, { method: "DELETE", headers: { Authorization: "Bearer " + token } });
+  await fetch(`${API_URL}/properties/${id}`, { method: "DELETE", headers: { Authorization: "Bearer " + token } });
   showToast("Deleted!");
   loadProperties();
 }
 
 async function toggleRentalStatus(id) {
-  await fetch(`${API_URL}/property/${id}/status`, {
+  await fetch(`${API_URL}/properties/${id}/status`, {
     method: "POST",
     headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
     body: JSON.stringify({ status: "toggle" }),
