@@ -34,7 +34,7 @@ export async function loadProperties() {
 
   try {
     const headers = token ? { Authorization: "Bearer " + token } : {};
-    const res = await fetch(`${API_URL}/property`, { headers });
+    const res = await fetch(`${API_URL}/properties`, { headers });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     propertiesData = data;
