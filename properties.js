@@ -59,7 +59,7 @@ export function renderProperties(properties) {
   propertyContainer.innerHTML = properties
     .map((p) => {
       const id = p.id ?? "-";
-      const firstImageKey = p.images?.[0] || "";
+      const firstImage = p.images?.[0] || "";
 
       const adminButtons =
         role === "admin"
@@ -67,13 +67,13 @@ export function renderProperties(properties) {
       <div class="admin-buttons-right">
         <button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>
         <button class="delete-btn" data-id="${id}">Delete</button>
-        ${p.category === "rental" ? `<button class="toggle-status-btn" data-id="${id}">${p.status === "free" ? "Occupied" : "Free"}</button>` : ""}
+        ${p.category === "rental" ? `<button class="toggle-status-btn" data-id="${id}">${p.status === "free" ? "Occupied" : "Free"}</button>` : ""} 
       </div>` 
           : `<button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>`;
 
       return `
       <div class="property" data-id="${id}">
-        ${firstImageKey ? `<img src="${API_URL}/image/${encodeURIComponent(firstImageKey)}" alt="Property image" loading="lazy">` : ""}
+        ${firstImage ? `<img src="${firstImage}" alt="Property image" loading="lazy">` : ""}
         <div class="property-content">
           <div class="property-id-box" style="
             position: absolute;
@@ -217,8 +217,7 @@ function updateModalImage() {
   }
 
   img.style.display = "block";
-  const key = currentPropertyImages[currentImageIndex];
-  img.src = `${API_URL}/image/${encodeURIComponent(key)}`;
+  img.src = currentPropertyImages[currentImageIndex];
   img.loading = "lazy";
 
   dots.innerHTML = "";
