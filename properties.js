@@ -208,6 +208,12 @@ async function openPropertyDetails(property) {
   const size = property.size != null ? property.size + " м²" : "-";
   const description = property.description || "-";
 
+  // --- LOG EVERYTHING ---
+  console.log("Property ID:", property.id);
+  console.log("category:", category, "type:", type, "title:", title);
+  console.log("price:", price, "bedrooms:", bedrooms, "bathrooms:", bathrooms, "size:", size);
+  console.log("description:", description);
+  
   set("propTitle", title);
   set("propPrice", price);
   set("propType", type);
