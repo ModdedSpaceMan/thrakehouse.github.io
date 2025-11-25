@@ -66,36 +66,23 @@ export function renderProperties(properties) {
     return;
   }
 
-  propertyContainer.innerHTML = properties
-    .map((p) => {
-      const id = p.id ?? "-";
-      const firstImage = p.firstImage;
+  propertyContainer.innerHTML = properties.map(p => {
+    const id = p.id ?? "-";
+    const firstImage = p.firstImage ?? "";
 
-      const adminButtons =
-        role === "admin"
-          ? `
-      <div class="admin-buttons-right">
-        <button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>
-        <button class="delete-btn" data-id="${id}">Delete</button>
-        ${p.category === "rent" ? `<button class="toggle-status-btn" data-id="${id}">${p.status === "free" ? "Occupied" : "Free"}</button>` : ""}
-      </div>` 
-          : `<button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>`;
+    const adminButtons = role === "admin"
+      ? `<div class="admin-buttons-right">
+           <button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>
+           <button class="delete-btn" data-id="${id}">Delete</button>
+           ${p.category === "rent" ? `<button class="toggle-status-btn" data-id="${id}">${p.status === "free" ? "Occupied" : "Free"}</button>` : ""}
+         </div>`
+      : `<button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>`;
 
-      return `
+    return `
       <div class="property" data-id="${id}">
         ${firstImage ? `<img src="${firstImage}" alt="Property image" loading="lazy">` : ""}
         <div class="property-content">
-          <div class="property-id-box" style="
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            background: rgba(0,0,0,0.6);
-            color: #fff;
-            padding: 2px 6px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-          ">ID: ${id}</div>
+          <div class="property-id-box">ID: ${id}</div>
           <h3>${p.title}</h3>
           <p><strong>Price:</strong> ${p.price}€</p>
           <p><strong>Category:</strong> ${p.category}</p>
@@ -105,12 +92,53 @@ export function renderProperties(properties) {
           <p><strong>Size:</strong> ${p.size} m²</p>
           <div class="property-actions">${adminButtons}</div>
         </div>
-      </div>`;
-    })
-    .join("");
+      </div>
+    `;
+  }).join("");
 
   attachPropertyCardListeners();
   attachAdminListeners();
+}
+
+// MODAL
+async function openPropertyDetails(property) {
+  const set = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value ?? "-";
+  };
+
+  set("propTitle", property.title);
+  set("propPrice", property.price + "€");
+  set("propType", property.type);
+  set("propBedrooms", property.bedrooms);
+  set("propBathrooms", property.bathrooms);
+  set("propArea", property.size + " m²");
+  set("propDescription", property.description);
+
+  currentPropertyImages = [property.firstImage];
+  currentImageIndex = 0;
+
+  // Lazy fetch rest images from IMAGES_KV
+  if (!property._imagesFetched) {
+    try {
+      const res = await fetch(`${API_URL}/properties/${property.id}/images`);
+      if (res.ok) {
+        const data = await res.json();
+        property.restImages = data.images || [];
+        property._imagesFetched = true;
+        currentPropertyImages = [property.firstImage, ...property.restImages];
+      }
+    } catch (err) {
+      console.error("Failed to load extra images:", err);
+    }
+  } else {
+    if (property.restImages?.length) {
+      currentPropertyImages = [property.firstImage, ...property.restImages];
+    }
+  }
+
+  updateModalImage();
+  propertyModal.style.display = "flex";
 }
 
 // ======================================================
