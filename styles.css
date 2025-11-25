@@ -953,5 +953,7 @@ header, main, footer, section, div, {
             z-index:10;
         
 }
-
-
+#prevImageBtn,
+#nextImageBtn {
+  color: black !important;
+}
