@@ -13,10 +13,9 @@ const username = localStorage.getItem("username");
 const token = localStorage.getItem("token");
 const role = localStorage.getItem("role");
 
-// ================= CACHE =================
-const fetchedImagesCache = {}; // propertyId -> array of images
-
-// ================= INIT =================
+// ======================================================
+// INIT
+// ======================================================
 export async function initProperties() {
   await loadWishlist();
   await loadProperties();
@@ -27,7 +26,9 @@ export async function initProperties() {
   window.openPropertyDetails = openPropertyDetails;
 }
 
-// ================= LOAD PROPERTIES =================
+// ======================================================
+// LOAD PROPERTIES
+// ======================================================
 export async function loadProperties() {
   if (!propertyContainer) return [];
 
@@ -36,9 +37,19 @@ export async function loadProperties() {
     const res = await fetch(`${API_URL}/properties`, { headers });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
-    propertiesData = data;
-    renderProperties(data);
-    return data;
+
+    // separate firstImage and restImages for convenience
+    propertiesData = data.map((p) => {
+      return {
+        ...p,
+        firstImage: p.images?.[0] || "",
+        restImages: p.images?.slice(1) || [],
+        _fetchedImages: false, // internal flag to avoid fetching multiple times
+      };
+    });
+
+    renderProperties(propertiesData);
+    return propertiesData;
   } catch (err) {
     console.error("Error loading properties:", err);
     propertyContainer.innerHTML = "<p>Error loading properties.</p>";
@@ -46,7 +57,9 @@ export async function loadProperties() {
   }
 }
 
-// ================= RENDER PROPERTIES =================
+// ======================================================
+// RENDER PROPERTIES
+// ======================================================
 export function renderProperties(properties) {
   if (!properties || properties.length === 0) {
     propertyContainer.innerHTML = "<p>No properties found.</p>";
@@ -56,7 +69,7 @@ export function renderProperties(properties) {
   propertyContainer.innerHTML = properties
     .map((p) => {
       const id = p.id ?? "-";
-      const firstImageKey = p.images?.[0] || "";
+      const firstImage = p.firstImage;
 
       const adminButtons =
         role === "admin"
@@ -64,13 +77,13 @@ export function renderProperties(properties) {
       <div class="admin-buttons-right">
         <button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>
         <button class="delete-btn" data-id="${id}">Delete</button>
-        ${p.category === "rental" ? `<button class="toggle-status-btn" data-id="${id}">${p.status === "free" ? "Occupied" : "Free"}</button>` : ""}
+        ${p.category === "rent" ? `<button class="toggle-status-btn" data-id="${id}">${p.status === "free" ? "Occupied" : "Free"}</button>` : ""}
       </div>` 
           : `<button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>`;
 
       return `
       <div class="property" data-id="${id}">
-        ${firstImageKey ? `<img src="${API_URL}/image/${encodeURIComponent(firstImageKey)}" alt="Property image" loading="lazy">` : ""}
+        ${firstImage ? `<img src="${firstImage}" alt="Property image" loading="lazy">` : ""}
         <div class="property-content">
           <div class="property-id-box" style="
             position: absolute;
@@ -100,19 +113,30 @@ export function renderProperties(properties) {
   attachAdminListeners();
 }
 
-// ================= PROPERTY CARD → OPEN MODAL =================
+// ======================================================
+// PROPERTY CARD → OPEN MODAL
+// ======================================================
 function attachPropertyCardListeners() {
   propertyContainer.querySelectorAll(".property").forEach((el) => {
     el.addEventListener("click", async () => {
       const id = el.dataset.id;
       const property = propertiesData.find((p) => p.id == id);
       if (!property) return showToast("Property not found!");
-      await openPropertyDetails(property);
+
+      // fetch additional images only once
+      if (!property._fetchedImages && property.restImages.length === 0 && property.images && property.images.length > 1) {
+        property.restImages = property.images.slice(1);
+        property._fetchedImages = true;
+      }
+
+      openPropertyDetails(property);
     });
   });
 }
 
-// ================= ADMIN BUTTONS =================
+// ======================================================
+// ADMIN BUTTONS
+// ======================================================
 function attachAdminListeners() {
   propertyContainer.querySelectorAll(".wishlist-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
@@ -138,7 +162,9 @@ function attachAdminListeners() {
   }
 }
 
-// ================= MODAL (STATIC LISTENERS — ADD ONCE) =================
+// ======================================================
+// MODAL (STATIC LISTENERS — ADD ONCE)
+// ======================================================
 let currentPropertyImages = [];
 let currentImageIndex = 0;
 
@@ -169,8 +195,10 @@ function setupModalStaticListeners() {
     });
 }
 
-// ================= OPEN MODAL =================
-async function openPropertyDetails(property) {
+// ======================================================
+// OPEN MODAL
+// ======================================================
+function openPropertyDetails(property) {
   const set = (id, value) => {
     const el = document.getElementById(id);
     if (el) el.textContent = value ?? "-";
@@ -184,32 +212,16 @@ async function openPropertyDetails(property) {
   set("propArea", property.size + " m²");
   set("propDescription", property.description);
 
+  currentPropertyImages = [property.firstImage, ...property.restImages];
   currentImageIndex = 0;
-
-  // Use cached images if available
-  if (fetchedImagesCache[property.id]) {
-    currentPropertyImages = fetchedImagesCache[property.id];
-  } else {
-    try {
-      const headers = token ? { Authorization: "Bearer " + token } : {};
-      const res = await fetch(`${API_URL}/properties/${property.id}`, { headers });
-      if (!res.ok) throw new Error("Failed to load images");
-
-      const data = await res.json();
-      currentPropertyImages = [data.firstImage, ...(data.allImages || [])].filter(Boolean);
-
-      fetchedImagesCache[property.id] = currentPropertyImages;
-    } catch (err) {
-      console.error("Error loading property images:", err);
-      currentPropertyImages = property.images?.[0] ? [property.images[0]] : [];
-    }
-  }
 
   updateModalImage();
   propertyModal.style.display = "flex";
 }
 
-// ================= UPDATE MODAL IMAGE =================
+// ======================================================
+// UPDATE MODAL IMAGE
+// ======================================================
 function updateModalImage() {
   const img = document.getElementById("propImage");
   const dots = document.getElementById("propImageDots");
@@ -222,8 +234,7 @@ function updateModalImage() {
   }
 
   img.style.display = "block";
-  const key = currentPropertyImages[currentImageIndex];
-  img.src = key;
+  img.src = currentPropertyImages[currentImageIndex];
   img.loading = "lazy";
 
   dots.innerHTML = "";
@@ -239,7 +250,9 @@ function updateModalImage() {
   });
 }
 
-// ================= WISHLIST =================
+// ======================================================
+// WISHLIST
+// ======================================================
 export async function loadWishlist() {
   if (!username || !token) return (wishlistIds = []);
 
@@ -248,6 +261,7 @@ export async function loadWishlist() {
       headers: { Authorization: "Bearer " + token },
     });
     const data = await res.json();
+
     wishlistIds = data.items || [];
   } catch {
     wishlistIds = [];
@@ -272,7 +286,9 @@ export async function toggleWishlist(id) {
   loadProperties();
 }
 
-// ================= ADMIN =================
+// ======================================================
+// ADMIN
+// ======================================================
 async function deleteProperty(id) {
   await fetch(`${API_URL}/property/${id}`, { method: "DELETE", headers: { Authorization: "Bearer " + token } });
   showToast("Deleted!");
@@ -289,7 +305,9 @@ async function toggleRentalStatus(id) {
   loadProperties();
 }
 
-// ================= FILTERS =================
+// ======================================================
+// FILTERS
+// ======================================================
 function setupFilterListeners() {
   const btn = document.getElementById("applyFilters");
   if (!btn) return;
@@ -313,7 +331,9 @@ function setupFilterListeners() {
   });
 }
 
-// ================= READY =================
+// ======================================================
+// READY
+// ======================================================
 document.addEventListener("DOMContentLoaded", () => {
   initProperties();
 });
