@@ -38,15 +38,12 @@ export async function loadProperties() {
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
 
-    // separate firstImage and restImages for convenience
-    propertiesData = data.map((p) => {
-      return {
-        ...p,
-        firstImage: p.images?.[0] || "",
-        restImages: p.images?.slice(1) || [],
-        _fetchedImages: false, // internal flag to avoid fetching multiple times
-      };
-    });
+    propertiesData = data.map((p) => ({
+      ...p,
+      firstImage: p.images?.[0] || "",
+      restImages: p.images?.slice(1) || [],
+      _fetchedImages: false,
+    }));
 
     renderProperties(propertiesData);
     return propertiesData;
@@ -66,7 +63,7 @@ export function renderProperties(properties) {
     return;
   }
 
-  propertyContainer.innerHTML = properties.map(p => {
+  propertyContainer.innerHTML = properties.map((p) => {
     const id = p.id ?? "-";
     const firstImage = p.firstImage ?? "";
 
@@ -100,7 +97,12 @@ export function renderProperties(properties) {
   attachAdminListeners();
 }
 
-// MODAL
+// ======================================================
+// MODAL - OPEN PROPERTY DETAILS
+// ======================================================
+let currentPropertyImages = [];
+let currentImageIndex = 0;
+
 async function openPropertyDetails(property) {
   const set = (id, value) => {
     const el = document.getElementById(id);
@@ -115,28 +117,23 @@ async function openPropertyDetails(property) {
   set("propArea", property.size + " m²");
   set("propDescription", property.description);
 
-  currentPropertyImages = [property.firstImage];
-  currentImageIndex = 0;
-
-  // Lazy fetch rest images from IMAGES_KV
-  if (!property._imagesFetched) {
+  // Lazy fetch rest images if not yet fetched
+  if (!property._fetchedImages) {
     try {
       const res = await fetch(`${API_URL}/properties/${property.id}/images`);
       if (res.ok) {
         const data = await res.json();
-        property.restImages = data.images || [];
-        property._imagesFetched = true;
-        currentPropertyImages = [property.firstImage, ...property.restImages];
+        property.restImages = data.allImages || [];
       }
     } catch (err) {
       console.error("Failed to load extra images:", err);
+      property.restImages = [];
     }
-  } else {
-    if (property.restImages?.length) {
-      currentPropertyImages = [property.firstImage, ...property.restImages];
-    }
+    property._fetchedImages = true;
   }
 
+  currentPropertyImages = [property.firstImage, ...property.restImages];
+  currentImageIndex = 0;
   updateModalImage();
   propertyModal.style.display = "flex";
 }
@@ -150,12 +147,6 @@ function attachPropertyCardListeners() {
       const id = el.dataset.id;
       const property = propertiesData.find((p) => p.id == id);
       if (!property) return showToast("Property not found!");
-
-      // fetch additional images only once
-      if (!property._fetchedImages && property.restImages.length === 0 && property.images && property.images.length > 1) {
-        property.restImages = property.images.slice(1);
-        property._fetchedImages = true;
-      }
 
       openPropertyDetails(property);
     });
@@ -191,64 +182,37 @@ function attachAdminListeners() {
 }
 
 // ======================================================
-// MODAL (STATIC LISTENERS — ADD ONCE)
+// MODAL - STATIC LISTENERS
 // ======================================================
-let currentPropertyImages = [];
-let currentImageIndex = 0;
-
 function setupModalStaticListeners() {
+  if (!propertyModal) return;
+
   const closeBtn = propertyModal.querySelector(".close");
   const prevBtn = propertyModal.querySelector("#prevImageBtn");
   const nextBtn = propertyModal.querySelector("#nextImageBtn");
 
-  closeBtn.addEventListener("click", () => (propertyModal.style.display = "none"));
+  closeBtn?.addEventListener("click", () => (propertyModal.style.display = "none"));
   propertyModal.addEventListener("click", (e) => {
     if (e.target === propertyModal) propertyModal.style.display = "none";
   });
 
-  if (prevBtn)
-    prevBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (!currentPropertyImages.length) return;
-      currentImageIndex = (currentImageIndex - 1 + currentPropertyImages.length) % currentPropertyImages.length;
-      updateModalImage();
-    });
+  prevBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!currentPropertyImages.length) return;
+    currentImageIndex = (currentImageIndex - 1 + currentPropertyImages.length) % currentPropertyImages.length;
+    updateModalImage();
+  });
 
-  if (nextBtn)
-    nextBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (!currentPropertyImages.length) return;
-      currentImageIndex = (currentImageIndex + 1) % currentPropertyImages.length;
-      updateModalImage();
-    });
+  nextBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!currentPropertyImages.length) return;
+    currentImageIndex = (currentImageIndex + 1) % currentPropertyImages.length;
+    updateModalImage();
+  });
 }
 
 // ======================================================
-// OPEN MODAL
-// ======================================================
-function openPropertyDetails(property) {
-  const set = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value ?? "-";
-  };
-
-  set("propTitle", property.title);
-  set("propPrice", property.price + "€");
-  set("propType", property.type);
-  set("propBedrooms", property.bedrooms);
-  set("propBathrooms", property.bathrooms);
-  set("propArea", property.size + " m²");
-  set("propDescription", property.description);
-
-  currentPropertyImages = [property.firstImage, ...property.restImages];
-  currentImageIndex = 0;
-
-  updateModalImage();
-  propertyModal.style.display = "flex";
-}
-
-// ======================================================
-// UPDATE MODAL IMAGE
+// MODAL IMAGE UPDATE
 // ======================================================
 function updateModalImage() {
   const img = document.getElementById("propImage");
@@ -257,7 +221,7 @@ function updateModalImage() {
 
   if (!currentPropertyImages.length) {
     img.style.display = "none";
-    dots.innerHTML = "";
+    if (dots) dots.innerHTML = "";
     return;
   }
 
@@ -265,17 +229,19 @@ function updateModalImage() {
   img.src = currentPropertyImages[currentImageIndex];
   img.loading = "lazy";
 
-  dots.innerHTML = "";
-  currentPropertyImages.forEach((_, i) => {
-    const dot = document.createElement("span");
-    dot.className = "slider-dot";
-    dot.style.opacity = i === currentImageIndex ? "1" : "0.5";
-    dot.addEventListener("click", () => {
-      currentImageIndex = i;
-      updateModalImage();
+  if (dots) {
+    dots.innerHTML = "";
+    currentPropertyImages.forEach((_, i) => {
+      const dot = document.createElement("span");
+      dot.className = "slider-dot";
+      dot.style.opacity = i === currentImageIndex ? "1" : "0.5";
+      dot.addEventListener("click", () => {
+        currentImageIndex = i;
+        updateModalImage();
+      });
+      dots.appendChild(dot);
     });
-    dots.appendChild(dot);
-  });
+  }
 }
 
 // ======================================================
@@ -289,7 +255,6 @@ export async function loadWishlist() {
       headers: { Authorization: "Bearer " + token },
     });
     const data = await res.json();
-
     wishlistIds = data.items || [];
   } catch {
     wishlistIds = [];
