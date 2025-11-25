@@ -179,9 +179,9 @@ function setupModalStaticListeners() {
 }
 
 // ======================================================
-// OPEN MODAL
+// OPEN MODAL (lazy-load extra images)
 // ======================================================
-function openPropertyDetails(property) {
+async function openPropertyDetails(property) {
   const set = (id, value) => {
     const el = document.getElementById(id);
     if (el) el.textContent = value ?? "-";
@@ -195,11 +195,23 @@ function openPropertyDetails(property) {
   set("propArea", property.size + " m²");
   set("propDescription", property.description);
 
-  currentPropertyImages = property.images || [];
+  // Use first image only initially
+  currentPropertyImages = property.images ? [property.images[0]] : [];
   currentImageIndex = 0;
-
   updateModalImage();
   propertyModal.style.display = "flex";
+
+  // Fetch additional images lazily
+  try {
+    const res = await fetch(`${API_URL}/property/${property.id}/images`);
+    const data = await res.json();
+    if (data.images && data.images.length > 1) {
+      currentPropertyImages = [property.images[0], ...data.images.slice(1)];
+      updateModalImage();
+    }
+  } catch (err) {
+    console.error("Failed to load additional images", err);
+  }
 }
 
 // ======================================================
