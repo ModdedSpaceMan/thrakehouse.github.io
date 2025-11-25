@@ -1,4 +1,3 @@
-// propertyForms.js
 import { loadProperties } from './properties.js';
 import { showToast } from './ui.js';
 
@@ -111,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const status = category === "rent" ? addStatus.value : "";
 
     if (!title || !type || !category) {
-      return showToast("Моля, попълнете всички задължителни полета!");
+      return showToast("Please fill all required fields!");
     }
 
     // Convert all selected images to Base64 data URLs
@@ -121,26 +120,13 @@ document.addEventListener("DOMContentLoaded", () => {
       base64Images.push(b64);
     }
 
-    // Split first image from the rest
-    const firstImage = base64Images[0] || null;
-    const allOtherImages = base64Images.slice(1);
+    if (!base64Images.length) return showToast("Please select at least one image!");
 
-    const newProperty = {
-      title,
-      description,
-      price,
-      type,
-      bedrooms,
-      bathrooms,
-      size,
-      year,
-      category,
-      status,
-      amenities: [],
-      firstImage: firstImage,
-      allImages: allOtherImages
-    };
+    const firstImage = base64Images[0];
+    const restImages = base64Images.slice(1);
 
+    // Step 1: POST property with firstImage only
+    let newProperty;
     try {
       const res = await fetch(`${API_URL}/properties`, {
         method: "POST",
@@ -148,19 +134,39 @@ document.addEventListener("DOMContentLoaded", () => {
           "Content-Type": "application/json",
           Authorization: "Bearer " + localStorage.getItem("token")
         },
-        body: JSON.stringify({ property: newProperty })
+        body: JSON.stringify({ property: { 
+          title, description, price, type, bedrooms, bathrooms, size, year,
+          category, status, amenities: [], firstImage
+        }})
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
-
-      showToast("Имотът беше добавен!");
-      closeAddModal();
-      loadProperties();
-
+      newProperty = data.property;
     } catch (err) {
       console.error(err);
-      showToast("Грешка при добавяне!");
+      return showToast("Failed to add property!");
     }
+
+    // Step 2: POST remaining images to IMAGES_KV if any
+    if (restImages.length) {
+      try {
+        await fetch(`${API_URL}/properties/${newProperty.id}/images`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + localStorage.getItem("token")
+          },
+          body: JSON.stringify({ images: restImages })
+        });
+      } catch (err) {
+        console.error(err);
+        showToast("Property added but failed to save extra images!");
+      }
+    }
+
+    showToast("Property added!");
+    closeAddModal();
+    loadProperties();
   });
 });
