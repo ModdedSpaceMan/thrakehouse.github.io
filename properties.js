@@ -41,7 +41,7 @@ export async function loadProperties() {
     propertiesData = data.map((p) => ({
       ...p,
       firstImage: p.images?.[0] || "",
-      restImages: p.images?.slice(1) || [],
+      restImages: [],
       _fetchedImages: false,
     }));
 
@@ -77,7 +77,7 @@ export function renderProperties(properties) {
 
     return `
       <div class="property" data-id="${id}">
-        ${firstImage ? `<img class="property-card-img" src="${firstImage}" alt="Property image" loading="lazy">` : ""}
+        ${firstImage ? `<img src="${firstImage}" alt="Property image" loading="lazy">` : ""}
         <div class="property-content">
           <div class="property-id-box">ID: ${id}</div>
           <h3>${p.title}</h3>
@@ -117,23 +117,27 @@ async function openPropertyDetails(property) {
   set("propArea", property.size + " m²");
   set("propDescription", property.description);
 
-  // Lazy fetch rest images if not yet fetched
+  currentPropertyImages = property.firstImage ? [property.firstImage] : [];
+  currentImageIndex = 0;
+
+  // fetch KV images if not fetched
   if (!property._fetchedImages) {
     try {
       const res = await fetch(`${API_URL}/properties/${property.id}/images`);
       if (res.ok) {
-        const data = await res.json();
-        property.restImages = data.images || [];
+        const data = await res.json(); // { images: ["data:image/jpeg;base64,..."] }
+        if (Array.isArray(data.images)) {
+          currentPropertyImages.push(...data.images);
+          property.restImages = data.images;
+        }
       }
     } catch (err) {
       console.error("Failed to load extra images:", err);
-      property.restImages = [];
     }
     property._fetchedImages = true;
+  } else if (property.restImages?.length) {
+    currentPropertyImages.push(...property.restImages);
   }
-
-  currentPropertyImages = property.firstImage ? [property.firstImage, ...property.restImages] : [...property.restImages];
-  currentImageIndex = 0;
 
   updateModalImage();
   propertyModal.style.display = "flex";
@@ -148,6 +152,7 @@ function attachPropertyCardListeners() {
       const id = el.dataset.id;
       const property = propertiesData.find((p) => p.id == id);
       if (!property) return showToast("Property not found!");
+
       openPropertyDetails(property);
     });
   });
