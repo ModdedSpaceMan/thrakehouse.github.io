@@ -59,7 +59,7 @@ export function renderProperties(properties) {
   propertyContainer.innerHTML = properties
     .map((p) => {
       const id = p.id ?? "-";
-      const firstImage = p.images?.[0] || "";
+      const firstImage = p.firstImage || "";
 
       const adminButtons =
         role === "admin"
@@ -179,7 +179,7 @@ function setupModalStaticListeners() {
 }
 
 // ======================================================
-// OPEN MODAL (lazy-load extra images)
+// OPEN MODAL (lazy fetch allImages)
 // ======================================================
 async function openPropertyDetails(property) {
   const set = (id, value) => {
@@ -195,19 +195,21 @@ async function openPropertyDetails(property) {
   set("propArea", property.size + " m²");
   set("propDescription", property.description);
 
-  // Use first image only initially
-  currentPropertyImages = property.images ? [property.images[0]] : [];
+  // Start with firstImage
+  currentPropertyImages = property.firstImage ? [property.firstImage] : [];
   currentImageIndex = 0;
   updateModalImage();
   propertyModal.style.display = "flex";
 
-  // Fetch additional images lazily
+  // Fetch allImages lazily
   try {
     const res = await fetch(`${API_URL}/property/${property.id}/images`);
-    const data = await res.json();
-    if (data.images && data.images.length > 1) {
-      currentPropertyImages = [property.images[0], ...data.images.slice(1)];
-      updateModalImage();
+    if (res.ok) {
+      const data = await res.json();
+      if (data.allImages && data.allImages.length) {
+        currentPropertyImages = [property.firstImage, ...data.allImages.filter(img => img !== property.firstImage)];
+        updateModalImage();
+      }
     }
   } catch (err) {
     console.error("Failed to load additional images", err);
