@@ -1,4 +1,4 @@
-// properties.js
+// property.js
 import { showToast } from "./ui.js";
 
 const API_URL = "https://my-backend.martinmiskata.workers.dev";
@@ -34,7 +34,7 @@ export async function loadProperties() {
 
   try {
     const headers = token ? { Authorization: "Bearer " + token } : {};
-    const res = await fetch(`${API_URL}/properties`, { headers });
+    const res = await fetch(`${API_URL}/property`, { headers });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
     propertiesData = data;
@@ -68,14 +68,24 @@ export function renderProperties(properties) {
         <button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>
         <button class="delete-btn" data-id="${id}">Delete</button>
         ${p.category === "rental" ? `<button class="toggle-status-btn" data-id="${id}">${p.status === "free" ? "Occupied" : "Free"}</button>` : ""}
-      </div>`
+      </div>` 
           : `<button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>`;
 
       return `
       <div class="property" data-id="${id}">
         ${firstImageKey ? `<img src="${API_URL}/image/${encodeURIComponent(firstImageKey)}" alt="Property image" loading="lazy">` : ""}
         <div class="property-content">
-          <div class="property-id-box">ID: ${id}</div>
+          <div class="property-id-box" style="
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+          ">ID: ${id}</div>
           <h3>${p.title}</h3>
           <p><strong>Price:</strong> ${p.price}€</p>
           <p><strong>Category:</strong> ${p.category}</p>
@@ -264,13 +274,13 @@ export async function toggleWishlist(id) {
 // ADMIN
 // ======================================================
 async function deleteProperty(id) {
-  await fetch(`${API_URL}/properties/${id}`, { method: "DELETE", headers: { Authorization: "Bearer " + token } });
+  await fetch(`${API_URL}/property/${id}`, { method: "DELETE", headers: { Authorization: "Bearer " + token } });
   showToast("Deleted!");
   loadProperties();
 }
 
 async function toggleRentalStatus(id) {
-  await fetch(`${API_URL}/properties/${id}/status`, {
+  await fetch(`${API_URL}/property/${id}/status`, {
     method: "POST",
     headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
     body: JSON.stringify({ status: "toggle" }),
