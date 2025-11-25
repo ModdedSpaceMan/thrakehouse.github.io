@@ -77,7 +77,7 @@ export function renderProperties(properties) {
 
     return `
       <div class="property" data-id="${id}">
-        ${firstImage ? `<img src="${firstImage}" alt="Property image" loading="lazy">` : ""}
+        ${firstImage ? `<img class="property-card-img" src="${firstImage}" alt="Property image" loading="lazy">` : ""}
         <div class="property-content">
           <div class="property-id-box">ID: ${id}</div>
           <h3>${p.title}</h3>
@@ -123,7 +123,7 @@ async function openPropertyDetails(property) {
       const res = await fetch(`${API_URL}/properties/${property.id}/images`);
       if (res.ok) {
         const data = await res.json();
-        property.restImages = data.allImages || [];
+        property.restImages = data.images || [];
       }
     } catch (err) {
       console.error("Failed to load extra images:", err);
@@ -132,8 +132,9 @@ async function openPropertyDetails(property) {
     property._fetchedImages = true;
   }
 
-  currentPropertyImages = [property.firstImage, ...property.restImages];
+  currentPropertyImages = property.firstImage ? [property.firstImage, ...property.restImages] : [...property.restImages];
   currentImageIndex = 0;
+
   updateModalImage();
   propertyModal.style.display = "flex";
 }
@@ -147,7 +148,6 @@ function attachPropertyCardListeners() {
       const id = el.dataset.id;
       const property = propertiesData.find((p) => p.id == id);
       if (!property) return showToast("Property not found!");
-
       openPropertyDetails(property);
     });
   });
