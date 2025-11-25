@@ -15,22 +15,15 @@ const username = localStorage.getItem("username");
 const token = localStorage.getItem("token");
 const role = localStorage.getItem("role");
 
-const CATEGORY_LABELS_BG = {
-  rent: "Наем",
-  sale: "Продажба",
-};
-
-const TYPE_LABELS_BG = {
-  apartment: "Апартамент",
-  house: "Къща",
-  villa: "Вила",
-};
+const CATEGORY_LABELS_BG = { rent: "Наем", sale: "Продажба" };
+const TYPE_LABELS_BG = { apartment: "Апартамент", house: "Къща", villa: "Вила" };
 
 let lazyObserver;
 let currentPage = 1;
 let totalItems = 0;
 let currentFilters = { minPrice: "", maxPrice: "", type: "", category: "" };
 let isLoading = false;
+let isSearchActive = false;
 
 export async function initProperties() {
   await loadWishlist();
@@ -119,7 +112,7 @@ function ensureLazyObserver() {
 }
 
 function observeLazyImages() {
-  if (!lazyObserver) return;
+  ensureLazyObserver();
   propertyContainer.querySelectorAll('img.lazy-img').forEach((img) => {
     if (!img.src && img.dataset && img.dataset.src) lazyObserver.observe(img);
   });
@@ -192,8 +185,9 @@ function setupDelegatedListeners() {
 
 function setupScrollLoader() {
   window.addEventListener("scroll", () => {
-    if ((window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) && (propertiesData.length < totalItems)) {
-      loadProperties();
+    if ((window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) && !isLoading) {
+      if (isSearchActive) return; // do not load more when searching by ID
+      if (propertiesData.length < totalItems) loadProperties();
     }
   });
 }
@@ -206,6 +200,8 @@ function setupSearchListener() {
   searchBtn.addEventListener("click", async () => {
     const id = searchInput.value.trim();
     if (!id) return showToast("Въведете ID на имота!");
+
+    isSearchActive = true;
     try {
       const headers = token ? { Authorization: "Bearer " + token } : {};
       const res = await fetch(`${API_URL}/properties/${id}`, { headers });
@@ -222,12 +218,16 @@ function setupSearchListener() {
   });
 }
 
-async function openPropertyDetails(property) {
-  const set = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value ?? "-";
-  };
+function resetSearch() {
+  isSearchActive = false;
+  filteredData = null;
+  renderIndex = 0;
+  propertyContainer.innerHTML = "";
+  loadProperties(true);
+}
 
+async function openPropertyDetails(property) {
+  const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value ?? "-"; };
   const category = CATEGORY_LABELS_BG[property.category] || property.category || "-";
   const type = TYPE_LABELS_BG[property.type] || property.type || "-";
 
@@ -250,16 +250,11 @@ async function openPropertyDetails(property) {
       const res = await fetch(`${API_URL}/properties/${property.id}/images`);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.images)) {
-          property.restImages = data.images;
-          currentPropertyImages.push(...data.images);
-        }
+        if (Array.isArray(data.images)) { property.restImages = data.images; currentPropertyImages.push(...data.images); }
       }
     } catch (err) { console.error("Failed to load extra images:", err); }
     property._fetchedImages = true;
-  } else if (property.restImages?.length) {
-    currentPropertyImages.push(...property.restImages);
-  }
+  } else if (property.restImages?.length) currentPropertyImages.push(...property.restImages);
 
   let currentImageIndex = 0;
   const img = document.getElementById("propImage");
@@ -267,11 +262,7 @@ async function openPropertyDetails(property) {
 
   function updateModalImage() {
     if (!img) return;
-    if (!currentPropertyImages.length) {
-      img.style.display = "none";
-      if (dots) dots.innerHTML = "";
-      return;
-    }
+    if (!currentPropertyImages.length) { img.style.display = "none"; if (dots) dots.innerHTML = ""; return; }
     img.style.display = "block";
     img.src = currentPropertyImages[currentImageIndex];
     if (dots) {
@@ -350,8 +341,10 @@ async function toggleRentalStatus(id) {
 
 function setupFilterListeners() {
   const btn = document.getElementById("applyFilters");
+  const resetBtn = document.getElementById("resetFilters");
   if (!btn) return;
   btn.addEventListener("click", () => {
+    isSearchActive = false;
     const minPrice = document.getElementById("filterMinPrice").value;
     const maxPrice = document.getElementById("filterMaxPrice").value;
     const type = document.getElementById("filterType").value;
@@ -359,6 +352,10 @@ function setupFilterListeners() {
 
     currentFilters = { minPrice, maxPrice, type, category };
     loadProperties(true);
+  });
+
+  resetBtn?.addEventListener("click", () => {
+    resetSearch();
   });
 }
 
