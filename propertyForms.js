@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
         canvas.height = img.height * scale;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", quality)); // FULL base64 URL string
+        resolve(canvas.toDataURL("image/jpeg", quality));
       };
       img.src = URL.createObjectURL(file);
     });
@@ -121,12 +121,24 @@ document.addEventListener("DOMContentLoaded", () => {
       base64Images.push(b64);
     }
 
+    // Split first image from the rest
+    const firstImage = base64Images[0] || null;
+    const allOtherImages = base64Images.slice(1);
+
     const newProperty = {
-      title, description, price, type,
-      bedrooms, bathrooms, size, year,
-      category, status,
+      title,
+      description,
+      price,
+      type,
+      bedrooms,
+      bathrooms,
+      size,
+      year,
+      category,
+      status,
       amenities: [],
-      images: base64Images // <-- FULL BASE64 STRINGS
+      firstImage: firstImage,
+      allImages: allOtherImages
     };
 
     try {
