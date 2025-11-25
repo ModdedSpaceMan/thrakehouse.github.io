@@ -59,7 +59,7 @@ export function renderProperties(properties) {
   propertyContainer.innerHTML = properties
     .map((p) => {
       const id = p.id ?? "-";
-      const firstImage = p.firstImage || "";
+      const firstImage = p.firstImage || ""; // <-- use firstImage only
 
       const adminButtons =
         role === "admin"
@@ -102,6 +102,7 @@ export function renderProperties(properties) {
   attachPropertyCardListeners();
   attachAdminListeners();
 }
+
 
 // ======================================================
 // PROPERTY CARD → OPEN MODAL
