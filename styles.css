@@ -940,5 +940,14 @@ header, main, footer, section, div, {
   transform: scale(1.05);
   transition: transform 0.3s ease;
 }
+.property-id-box {
+  background-color: #2b6cb0;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+  display: inline-block;
+  margin-bottom: 4px;
+}
 
 
