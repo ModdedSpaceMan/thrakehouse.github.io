@@ -36,14 +36,20 @@ export async function loadProperties() {
     const headers = token ? { Authorization: "Bearer " + token } : {};
     const res = await fetch(`${API_URL}/properties`, { headers });
     if (!res.ok) throw new Error("HTTP " + res.status);
+
     const data = await res.json();
 
     propertiesData = data.map((p) => ({
       ...p,
-      firstImage: p.images?.[0] || "",
+
+      // FIXED — DO NOT OVERWRITE BACKEND VALUE
+      firstImage: typeof p.firstImage === "string" ? p.firstImage.trim() : "",
+
       restImages: [],
       _fetchedImages: false,
     }));
+
+    console.log("Loaded properties:", propertiesData);
 
     renderProperties(propertiesData);
     return propertiesData;
@@ -63,21 +69,38 @@ export function renderProperties(properties) {
     return;
   }
 
-  propertyContainer.innerHTML = properties.map((p) => {
-    const id = p.id ?? "-";
-    const firstImage = p.firstImage ?? "";
+  propertyContainer.innerHTML = properties
+    .map((p) => {
+      const id = p.id ?? "-";
+      const firstImage = p.firstImage || ""; // FIXED
 
-    const adminButtons = role === "admin"
-      ? `<div class="admin-buttons-right">
-           <button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>
-           <button class="delete-btn" data-id="${id}">Delete</button>
-           ${p.category === "rent" ? `<button class="toggle-status-btn" data-id="${id}">${p.status === "free" ? "Occupied" : "Free"}</button>` : ""}
-         </div>`
-      : `<button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>`;
+      const adminButtons =
+        role === "admin"
+          ? `
+      <div class="admin-buttons-right">
+        <button class="wishlist-btn" data-id="${id}">
+          ${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}
+        </button>
+        <button class="delete-btn" data-id="${id}">Delete</button>
+        ${
+          p.category === "rent"
+            ? `<button class="toggle-status-btn" data-id="${id}">
+                 ${p.status === "free" ? "Occupied" : "Free"}
+               </button>`
+            : ""
+        }
+      </div>`
+          : `<button class="wishlist-btn" data-id="${id}">${
+              wishlistIds.includes(String(id)) ? "❤️" : "🤍"
+            }</button>`;
 
-    return `
+      return `
       <div class="property" data-id="${id}">
-        ${firstImage ? `<img src="${firstImage}" alt="Property image" loading="lazy">` : ""}
+        ${
+          firstImage
+            ? `<img src="${firstImage}" alt="Property image" loading="lazy">`
+            : ""
+        }
         <div class="property-content">
           <div class="property-id-box">ID: ${id}</div>
           <h3>${p.title}</h3>
@@ -89,9 +112,9 @@ export function renderProperties(properties) {
           <p><strong>Size:</strong> ${p.size} m²</p>
           <div class="property-actions">${adminButtons}</div>
         </div>
-      </div>
-    `;
-  }).join("");
+      </div>`;
+    })
+    .join("");
 
   attachPropertyCardListeners();
   attachAdminListeners();
@@ -117,7 +140,9 @@ async function openPropertyDetails(property) {
   set("propArea", property.size + " m²");
   set("propDescription", property.description);
 
-  currentPropertyImages = property.firstImage ? [property.firstImage] : [];
+  currentPropertyImages = [];
+  if (property.firstImage) currentPropertyImages.push(property.firstImage);
+
   currentImageIndex = 0;
 
   // fetch KV images if not fetched
@@ -125,10 +150,10 @@ async function openPropertyDetails(property) {
     try {
       const res = await fetch(`${API_URL}/properties/${property.id}/images`);
       if (res.ok) {
-        const data = await res.json(); // { images: ["data:image/jpeg;base64,..."] }
+        const data = await res.json(); // { images: [...] }
         if (Array.isArray(data.images)) {
-          currentPropertyImages.push(...data.images);
           property.restImages = data.images;
+          currentPropertyImages.push(...data.images);
         }
       }
     } catch (err) {
@@ -148,7 +173,7 @@ async function openPropertyDetails(property) {
 // ======================================================
 function attachPropertyCardListeners() {
   propertyContainer.querySelectorAll(".property").forEach((el) => {
-    el.addEventListener("click", async () => {
+    el.addEventListener("click", () => {
       const id = el.dataset.id;
       const property = propertiesData.find((p) => p.id == id);
       if (!property) return showToast("Property not found!");
@@ -177,12 +202,14 @@ function attachAdminListeners() {
       })
     );
 
-    propertyContainer.querySelectorAll(".toggle-status-btn").forEach((btn) =>
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        toggleRentalStatus(btn.dataset.id);
-      })
-    );
+    propertyContainer
+      .querySelectorAll(".toggle-status-btn")
+      .forEach((btn) =>
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleRentalStatus(btn.dataset.id);
+        })
+      );
   }
 }
 
@@ -204,14 +231,17 @@ function setupModalStaticListeners() {
   prevBtn?.addEventListener("click", (e) => {
     e.stopPropagation();
     if (!currentPropertyImages.length) return;
-    currentImageIndex = (currentImageIndex - 1 + currentPropertyImages.length) % currentPropertyImages.length;
+    currentImageIndex =
+      (currentImageIndex - 1 + currentPropertyImages.length) %
+      currentPropertyImages.length;
     updateModalImage();
   });
 
   nextBtn?.addEventListener("click", (e) => {
     e.stopPropagation();
     if (!currentPropertyImages.length) return;
-    currentImageIndex = (currentImageIndex + 1) % currentPropertyImages.length;
+    currentImageIndex =
+      (currentImageIndex + 1) % currentPropertyImages.length;
     updateModalImage();
   });
 }
@@ -232,7 +262,6 @@ function updateModalImage() {
 
   img.style.display = "block";
   img.src = currentPropertyImages[currentImageIndex];
-  img.loading = "lazy";
 
   if (dots) {
     dots.innerHTML = "";
@@ -272,9 +301,13 @@ export async function toggleWishlist(id) {
 
   const res = await fetch(`${API_URL}/wishlists/${username}/${action}`, {
     method: "POST",
-    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ propertyId: id }),
   });
+
   const data = await res.json();
   if (!data.success) return showToast("Error updating wishlist");
 
@@ -288,7 +321,10 @@ export async function toggleWishlist(id) {
 // ADMIN
 // ======================================================
 async function deleteProperty(id) {
-  await fetch(`${API_URL}/properties/${id}`, { method: "DELETE", headers: { Authorization: "Bearer " + token } });
+  await fetch(`${API_URL}/properties/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: "Bearer " + token },
+  });
   showToast("Deleted!");
   loadProperties();
 }
@@ -296,9 +332,13 @@ async function deleteProperty(id) {
 async function toggleRentalStatus(id) {
   await fetch(`${API_URL}/properties/${id}/status`, {
     method: "POST",
-    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ status: "toggle" }),
   });
+
   showToast("Status updated!");
   loadProperties();
 }
@@ -312,14 +352,17 @@ function setupFilterListeners() {
 
   btn.addEventListener("click", () => {
     let filtered = [...propertiesData];
+
     const minPrice = Number(document.getElementById("filterMinPrice").value);
     const maxPrice = Number(document.getElementById("filterMaxPrice").value);
     const type = document.getElementById("filterType").value;
     const cat = document.getElementById("filterCategory").value;
 
     filtered = filtered.filter((p) => {
-      if (!isNaN(minPrice) && minPrice > 0 && p.price < minPrice) return false;
-      if (!isNaN(maxPrice) && maxPrice > 0 && p.price > maxPrice) return false;
+      if (!isNaN(minPrice) && minPrice > 0 && p.price < minPrice)
+        return false;
+      if (!isNaN(maxPrice) && maxPrice > 0 && p.price > maxPrice)
+        return false;
       if (type && type !== "" && p.type !== type) return false;
       if (cat && cat !== "" && p.category !== cat) return false;
       return true;
