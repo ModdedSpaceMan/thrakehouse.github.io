@@ -21,9 +21,98 @@ export async function initProperties() {
   await loadProperties();
   setupFilterListeners();
   setupModalStaticListeners();
+  setupSearchListener();
 
   window.addEventListener("propertiesUpdated", loadProperties);
   window.openPropertyDetails = openPropertyDetails;
+}
+
+// ======================================================
+// SEARCH BY ID
+// ======================================================
+function setupSearchListener() {
+  const searchBtn = document.getElementById("searchByIdBtn");
+  const searchInput = document.getElementById("searchByIdInput");
+  if (!searchBtn || !searchInput) return;
+
+  searchBtn.addEventListener("click", async () => {
+    const id = searchInput.value.trim();
+    if (!id) return showToast("Enter a property ID!");
+
+    try {
+      const headers = token ? { Authorization: "Bearer " + token } : {};
+      const res = await fetch(`${API_URL}/properties/${id}`, { headers });
+
+      if (!res.ok) return showToast("Property not found");
+
+      const property = await res.json();
+
+      // Update propertiesData to include only this property for modal clicks
+      propertiesData = [property];
+
+      renderSearchResults([property]);
+    } catch (err) {
+      console.error(err);
+      showToast("Error fetching property");
+    }
+  });
+}
+
+function renderSearchResults(properties) {
+  if (!properties || properties.length === 0) {
+    propertyContainer.innerHTML = "<p>No properties found.</p>";
+    return;
+  }
+
+  propertyContainer.innerHTML = properties
+    .map((p) => {
+      const id = p.id ?? "-";
+      const firstImage = typeof p.firstImage === "string" ? p.firstImage.trim() : "";
+
+      const adminButtons =
+        role === "admin"
+          ? `
+      <div class="admin-buttons-right">
+        <button class="wishlist-btn" data-id="${id}">
+          ${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}
+        </button>
+        <button class="delete-btn" data-id="${id}">Delete</button>
+        ${
+          p.category === "rent"
+            ? `<button class="toggle-status-btn" data-id="${id}">
+                 ${p.status === "free" ? "Occupied" : "Free"}
+               </button>`
+            : ""
+        }
+      </div>`
+          : `<button class="wishlist-btn" data-id="${id}">${
+              wishlistIds.includes(String(id)) ? "❤️" : "🤍"
+            }</button>`;
+
+      return `
+      <div class="property" data-id="${id}">
+        ${
+          firstImage
+            ? `<img src="${firstImage}" alt="Property image" loading="lazy">`
+            : ""
+        }
+        <div class="property-content">
+          <div class="property-id-box">ID: ${id}</div>
+          <h3>${p.title}</h3>
+          <p><strong>Price:</strong> ${p.price}€</p>
+          <p><strong>Category:</strong> ${p.category}</p>
+          <p><strong>Type:</strong> ${p.type}</p>
+          <p><strong>Bedrooms:</strong> ${p.bedrooms}</p>
+          <p><strong>Bathrooms:</strong> ${p.bathrooms}</p>
+          <p><strong>Size:</strong> ${p.size} m²</p>
+          <div class="property-actions">${adminButtons}</div>
+        </div>
+      </div>`;
+    })
+    .join("");
+
+  attachPropertyCardListeners();
+  attachAdminListeners();
 }
 
 // ======================================================
@@ -41,10 +130,7 @@ export async function loadProperties() {
 
     propertiesData = data.map((p) => ({
       ...p,
-
-      // FIXED — DO NOT OVERWRITE BACKEND VALUE
       firstImage: typeof p.firstImage === "string" ? p.firstImage.trim() : "",
-
       restImages: [],
       _fetchedImages: false,
     }));
@@ -72,7 +158,7 @@ export function renderProperties(properties) {
   propertyContainer.innerHTML = properties
     .map((p) => {
       const id = p.id ?? "-";
-      const firstImage = p.firstImage || ""; // FIXED
+      const firstImage = p.firstImage || "";
 
       const adminButtons =
         role === "admin"
@@ -145,12 +231,11 @@ async function openPropertyDetails(property) {
 
   currentImageIndex = 0;
 
-  // fetch KV images if not fetched
   if (!property._fetchedImages) {
     try {
       const res = await fetch(`${API_URL}/properties/${property.id}/images`);
       if (res.ok) {
-        const data = await res.json(); // { images: [...] }
+        const data = await res.json();
         if (Array.isArray(data.images)) {
           property.restImages = data.images;
           currentPropertyImages.push(...data.images);
@@ -172,7 +257,7 @@ async function openPropertyDetails(property) {
 // PROPERTY CARD → OPEN MODAL
 // ======================================================
 function attachPropertyCardListeners() {
-  propertyContainer.querySelectorAll(".property").forEach((el) => {
+  document.querySelectorAll(".property").forEach((el) => {
     el.addEventListener("click", () => {
       const id = el.dataset.id;
       const property = propertiesData.find((p) => p.id == id);
@@ -187,7 +272,7 @@ function attachPropertyCardListeners() {
 // ADMIN BUTTONS
 // ======================================================
 function attachAdminListeners() {
-  propertyContainer.querySelectorAll(".wishlist-btn").forEach((btn) => {
+  document.querySelectorAll(".wishlist-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       e.stopPropagation();
       await toggleWishlist(btn.dataset.id);
@@ -195,14 +280,14 @@ function attachAdminListeners() {
   });
 
   if (role === "admin") {
-    propertyContainer.querySelectorAll(".delete-btn").forEach((btn) =>
+    document.querySelectorAll(".delete-btn").forEach((btn) =>
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
         if (confirm("Delete property?")) deleteProperty(btn.dataset.id);
       })
     );
 
-    propertyContainer
+    document
       .querySelectorAll(".toggle-status-btn")
       .forEach((btn) =>
         btn.addEventListener("click", (e) => {
