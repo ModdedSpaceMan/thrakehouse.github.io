@@ -40,7 +40,7 @@ export async function initProperties() {
   window.openPropertyDetails = openPropertyDetails;
 }
 
-export async function loadProperties(page = 1, limit = 1000, append = false) {
+export async function loadProperties(page = 1, limit = 10, append = false) {
   if (!propertyContainer) return [];
   try {
     const headers = token ? { Authorization: "Bearer " + token } : {};
