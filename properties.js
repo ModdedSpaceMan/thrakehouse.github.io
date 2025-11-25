@@ -14,6 +14,20 @@ const token = localStorage.getItem("token");
 const role = localStorage.getItem("role");
 
 // ======================================================
+// TRANSLATIONS TO BULGARIAN
+// ======================================================
+const CATEGORY_LABELS_BG = {
+  rent: "Наем",
+  sale: "Продажба",
+};
+
+const TYPE_LABELS_BG = {
+  apartment: "Апартамент",
+  house: "Къща",
+  villa: "Вила",
+};
+
+// ======================================================
 // INIT
 // ======================================================
 export async function initProperties() {
@@ -37,78 +51,33 @@ function setupSearchListener() {
 
   searchBtn.addEventListener("click", async () => {
     const id = searchInput.value.trim();
-    if (!id) return showToast("Enter a property ID!");
+    if (!id) return showToast("Въведете ID на имота!");
 
     try {
       const headers = token ? { Authorization: "Bearer " + token } : {};
       const res = await fetch(`${API_URL}/properties/${id}`, { headers });
 
-      if (!res.ok) return showToast("Property not found");
+      if (!res.ok) return showToast("Имотът не е намерен");
 
       const property = await res.json();
-
-      // Update propertiesData to include only this property for modal clicks
       propertiesData = [property];
 
       renderSearchResults([property]);
     } catch (err) {
       console.error(err);
-      showToast("Error fetching property");
+      showToast("Грешка при зареждане на имота");
     }
   });
 }
 
 function renderSearchResults(properties) {
   if (!properties || properties.length === 0) {
-    propertyContainer.innerHTML = "<p>No properties found.</p>";
+    propertyContainer.innerHTML = "<p>Не са намерени имоти.</p>";
     return;
   }
 
   propertyContainer.innerHTML = properties
-    .map((p) => {
-      const id = p.id ?? "-";
-      const firstImage = typeof p.firstImage === "string" ? p.firstImage.trim() : "";
-
-      const adminButtons =
-        role === "admin"
-          ? `
-      <div class="admin-buttons-right">
-        <button class="wishlist-btn" data-id="${id}">
-          ${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}
-        </button>
-        <button class="delete-btn" data-id="${id}">Delete</button>
-        ${
-          p.category === "rent"
-            ? `<button class="toggle-status-btn" data-id="${id}">
-                 ${p.status === "free" ? "Occupied" : "Free"}
-               </button>`
-            : ""
-        }
-      </div>`
-          : `<button class="wishlist-btn" data-id="${id}">${
-              wishlistIds.includes(String(id)) ? "❤️" : "🤍"
-            }</button>`;
-
-      return `
-      <div class="property" data-id="${id}">
-        ${
-          firstImage
-            ? `<img src="${firstImage}" alt="Property image" loading="lazy">`
-            : ""
-        }
-        <div class="property-content">
-          <div class="property-id-box">ID: ${id}</div>
-          <h3>${p.title}</h3>
-          <p><strong>Price:</strong> ${p.price}€</p>
-          <p><strong>Category:</strong> ${p.category}</p>
-          <p><strong>Type:</strong> ${p.type}</p>
-          <p><strong>Bedrooms:</strong> ${p.bedrooms}</p>
-          <p><strong>Bathrooms:</strong> ${p.bathrooms}</p>
-          <p><strong>Size:</strong> ${p.size} m²</p>
-          <div class="property-actions">${adminButtons}</div>
-        </div>
-      </div>`;
-    })
+    .map((p) => renderPropertyCard(p))
     .join("");
 
   attachPropertyCardListeners();
@@ -135,13 +104,11 @@ export async function loadProperties() {
       _fetchedImages: false,
     }));
 
-    console.log("Loaded properties:", propertiesData);
-
     renderProperties(propertiesData);
     return propertiesData;
   } catch (err) {
     console.error("Error loading properties:", err);
-    propertyContainer.innerHTML = "<p>Error loading properties.</p>";
+    propertyContainer.innerHTML = "<p>Грешка при зареждане на имотите.</p>";
     return [];
   }
 }
@@ -151,55 +118,12 @@ export async function loadProperties() {
 // ======================================================
 export function renderProperties(properties) {
   if (!properties || properties.length === 0) {
-    propertyContainer.innerHTML = "<p>No properties found.</p>";
+    propertyContainer.innerHTML = "<p>Не са намерени имоти.</p>";
     return;
   }
 
   propertyContainer.innerHTML = properties
-    .map((p) => {
-      const id = p.id ?? "-";
-      const firstImage = p.firstImage || "";
-
-      const adminButtons =
-        role === "admin"
-          ? `
-      <div class="admin-buttons-right">
-        <button class="wishlist-btn" data-id="${id}">
-          ${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}
-        </button>
-        <button class="delete-btn" data-id="${id}">Delete</button>
-        ${
-          p.category === "rent"
-            ? `<button class="toggle-status-btn" data-id="${id}">
-                 ${p.status === "free" ? "Occupied" : "Free"}
-               </button>`
-            : ""
-        }
-      </div>`
-          : `<button class="wishlist-btn" data-id="${id}">${
-              wishlistIds.includes(String(id)) ? "❤️" : "🤍"
-            }</button>`;
-
-      return `
-      <div class="property" data-id="${id}">
-        ${
-          firstImage
-            ? `<img src="${firstImage}" alt="Property image" loading="lazy">`
-            : ""
-        }
-        <div class="property-content">
-          <div class="property-id-box">ID: ${id}</div>
-          <h3>${p.title}</h3>
-          <p><strong>Price:</strong> ${p.price}€</p>
-          <p><strong>Category:</strong> ${p.category}</p>
-          <p><strong>Type:</strong> ${p.type}</p>
-          <p><strong>Bedrooms:</strong> ${p.bedrooms}</p>
-          <p><strong>Bathrooms:</strong> ${p.bathrooms}</p>
-          <p><strong>Size:</strong> ${p.size} m²</p>
-          <div class="property-actions">${adminButtons}</div>
-        </div>
-      </div>`;
-    })
+    .map((p) => renderPropertyCard(p))
     .join("");
 
   attachPropertyCardListeners();
@@ -207,7 +131,63 @@ export function renderProperties(properties) {
 }
 
 // ======================================================
-// MODAL - OPEN PROPERTY DETAILS
+// RENDER SINGLE PROPERTY CARD WITH BG TRANSLATIONS
+// ======================================================
+function renderPropertyCard(p) {
+  const id = p.id ?? "-";
+  const firstImage = typeof p.firstImage === "string" ? p.firstImage.trim() : "";
+
+  const category = CATEGORY_LABELS_BG[p.category] || p.category || "-";
+  const type = TYPE_LABELS_BG[p.type] || p.type || "-";
+  const title = p.title || "-";
+  const price = p.price != null ? p.price + "€" : "-";
+  const bedrooms = p.bedrooms != null ? p.bedrooms : "-";
+  const bathrooms = p.bathrooms != null ? p.bathrooms : "-";
+  const size = p.size != null ? p.size + " м²" : "-";
+
+  const adminButtons =
+    role === "admin"
+      ? `
+<div class="admin-buttons-right">
+  <button class="wishlist-btn" data-id="${id}">
+    ${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}
+  </button>
+  <button class="delete-btn" data-id="${id}">Изтрий</button>
+  ${
+    p.category === "rent"
+      ? `<button class="toggle-status-btn" data-id="${id}">
+           ${p.status === "free" ? "Зает" : "Свободен"}
+         </button>`
+      : ""
+  }
+</div>`
+      : `<button class="wishlist-btn" data-id="${id}">${
+          wishlistIds.includes(String(id)) ? "❤️" : "🤍"
+        }</button>`;
+
+  return `
+<div class="property" data-id="${id}">
+  ${
+    firstImage
+      ? `<img src="${firstImage}" alt="Имот" loading="lazy">`
+      : ""
+  }
+  <div class="property-content">
+    <div class="property-id-box">ID: ${id}</div>
+    <h3>${title}</h3>
+    <p><strong>Цена:</strong> ${price}</p>
+    <p><strong>Категория:</strong> ${category}</p>
+    <p><strong>Тип:</strong> ${type}</p>
+    <p><strong>Спални:</strong> ${bedrooms}</p>
+    <p><strong>Бани:</strong> ${bathrooms}</p>
+    <p><strong>Площ:</strong> ${size}</p>
+    <div class="property-actions">${adminButtons}</div>
+  </div>
+</div>`;
+}
+
+// ======================================================
+// MODAL - OPEN PROPERTY DETAILS (BG + fallback)
 // ======================================================
 let currentPropertyImages = [];
 let currentImageIndex = 0;
@@ -218,24 +198,35 @@ async function openPropertyDetails(property) {
     if (el) el.textContent = value ?? "-";
   };
 
-  set("propTitle", property.title);
-  set("propPrice", property.price + "€");
-  set("propType", property.type);
-  set("propBedrooms", property.bedrooms);
-  set("propBathrooms", property.bathrooms);
-  set("propArea", property.size + " m²");
-  set("propDescription", property.description);
+  // TRANSLATIONS & FALLBACKS
+  const category = CATEGORY_LABELS_BG[property.category] || property.category || "-";
+  const type = TYPE_LABELS_BG[property.type] || property.type || "-";
+  const title = property.title || "-";
+  const price = property.price != null ? property.price + "€" : "-";
+  const bedrooms = property.bedrooms != null ? property.bedrooms : "-";
+  const bathrooms = property.bathrooms != null ? property.bathrooms : "-";
+  const size = property.size != null ? property.size + " м²" : "-";
+  const description = property.description || "-";
+
+  set("propTitle", title);
+  set("propPrice", price);
+  set("propType", type);
+  set("propBedrooms", bedrooms);
+  set("propBathrooms", bathrooms);
+  set("propArea", size);
+  set("propDescription", description);
 
   currentPropertyImages = [];
   if (property.firstImage) currentPropertyImages.push(property.firstImage);
 
   currentImageIndex = 0;
 
+  // fetch KV images if not fetched
   if (!property._fetchedImages) {
     try {
       const res = await fetch(`${API_URL}/properties/${property.id}/images`);
       if (res.ok) {
-        const data = await res.json();
+        const data = await res.json(); // { images: [...] }
         if (Array.isArray(data.images)) {
           property.restImages = data.images;
           currentPropertyImages.push(...data.images);
@@ -257,11 +248,11 @@ async function openPropertyDetails(property) {
 // PROPERTY CARD → OPEN MODAL
 // ======================================================
 function attachPropertyCardListeners() {
-  document.querySelectorAll(".property").forEach((el) => {
+  propertyContainer.querySelectorAll(".property").forEach((el) => {
     el.addEventListener("click", () => {
       const id = el.dataset.id;
       const property = propertiesData.find((p) => p.id == id);
-      if (!property) return showToast("Property not found!");
+      if (!property) return showToast("Имотът не е намерен!");
 
       openPropertyDetails(property);
     });
@@ -272,7 +263,7 @@ function attachPropertyCardListeners() {
 // ADMIN BUTTONS
 // ======================================================
 function attachAdminListeners() {
-  document.querySelectorAll(".wishlist-btn").forEach((btn) => {
+  propertyContainer.querySelectorAll(".wishlist-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       e.stopPropagation();
       await toggleWishlist(btn.dataset.id);
@@ -280,14 +271,14 @@ function attachAdminListeners() {
   });
 
   if (role === "admin") {
-    document.querySelectorAll(".delete-btn").forEach((btn) =>
+    propertyContainer.querySelectorAll(".delete-btn").forEach((btn) =>
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (confirm("Delete property?")) deleteProperty(btn.dataset.id);
+        if (confirm("Изтриване на имота?")) deleteProperty(btn.dataset.id);
       })
     );
 
-    document
+    propertyContainer
       .querySelectorAll(".toggle-status-btn")
       .forEach((btn) =>
         btn.addEventListener("click", (e) => {
@@ -381,7 +372,7 @@ export async function loadWishlist() {
 }
 
 export async function toggleWishlist(id) {
-  if (!username || !token) return showToast("You must be logged in!");
+  if (!username || !token) return showToast("Трябва да сте влезли!");
   const action = wishlistIds.includes(id) ? "remove" : "add";
 
   const res = await fetch(`${API_URL}/wishlists/${username}/${action}`, {
@@ -394,7 +385,7 @@ export async function toggleWishlist(id) {
   });
 
   const data = await res.json();
-  if (!data.success) return showToast("Error updating wishlist");
+  if (!data.success) return showToast("Грешка при актуализиране на списъка с любими");
 
   if (action === "add") wishlistIds.push(id);
   else wishlistIds = wishlistIds.filter((x) => x !== id);
@@ -410,7 +401,7 @@ async function deleteProperty(id) {
     method: "DELETE",
     headers: { Authorization: "Bearer " + token },
   });
-  showToast("Deleted!");
+  showToast("Имотът беше изтрит!");
   loadProperties();
 }
 
@@ -424,7 +415,7 @@ async function toggleRentalStatus(id) {
     body: JSON.stringify({ status: "toggle" }),
   });
 
-  showToast("Status updated!");
+  showToast("Статусът беше актуализиран!");
   loadProperties();
 }
 
