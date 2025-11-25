@@ -232,6 +232,136 @@ function setupFilterListeners() {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => { initProperties(); });
+export async function loadWishlist() {
+  if (!username || !token) return (wishlistIds = []);
+  try {
+    const res = await fetch(`${API_URL}/wishlists/${username}`, { headers: { Authorization: "Bearer " + token } });
+    const data = await res.json();
+    wishlistIds = data.items || [];
+  } catch {
+    wishlistIds = [];
+  }
+}
 
-// The rest (openPropertyDetails, toggleWishlist, deleteProperty, toggleRentalStatus) remains unchanged
+export async function toggleWishlist(id) {
+  if (!username || !token) return showToast("Трябва да сте влезли!");
+  const action = wishlistIds.includes(String(id)) ? "remove" : "add";
+  try {
+    const res = await fetch(`${API_URL}/wishlists/${username}/${action}`, {
+      method: "POST",
+      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+      body: JSON.stringify({ propertyId: id }),
+    });
+    const data = await res.json();
+    if (!data.success) return showToast("Грешка при актуализиране на списъка с любими");
+    if (action === "add") wishlistIds.push(String(id)); else wishlistIds = wishlistIds.filter((x) => x !== String(id));
+    const btn = document.querySelector(`.wishlist-btn[data-id="${id}"]`);
+    if (btn) btn.textContent = wishlistIds.includes(String(id)) ? "❤️" : "🤍";
+  } catch (err) {
+    console.error(err);
+    showToast("Грешка при актуализиране на списъка с любими");
+  }
+}
+
+async function deleteProperty(id) {
+  try {
+    await fetch(`${API_URL}/properties/${id}`, { method: "DELETE", headers: { Authorization: "Bearer " + token } });
+    showToast("Имотът беше изтрит!");
+    await loadProperties();
+  } catch (err) {
+    console.error(err);
+    showToast("Грешка при изтриване на имота");
+  }
+}
+
+async function toggleRentalStatus(id) {
+  try {
+    await fetch(`${API_URL}/properties/${id}/status`, { method: "POST", headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }, body: JSON.stringify({ status: "toggle" }) });
+    showToast("Статусът беше актуализиран!");
+    await loadProperties();
+  } catch (err) {
+    console.error(err);
+    showToast("Грешка при актуализиране на статуса");
+  }
+}
+
+async function openPropertyDetails(property) {
+  const set = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value ?? "-";
+  };
+  const category = CATEGORY_LABELS_BG[property.category] || property.category || "-";
+  const type = TYPE_LABELS_BG[property.type] || property.type || "-";
+  set("propTitle", property.title || "-");
+  set("propPrice", property.price != null ? property.price + "€" : "-");
+  set("propType", type);
+  set("propBedrooms", property.bedrooms ?? "-");
+  set("propBathrooms", property.bathrooms ?? "-");
+  set("propArea", property.size != null ? property.size + " м²" : "-");
+  set("propDescription", property.description || "-");
+  set("propCategory", category);
+  set("propStatus", property.status || "-");
+  set("propYear", property.year ?? "-");
+
+  let currentPropertyImages = [];
+  if (property.firstImage) currentPropertyImages.push(property.firstImage);
+
+  if (!property._fetchedImages) {
+    try {
+      const res = await fetch(`${API_URL}/properties/${property.id}/images`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.images)) {
+          property.restImages = data.images;
+          currentPropertyImages.push(...data.images);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load extra images:", err);
+    }
+    property._fetchedImages = true;
+  } else if (property.restImages?.length) {
+    currentPropertyImages.push(...property.restImages);
+  }
+
+  let currentImageIndex = 0;
+  const img = document.getElementById("propImage");
+  const dots = document.getElementById("propImageDots");
+
+  function updateModalImage() {
+    if (!img) return;
+    if (!currentPropertyImages.length) {
+      img.style.display = "none";
+      if (dots) dots.innerHTML = "";
+      return;
+    }
+    img.style.display = "block";
+    img.src = currentPropertyImages[currentImageIndex];
+    if (dots) {
+      dots.innerHTML = "";
+      currentPropertyImages.forEach((_, i) => {
+        const dot = document.createElement("span");
+        dot.className = "slider-dot";
+        dot.style.opacity = i === currentImageIndex ? "1" : "0.5";
+        dot.addEventListener("click", (e) => { e.stopPropagation(); currentImageIndex = i; updateModalImage(); });
+        dots.appendChild(dot);
+      });
+    }
+  }
+
+  const prevBtn = propertyModal.querySelector("#prevImageBtn");
+  const nextBtn = propertyModal.querySelector("#nextImageBtn");
+  prevBtn?.addEventListener("click", (e) => { e.stopPropagation(); if (!currentPropertyImages.length) return; currentImageIndex = (currentImageIndex - 1 + currentPropertyImages.length) % currentPropertyImages.length; updateModalImage(); });
+  nextBtn?.addEventListener("click", (e) => { e.stopPropagation(); if (!currentPropertyImages.length) return; currentImageIndex = (currentImageIndex + 1) % currentPropertyImages.length; updateModalImage(); });
+  updateModalImage();
+  propertyModal.style.display = "flex";
+}
+
+function setupModalStaticListeners() {
+  if (!propertyModal) return;
+  const closeBtn = propertyModal.querySelector(".close");
+  closeBtn?.addEventListener("click", () => (propertyModal.style.display = "none"));
+  propertyModal.addEventListener("click", (e) => { if (e.target === propertyModal) propertyModal.style.display = "none"; });
+}
+
+document.addEventListener("DOMContentLoaded", () => { initProperties(); });
