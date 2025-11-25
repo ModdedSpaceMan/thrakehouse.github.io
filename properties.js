@@ -13,9 +13,10 @@ const username = localStorage.getItem("username");
 const token = localStorage.getItem("token");
 const role = localStorage.getItem("role");
 
-// ======================================================
-// INIT
-// ======================================================
+// ================= CACHE =================
+const fetchedImagesCache = {}; // propertyId -> array of images
+
+// ================= INIT =================
 export async function initProperties() {
   await loadWishlist();
   await loadProperties();
@@ -26,9 +27,7 @@ export async function initProperties() {
   window.openPropertyDetails = openPropertyDetails;
 }
 
-// ======================================================
-// LOAD PROPERTIES
-// ======================================================
+// ================= LOAD PROPERTIES =================
 export async function loadProperties() {
   if (!propertyContainer) return [];
 
@@ -47,9 +46,7 @@ export async function loadProperties() {
   }
 }
 
-// ======================================================
-// RENDER PROPERTIES
-// ======================================================
+// ================= RENDER PROPERTIES =================
 export function renderProperties(properties) {
   if (!properties || properties.length === 0) {
     propertyContainer.innerHTML = "<p>No properties found.</p>";
@@ -59,7 +56,7 @@ export function renderProperties(properties) {
   propertyContainer.innerHTML = properties
     .map((p) => {
       const id = p.id ?? "-";
-      const firstImage = p.firstImage || ""; // <-- use firstImage only
+      const firstImageKey = p.images?.[0] || "";
 
       const adminButtons =
         role === "admin"
@@ -67,13 +64,13 @@ export function renderProperties(properties) {
       <div class="admin-buttons-right">
         <button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>
         <button class="delete-btn" data-id="${id}">Delete</button>
-        ${p.category === "rental" ? `<button class="toggle-status-btn" data-id="${id}">${p.status === "free" ? "Occupied" : "Free"}</button>` : ""} 
+        ${p.category === "rental" ? `<button class="toggle-status-btn" data-id="${id}">${p.status === "free" ? "Occupied" : "Free"}</button>` : ""}
       </div>` 
           : `<button class="wishlist-btn" data-id="${id}">${wishlistIds.includes(String(id)) ? "❤️" : "🤍"}</button>`;
 
       return `
       <div class="property" data-id="${id}">
-        ${firstImage ? `<img src="${firstImage}" alt="Property image" loading="lazy">` : ""}
+        ${firstImageKey ? `<img src="${API_URL}/image/${encodeURIComponent(firstImageKey)}" alt="Property image" loading="lazy">` : ""}
         <div class="property-content">
           <div class="property-id-box" style="
             position: absolute;
@@ -103,24 +100,19 @@ export function renderProperties(properties) {
   attachAdminListeners();
 }
 
-
-// ======================================================
-// PROPERTY CARD → OPEN MODAL
-// ======================================================
+// ================= PROPERTY CARD → OPEN MODAL =================
 function attachPropertyCardListeners() {
   propertyContainer.querySelectorAll(".property").forEach((el) => {
-    el.addEventListener("click", () => {
+    el.addEventListener("click", async () => {
       const id = el.dataset.id;
       const property = propertiesData.find((p) => p.id == id);
       if (!property) return showToast("Property not found!");
-      openPropertyDetails(property);
+      await openPropertyDetails(property);
     });
   });
 }
 
-// ======================================================
-// ADMIN BUTTONS
-// ======================================================
+// ================= ADMIN BUTTONS =================
 function attachAdminListeners() {
   propertyContainer.querySelectorAll(".wishlist-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
@@ -146,9 +138,7 @@ function attachAdminListeners() {
   }
 }
 
-// ======================================================
-// MODAL (STATIC LISTENERS — ADD ONCE)
-// ======================================================
+// ================= MODAL (STATIC LISTENERS — ADD ONCE) =================
 let currentPropertyImages = [];
 let currentImageIndex = 0;
 
@@ -179,9 +169,7 @@ function setupModalStaticListeners() {
     });
 }
 
-// ======================================================
-// OPEN MODAL (lazy fetch allImages)
-// ======================================================
+// ================= OPEN MODAL =================
 async function openPropertyDetails(property) {
   const set = (id, value) => {
     const el = document.getElementById(id);
@@ -196,30 +184,32 @@ async function openPropertyDetails(property) {
   set("propArea", property.size + " m²");
   set("propDescription", property.description);
 
-  // Start with firstImage
-  currentPropertyImages = property.firstImage ? [property.firstImage] : [];
   currentImageIndex = 0;
+
+  // Use cached images if available
+  if (fetchedImagesCache[property.id]) {
+    currentPropertyImages = fetchedImagesCache[property.id];
+  } else {
+    try {
+      const headers = token ? { Authorization: "Bearer " + token } : {};
+      const res = await fetch(`${API_URL}/properties/${property.id}`, { headers });
+      if (!res.ok) throw new Error("Failed to load images");
+
+      const data = await res.json();
+      currentPropertyImages = [data.firstImage, ...(data.allImages || [])].filter(Boolean);
+
+      fetchedImagesCache[property.id] = currentPropertyImages;
+    } catch (err) {
+      console.error("Error loading property images:", err);
+      currentPropertyImages = property.images?.[0] ? [property.images[0]] : [];
+    }
+  }
+
   updateModalImage();
   propertyModal.style.display = "flex";
-
-  // Fetch allImages lazily
-  try {
-    const res = await fetch(`${API_URL}/properties/${property.id}/images`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.allImages && data.allImages.length) {
-        currentPropertyImages = [property.firstImage, ...data.allImages.filter(img => img !== property.firstImage)];
-        updateModalImage();
-      }
-    }
-  } catch (err) {
-    console.error("Failed to load additional images", err);
-  }
 }
 
-// ======================================================
-// UPDATE MODAL IMAGE
-// ======================================================
+// ================= UPDATE MODAL IMAGE =================
 function updateModalImage() {
   const img = document.getElementById("propImage");
   const dots = document.getElementById("propImageDots");
@@ -232,7 +222,8 @@ function updateModalImage() {
   }
 
   img.style.display = "block";
-  img.src = currentPropertyImages[currentImageIndex];
+  const key = currentPropertyImages[currentImageIndex];
+  img.src = key;
   img.loading = "lazy";
 
   dots.innerHTML = "";
@@ -248,9 +239,7 @@ function updateModalImage() {
   });
 }
 
-// ======================================================
-// WISHLIST
-// ======================================================
+// ================= WISHLIST =================
 export async function loadWishlist() {
   if (!username || !token) return (wishlistIds = []);
 
@@ -259,7 +248,6 @@ export async function loadWishlist() {
       headers: { Authorization: "Bearer " + token },
     });
     const data = await res.json();
-
     wishlistIds = data.items || [];
   } catch {
     wishlistIds = [];
@@ -284,17 +272,15 @@ export async function toggleWishlist(id) {
   loadProperties();
 }
 
-// ======================================================
-// ADMIN
-// ======================================================
+// ================= ADMIN =================
 async function deleteProperty(id) {
-  await fetch(`${API_URL}/properties/${id}`, { method: "DELETE", headers: { Authorization: "Bearer " + token } });
+  await fetch(`${API_URL}/property/${id}`, { method: "DELETE", headers: { Authorization: "Bearer " + token } });
   showToast("Deleted!");
   loadProperties();
 }
 
 async function toggleRentalStatus(id) {
-  await fetch(`${API_URL}/properties/${id}/status`, {
+  await fetch(`${API_URL}/property/${id}/status`, {
     method: "POST",
     headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
     body: JSON.stringify({ status: "toggle" }),
@@ -303,9 +289,7 @@ async function toggleRentalStatus(id) {
   loadProperties();
 }
 
-// ======================================================
-// FILTERS
-// ======================================================
+// ================= FILTERS =================
 function setupFilterListeners() {
   const btn = document.getElementById("applyFilters");
   if (!btn) return;
@@ -329,9 +313,7 @@ function setupFilterListeners() {
   });
 }
 
-// ======================================================
-// READY
-// ======================================================
+// ================= READY =================
 document.addEventListener("DOMContentLoaded", () => {
   initProperties();
 });
