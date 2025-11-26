@@ -227,6 +227,9 @@ function resetSearch() {
 }
 
 async function openPropertyDetails(property) {
+  const loader = document.getElementById("globalLoader");
+  loader.style.display = "flex";
+  
   const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value ?? "-"; };
   const category = CATEGORY_LABELS_BG[property.category] || property.category || "-";
   const type = TYPE_LABELS_BG[property.type] || property.type || "-";
@@ -243,18 +246,32 @@ async function openPropertyDetails(property) {
   set("propYear", property.year ?? "-");
 
   let currentPropertyImages = [];
-  if (property.firstImage) currentPropertyImages.push(property.firstImage);
+if (property.firstImage) currentPropertyImages.push(property.firstImage);
 
-  if (!property._fetchedImages) {
-    try {
-      const res = await fetch(`${API_URL}/properties/${property.id}/images`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.images)) { property.restImages = data.images; currentPropertyImages.push(...data.images); }
+if (!property._fetchedImages) {
+  try {
+    const res = await fetch(`${API_URL}/properties/${property.id}/images`);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.images)) { 
+        property.restImages = data.images; 
+        currentPropertyImages.push(...data.images); 
       }
-    } catch (err) { console.error("Failed to load extra images:", err); }
-    property._fetchedImages = true;
-  } else if (property.restImages?.length) currentPropertyImages.push(...property.restImages);
+    }
+  } catch (err) { console.error("Failed to load extra images:", err); }
+  property._fetchedImages = true;
+} else if (property.restImages?.length) currentPropertyImages.push(...property.restImages);
+
+// **Wait for all images to load**
+await Promise.all(currentPropertyImages.map(src => new Promise(res => {
+  const img = new Image();
+  img.onload = res;
+  img.onerror = res;
+  img.src = src;
+})));
+
+loader.style.display = "none"; // hide loader after images loaded
+
 
   let currentImageIndex = 0;
   const img = document.getElementById("propImage");
