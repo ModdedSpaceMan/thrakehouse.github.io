@@ -62,19 +62,24 @@ export async function loadProperties(reset = false) {
     const data = await res.json();
     const items = Array.isArray(data.items) ? data.items : [];
 
+    // Render each property immediately
     items.forEach((p) => {
       p.firstImage = typeof p.firstImage === "string" ? p.firstImage.trim() : "";
       p.restImages = [];
       p._fetchedImages = false;
+
+      const temp = document.createElement("div");
+      temp.innerHTML = renderPropertyCard(p);
+      while (temp.firstChild) propertyContainer.appendChild(temp.firstChild);
     });
 
     propertiesData = reset ? items : propertiesData.concat(items);
     filteredData = null;
-
-    renderChunk(items);
     totalItems = data.total || totalItems;
-    renderPagination();
     currentPage++;
+    
+    renderPagination();
+    observeLazyImages(); // lazy-load images for newly added cards
   } catch (err) {
     console.error("Error loading properties:", err);
     if (reset) propertyContainer.innerHTML = "<p>Грешка при зареждане на имотите.</p>";
