@@ -37,7 +37,7 @@ export async function initProperties() {
   window.openPropertyDetails = openPropertyDetails;
 }
 
-async function loadProperties(reset = false) {
+export async function loadProperties(reset = false) {
   if (!propertyContainer || isLoading) return;
   isLoading = true;
 
