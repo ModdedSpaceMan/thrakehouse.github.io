@@ -10,7 +10,8 @@ const CHUNK = 20;
 
 const propertyContainer = document.getElementById("properties");
 const propertyModal = document.getElementById("propertyDetailsModal");
-
+const paginationTop = document.getElementById("paginationTop");
+const paginationBottom = document.getElementById("paginationBottom");
 const username = localStorage.getItem("username");
 const token = localStorage.getItem("token");
 const role = localStorage.getItem("role");
@@ -72,6 +73,7 @@ export async function loadProperties(reset = false) {
 
     renderChunk(items);
     totalItems = data.total || totalItems;
+    renderPagination();
     currentPage++;
   } catch (err) {
     console.error("Error loading properties:", err);
@@ -375,5 +377,71 @@ function setupFilterListeners() {
     resetSearch();
   });
 }
+function renderPagination() {
+  if (!paginationTop || !paginationBottom) return;
 
+  const totalPages = Math.ceil(totalItems / CHUNK);
+  if (totalPages <= 1) {
+    paginationTop.innerHTML = "";
+    paginationBottom.innerHTML = "";
+    return;
+  }
+
+  let html = "";
+  for (let i = 1; i <= totalPages; i++) {
+    html += `<button class="page-btn${i === currentPage ? " active-page" : ""}" data-page="${i}">${i}</button>`;
+  }
+
+  paginationTop.innerHTML = html;
+  paginationBottom.innerHTML = html;
+
+  // Click listeners
+  document.querySelectorAll(".page-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const page = parseInt(btn.dataset.page);
+      if (!page || page === currentPage) return;
+      loadPropertiesPage(page);
+    });
+  });
+}
+
+async function loadPropertiesPage(page) {
+  if (!propertyContainer || isLoading) return;
+  isLoading = true;
+
+  try {
+    const headers = token ? { Authorization: "Bearer " + token } : {};
+    const params = new URLSearchParams({
+      page,
+      limit: CHUNK,
+      ...currentFilters,
+    });
+    const res = await fetch(`${API_URL}/properties?${params.toString()}`, { headers });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+
+    const data = await res.json();
+    const items = Array.isArray(data.items) ? data.items : [];
+
+    items.forEach((p) => {
+      p.firstImage = typeof p.firstImage === "string" ? p.firstImage.trim() : "";
+      p.restImages = [];
+      p._fetchedImages = false;
+    });
+
+    propertiesData = items;
+    filteredData = null;
+    renderIndex = 0;
+    propertyContainer.innerHTML = "";
+    renderChunk(items);
+
+    currentPage = page;
+    totalItems = data.total || totalItems;
+    renderPagination();
+  } catch (err) {
+    console.error(err);
+    propertyContainer.innerHTML = "<p>Грешка при зареждане на имотите.</p>";
+  } finally {
+    isLoading = false;
+  }
+}
 document.addEventListener("DOMContentLoaded", () => { initProperties(); });
