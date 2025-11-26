@@ -1,5 +1,6 @@
 // admin.js
 import { openModal, closeModal, showToast } from './ui.js';
+import { loadProperties } from './properties.js';
 
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
 
@@ -105,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!delRes.ok) throw new Error(`HTTP ${delRes.status}`);
           showToast('Имотът беше изтрит!');
           adminFound.innerHTML = '';
+          await loadProperties();
         } catch (err) {
           console.error(err);
           showToast('Грешка при изтриване на имота');
