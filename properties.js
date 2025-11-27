@@ -155,6 +155,12 @@ items = items.filter((p) => {
 
 
 
+
+
+
+
+// ------------------------ Render Functions ------------------------
+
 function renderChunk(list = filteredData ?? propertiesData) {
   if (!list || list.length === 0) {
     // No properties found, show message
@@ -164,26 +170,6 @@ function renderChunk(list = filteredData ?? propertiesData) {
 
   if (renderIndex >= list.length) return;
 
-  const frag = document.createDocumentFragment();
-  const slice = list.slice(renderIndex, renderIndex + CHUNK);
-
-  slice.forEach((p) => {
-    const temp = document.createElement("div");
-    temp.innerHTML = renderPropertyCard(p);
-    while (temp.firstChild) frag.appendChild(temp.firstChild);
-  });
-
-  propertyContainer.appendChild(frag);
-  observeLazyImages();
-  renderIndex += CHUNK;
-}
-
-
-
-// ------------------------ Render Functions ------------------------
-
-function renderChunk(list = filteredData ?? propertiesData) {
-  if (!list || renderIndex >= list.length) return;
   const frag = document.createDocumentFragment();
   const slice = list.slice(renderIndex, renderIndex + CHUNK);
 
