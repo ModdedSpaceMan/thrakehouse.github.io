@@ -34,7 +34,6 @@ export async function initProperties() {
   setupFilterListeners();
   setupModalStaticListeners();
   setupSearchListener();
-  setupScrollLoader();
   setupDelegatedListeners();
   window.addEventListener("propertiesUpdated", () => loadProperties(true));
   window.openPropertyDetails = openPropertyDetails;
