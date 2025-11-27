@@ -9,11 +9,20 @@ let wishlistIds = [];
 
 // --------------------
 // Fetch and MAP properties (MATCHES properties.js format)
+// --------------------
+// Fetch and MAP properties (MATCHES properties.js format)
 async function fetchProperties() {
   try {
     const res = await fetch('https://my-backend.martinmiskata.workers.dev/properties');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    
+    // Parse the response
     const data = await res.json();
+
+    // Check if 'data' is an array before trying to map
+    if (!Array.isArray(data)) {
+      throw new Error('Expected an array of properties but received something else');
+    }
 
     // FIX: Transform raw backend data into same structure used in properties.js
     return data.map(p => ({
@@ -25,9 +34,10 @@ async function fetchProperties() {
 
   } catch (err) {
     console.error('Failed to fetch properties:', err);
-    return [];
+    return []; // Return an empty array in case of error
   }
 }
+
 
 // --------------------
 // Load wishlist from backend
