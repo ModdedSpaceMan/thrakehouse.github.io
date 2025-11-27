@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Admin search property by ID
  adminSearchBtn?.addEventListener('click', async () => {
   if (!adminSearchInput || !adminFound) return;
+
   const searchId = adminSearchInput.value.trim();
   if (!searchId) return;
 
@@ -66,14 +67,28 @@ document.addEventListener('DOMContentLoaded', () => {
       headers: { 'Authorization': 'Bearer ' + token }
     });
 
-    const data = await res.json();
-
-    if (!data.success || !data.property) {
+    // Handle 404 explicitly
+    if (!res.ok) {
       adminFound.textContent = 'Няма намерен имот с това ID';
       return;
     }
 
-    const prop = data.property;
+    // Safe JSON parse
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      adminFound.textContent = 'Няма намерен имот с това ID';
+      return;
+    }
+
+    if (!data || !data.id) {
+      adminFound.textContent = 'Няма намерен имот с това ID';
+      return;
+    }
+
+    const prop = data;
+
 
     adminFound.innerHTML = `
       <div class="property" data-id="${prop.id}">
