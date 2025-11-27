@@ -159,7 +159,7 @@ function renderPropertyCard(p) {
 
   return `<div class="property" data-id="${id}">
     ${firstImage ? `<img class="lazy-img" data-src="${firstImage}" alt="Имот" loading="lazy">` : ""}
-    <div class="property-content">c
+    <div class="property-content">
       <div class="property-id-box">ID: ${id}</div>
       <h3>${title}</h3>
       <p><strong>Цена:</strong> ${price}</p>
