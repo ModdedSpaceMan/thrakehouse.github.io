@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!searchId) return;
 
   try {
-    const res = await fetch(`${API_URL}/properties/{searchId}`, {
+    const res = await fetch(`${API_URL}/properties/${searchId}`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
 
