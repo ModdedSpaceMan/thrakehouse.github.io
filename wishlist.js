@@ -118,21 +118,30 @@ function initLazyLoading() {
 
   const lazyObserver = new IntersectionObserver(entries => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const img = entry.target;
+      const img = entry.target;
 
-        // MOVE data-src → src
-        if (img.dataset.src) {
-          img.src = img.dataset.src;
-        }
-
-        img.classList.remove("lazy-img");
-        lazyObserver.unobserve(img);
+      if (img.dataset.src) {
+        // If Base64 or normal image, move to src
+        img.src = img.dataset.src;
+        img.removeAttribute("data-src");
       }
+
+      img.classList.remove("lazy-img");
+      lazyObserver.unobserve(img);
     });
   });
 
-  lazyImages.forEach(img => lazyObserver.observe(img));
+  lazyImages.forEach(img => {
+    // If the image is already visible or Base64 above the fold
+    if (!img.dataset.src.startsWith("http")) {
+      img.src = img.dataset.src;
+      img.removeAttribute("data-src");
+      img.classList.remove("lazy-img");
+      return;
+    }
+
+    lazyObserver.observe(img);
+  });
 }
 
 // -----------------------------------------------------------
