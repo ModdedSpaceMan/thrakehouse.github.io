@@ -18,7 +18,7 @@ async function fetchProperties() {
     const data = await res.json();
     if (!Array.isArray(data.items)) throw new Error("Expected array");
 
-    // If the backend only returned IDs → fetch full objects
+    // Backend only returned IDs
     if (typeof data.items[0] === "string" || typeof data.items[0] === "number") {
       const props = await Promise.all(
         data.items.map(async (id) => {
@@ -43,7 +43,7 @@ async function fetchProperties() {
       return props;
     }
 
-    // Otherwise backend already returned full objects
+    // Backend already returned full objects
     return data.items.map((p) => ({
       ...p,
       firstImage: p.firstImage || p.images?.[0] || "",
@@ -107,10 +107,36 @@ export function renderWishlist() {
   wishlistContainer.innerHTML = savedProps.map((p) => renderPropertyCard(p)).join("");
 
   attachListeners();
+  initLazyLoading(); // <-- Lazy loading ENABLED
 }
 
 // -----------------------------------------------------------
-// Attach click listeners (open property + wishlist toggle)
+// Lazy-load Base64 images
+// -----------------------------------------------------------
+function initLazyLoading() {
+  const lazyImages = document.querySelectorAll(".lazy-img");
+
+  const lazyObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+
+        // MOVE data-src → src
+        if (img.dataset.src) {
+          img.src = img.dataset.src;
+        }
+
+        img.classList.remove("lazy-img");
+        lazyObserver.unobserve(img);
+      }
+    });
+  });
+
+  lazyImages.forEach(img => lazyObserver.observe(img));
+}
+
+// -----------------------------------------------------------
+// Attach click listeners
 // -----------------------------------------------------------
 function attachListeners() {
   wishlistContainer.querySelectorAll(".property").forEach((card) => {
@@ -122,7 +148,6 @@ function attachListeners() {
 
       if (!property) return showToast("Не може да се зареди имотът");
 
-      // Must include full image arrays
       window.openPropertyDetails(property);
     });
   });
