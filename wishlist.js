@@ -1,4 +1,5 @@
 import { showToast } from './ui.js';
+import { renderPropertyCard } from "./properties.js";
 import { toggleWishlist as mainToggleWishlist } from './properties.js';
 
 const wishlistContainer = document.getElementById('wishlistProperties');
