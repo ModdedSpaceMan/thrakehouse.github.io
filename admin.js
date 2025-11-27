@@ -119,4 +119,5 @@ document.addEventListener('DOMContentLoaded', () => {
     adminFound.textContent = 'Грешка при търсене на имота';
   }
 });
+});
 
