@@ -77,19 +77,52 @@ export async function loadProperties(reset = false) {
 
     // ------------------------ FILTER FIX ------------------------
     // Only keep items matching currentFilters
-    items = items.filter((p) => {
-      const min = currentFilters.minPrice ? parseFloat(currentFilters.minPrice) : null;
-      const max = currentFilters.maxPrice ? parseFloat(currentFilters.maxPrice) : null;
-      const type = currentFilters.type || null;
-      const category = currentFilters.category || null;
+items = items.filter((p) => {
+  const min = currentFilters.minPrice ? parseFloat(currentFilters.minPrice) : null;
+  const max = currentFilters.maxPrice ? parseFloat(currentFilters.maxPrice) : null;
+  const type = currentFilters.type || null;
+  const category = currentFilters.category || null;
 
-      if (min !== null && p.price < min) return false;
-      if (max !== null && p.price > max) return false;
-      if (type && p.type !== type) return false;
-      if (category && p.category !== category) return false;
+  const minBedrooms = currentFilters.minBedrooms ? parseInt(currentFilters.minBedrooms) : null;
+  const maxBedrooms = currentFilters.maxBedrooms ? parseInt(currentFilters.maxBedrooms) : null;
+  const minBathrooms = currentFilters.minBathrooms ? parseInt(currentFilters.minBathrooms) : null;
+  const maxBathrooms = currentFilters.maxBathrooms ? parseInt(currentFilters.maxBathrooms) : null;
 
-      return true;
-    });
+  const minSize = currentFilters.minSize ? parseFloat(currentFilters.minSize) : null;
+  const maxSize = currentFilters.maxSize ? parseFloat(currentFilters.maxSize) : null;
+
+  const minYear = currentFilters.minYear ? parseInt(currentFilters.minYear) : null;
+  const maxYear = currentFilters.maxYear ? parseInt(currentFilters.maxYear) : null;
+
+  // Price Filter
+  if (min !== null && p.price < min) return false;
+  if (max !== null && p.price > max) return false;
+
+  // Type Filter
+  if (type && p.type !== type) return false;
+
+  // Category Filter
+  if (category && p.category !== category) return false;
+
+  // Bedrooms Filter
+  if (minBedrooms !== null && p.bedrooms < minBedrooms) return false;
+  if (maxBedrooms !== null && p.bedrooms > maxBedrooms) return false;
+
+  // Bathrooms Filter
+  if (minBathrooms !== null && p.bathrooms < minBathrooms) return false;
+  if (maxBathrooms !== null && p.bathrooms > maxBathrooms) return false;
+
+  // Size Filter
+  if (minSize !== null && p.size < minSize) return false;
+  if (maxSize !== null && p.size > maxSize) return false;
+
+  // Year Filter
+  if (minYear !== null && p.year < minYear) return false;
+  if (maxYear !== null && p.year > maxYear) return false;
+
+  return true;
+});
+
 
     if (items.length === 0) {
       propertyContainer.innerHTML = "<p>Няма намерени имоти.</p>";
