@@ -18,8 +18,18 @@ const username = localStorage.getItem("username");
 const token = localStorage.getItem("token");
 const role = localStorage.getItem("role");
 
-const CATEGORY_LABELS_BG = { rent: "Наем", sale: "Продажба" };
-const TYPE_LABELS_BG = { apartment: "Апартамент", house: "Къща", villa: "Вила" };
+const CATEGORY_LABELS_BG = { 
+  rent: "Наем", 
+  sale: "Продажба" 
+};
+const TYPE_LABELS_BG = {
+  apartment: "Апартамент",
+  house: "Къща",
+  villa: "Вила",
+  farm: "Земеделски имот",
+  plot: "Парцел"
+};
+
 
 let lazyObserver;
 let currentPage = 1;
@@ -149,7 +159,7 @@ function renderPropertyCard(p) {
 
   return `<div class="property" data-id="${id}">
     ${firstImage ? `<img class="lazy-img" data-src="${firstImage}" alt="Имот" loading="lazy">` : ""}
-    <div class="property-content">
+    <div class="property-content">c
       <div class="property-id-box">ID: ${id}</div>
       <h3>${title}</h3>
       <p><strong>Цена:</strong> ${price}</p>
