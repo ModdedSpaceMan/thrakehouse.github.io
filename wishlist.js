@@ -1,3 +1,104 @@
+import { showToast } from './ui.js';
+import { toggleWishlist as mainToggleWishlist } from './properties.js';
+
+const wishlistContainer = document.getElementById('wishlistProperties');
+const username = localStorage.getItem('username');
+
+let propertiesData = [];
+let wishlistIds = [];
+
+// --------------------
+// Fetch all properties with full details
+async function fetchProperties() {
+  try {
+    const res = await fetch('https://my-backend.martinmiskata.workers.dev/properties');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+    if (!Array.isArray(data.items)) throw new Error('Expected an array of properties');
+
+    // Detect if backend returned only IDs
+    if (typeof data.items[0] === 'string' || typeof data.items[0] === 'number') {
+      // Only IDs returned, fetch full details per property
+      const props = await Promise.all(
+        data.items.map(async id => {
+          const r = await fetch(`https://my-backend.martinmiskata.workers.dev/properties/${id}`);
+          if (!r.ok) throw new Error(`Failed to fetch property ${id}`);
+          const p = await r.json();
+          return {
+            id: p.id,
+            title: p.title ?? 'Без име',
+            price: p.price ?? null,
+            category: p.category ?? '-',
+            status: p.status ?? '-',
+            bedrooms: p.bedrooms ?? '-',
+            bathrooms: p.bathrooms ?? '-',
+            size: p.size ?? null,
+            year: p.year ?? '-',
+            firstImage: p.firstImage || '',
+            restImages: p.restImages || [],
+            _fetchedImages: true
+          };
+        })
+      );
+      return props;
+    }
+
+    // Already full objects
+    return data.items.map(p => ({
+      id: p.id,
+      title: p.title ?? 'Без име',
+      price: p.price ?? null,
+      category: p.category ?? '-',
+      status: p.status ?? '-',
+      bedrooms: p.bedrooms ?? '-',
+      bathrooms: p.bathrooms ?? '-',
+      size: p.size ?? null,
+      year: p.year ?? '-',
+      firstImage: p.firstImage || p.images?.[0] || '',
+      restImages: p.restImages || p.images?.slice(1) || [],
+      _fetchedImages: true
+    }));
+
+  } catch (err) {
+    console.error('Failed to fetch properties:', err);
+    return [];
+  }
+}
+
+// --------------------
+// Load wishlist for the logged-in user
+export async function loadWishlist() {
+  if (!username) {
+    wishlistContainer.innerHTML = '<p>Трябва да сте влезли, за да видите wishlist.</p>';
+    return;
+  }
+
+  try {
+    // Fetch all properties
+    propertiesData = await fetchProperties();
+    console.log('Fetched properties:', propertiesData);
+
+    // Fetch wishlist IDs
+    const res = await fetch(`https://my-backend.martinmiskata.workers.dev/wishlists/${username}`, {
+      headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+    const validIds = propertiesData.map(p => String(p.id));
+    wishlistIds = (data.items || []).filter(id => validIds.includes(String(id)));
+    console.log('Wishlist IDs:', wishlistIds);
+
+    renderWishlist();
+  } catch (err) {
+    console.error(err);
+    wishlistContainer.innerHTML = '<p>Грешка при зареждане на wishlist.</p>';
+  }
+}
+
+// --------------------
+// Render wishlist properties
 export function renderWishlist() {
   if (!wishlistContainer) return;
 
@@ -19,8 +120,6 @@ export function renderWishlist() {
       const bathrooms = p.bathrooms ?? '-';
       const size = p.size != null ? p.size + ' м²' : '-';
       const year = p.year ?? '-';
-
-      // Show only the first image as a preview
       const image = p.firstImage || p.restImages?.[0] || '';
       const inWishlist = wishlistIds.includes(String(id)) ? '❤️' : '🤍';
 
@@ -58,10 +157,7 @@ function attachListeners() {
       const id = card.dataset.id;
       const property = propertiesData.find(p => p.id == id);
       if (!property) return showToast('Не може да се зареди имотът');
-
-      // Pass full property including restImages to your modal
-      // Example: your modal can iterate property.restImages and property.firstImage
-      window.openPropertyDetails(property);
+      window.openPropertyDetails(property); // modal gets full images
     });
   });
 
@@ -73,3 +169,7 @@ function attachListeners() {
     });
   });
 }
+
+// --------------------
+// Initialize
+document.addEventListener('DOMContentLoaded', loadWishlist);
