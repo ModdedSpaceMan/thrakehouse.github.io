@@ -1,76 +1,3 @@
-import { showToast } from './ui.js';
-import { toggleWishlist as mainToggleWishlist } from './properties.js';
-
-const wishlistContainer = document.getElementById('wishlistProperties');
-const username = localStorage.getItem('username');
-
-let propertiesData = [];
-let wishlistIds = [];
-
-// --------------------
-// Fetch all properties with full details
-async function fetchProperties() {
-  try {
-    const res = await fetch('https://my-backend.martinmiskata.workers.dev/properties');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const data = await res.json();
-
-    if (!Array.isArray(data.items)) throw new Error('Expected an array of properties');
-
-    // Map backend objects to our internal structure
-    return data.items.map(p => ({
-      id: p.id,
-      title: p.title ?? 'Без име',
-      price: p.price ?? null,
-      category: p.category ?? '-',
-      status: p.status ?? '-',
-      bedrooms: p.bedrooms ?? '-',
-      bathrooms: p.bathrooms ?? '-',
-      size: p.size ?? null,
-      year: p.year ?? '-',
-      firstImage: p.images?.[0] || '',
-      restImages: p.images?.slice(1) || [],
-      _fetchedImages: true
-    }));
-
-  } catch (err) {
-    console.error('Failed to fetch properties:', err);
-    return [];
-  }
-}
-
-// --------------------
-// Load wishlist for the logged-in user
-export async function loadWishlist() {
-  if (!username) {
-    wishlistContainer.innerHTML = '<p>Трябва да сте влезли, за да видите wishlist.</p>';
-    return;
-  }
-
-  try {
-    // Fetch all properties
-    propertiesData = await fetchProperties();
-
-    // Fetch wishlist IDs for the user
-    const res = await fetch(`https://my-backend.martinmiskata.workers.dev/wishlists/${username}`, {
-      headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const data = await res.json();
-    const validIds = propertiesData.map(p => String(p.id));
-    wishlistIds = (data.items || []).filter(id => validIds.includes(String(id)));
-
-    renderWishlist();
-  } catch (err) {
-    console.error(err);
-    wishlistContainer.innerHTML = '<p>Грешка при зареждане на wishlist.</p>';
-  }
-}
-
-// --------------------
-// Render wishlist properties
 export function renderWishlist() {
   if (!wishlistContainer) return;
 
@@ -92,6 +19,8 @@ export function renderWishlist() {
       const bathrooms = p.bathrooms ?? '-';
       const size = p.size != null ? p.size + ' м²' : '-';
       const year = p.year ?? '-';
+
+      // Show only the first image as a preview
       const image = p.firstImage || p.restImages?.[0] || '';
       const inWishlist = wishlistIds.includes(String(id)) ? '❤️' : '🤍';
 
@@ -129,6 +58,9 @@ function attachListeners() {
       const id = card.dataset.id;
       const property = propertiesData.find(p => p.id == id);
       if (!property) return showToast('Не може да се зареди имотът');
+
+      // Pass full property including restImages to your modal
+      // Example: your modal can iterate property.restImages and property.firstImage
       window.openPropertyDetails(property);
     });
   });
@@ -141,7 +73,3 @@ function attachListeners() {
     });
   });
 }
-
-// --------------------
-// Initialize
-document.addEventListener('DOMContentLoaded', loadWishlist);
