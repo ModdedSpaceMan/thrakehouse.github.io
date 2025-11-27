@@ -7,6 +7,8 @@ let propertiesData = [];
 let filteredData = null;
 let renderIndex = 0;
 const CHUNK = 20;
+let pageCache = {}; // Caches pages once loaded
+
 
 const propertyContainer = document.getElementById("properties");
 const propertyModal = document.getElementById("propertyDetailsModal");
@@ -392,27 +394,61 @@ function renderPagination() {
     return;
   }
 
-  let html = "";
-  for (let i = 1; i <= totalPages; i++) {
-    html += `<button class="page-btn${i === currentPage ? " active-page" : ""}" data-page="${i}">${i}</button>`;
+  function createButton(page) {
+    return `<button class="page-btn${page === currentPage ? " active-page" : ""}" data-page="${page}">${page}</button>`;
   }
 
-  paginationTop.innerHTML = html;
-  paginationBottom.innerHTML = html;
+  let pagesHTML = "";
 
-  // Click listeners
+  // Always show first page
+  pagesHTML += createButton(1);
+
+  // Show left dots
+  if (currentPage > 3) pagesHTML += `<span class="dots">...</span>`;
+
+  // Middle window: currentPage -1 / currentPage / currentPage +1
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(totalPages - 1, currentPage + 1);
+
+  for (let i = start; i <= end; i++) {
+    pagesHTML += createButton(i);
+  }
+
+  // Show right dots
+  if (currentPage < totalPages - 2) pagesHTML += `<span class="dots">...</span>`;
+
+  // Always show last page
+  if (totalPages > 1) pagesHTML += createButton(totalPages);
+
+  // Apply pagination to both areas
+  paginationTop.innerHTML = pagesHTML;
+  paginationBottom.innerHTML = pagesHTML;
+
+  // Activate click listeners
   document.querySelectorAll(".page-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
+    btn.addEventListener("click", () => {
       const page = parseInt(btn.dataset.page);
-      if (!page || page === currentPage) return;
-      loadPropertiesPage(page);
+      if (page && page !== currentPage) {
+        loadPropertiesPage(page);
+      }
     });
   });
 }
 
+
 async function loadPropertiesPage(page) {
   if (!propertyContainer || isLoading) return;
   isLoading = true;
+  
+  // Show Bulgarian loading message
+  propertyContainer.innerHTML = `<p class="loading-msg">Зареждане...</p>`;
+
+  // Serve instantly from cache
+  if (pageCache[page]) {
+    renderPageFromCache(page);
+    isLoading = false;
+    return;
+  }
 
   try {
     const headers = token ? { Authorization: "Bearer " + token } : {};
@@ -421,7 +457,8 @@ async function loadPropertiesPage(page) {
       limit: CHUNK,
       ...currentFilters,
     });
-    const res = await fetch(`${API_URL}/properties?${params.toString()}`, { headers });
+
+    const res = await fetch(`${API_URL}/properties?${params}`, { headers });
     if (!res.ok) throw new Error("HTTP " + res.status);
 
     const data = await res.json();
@@ -433,16 +470,30 @@ async function loadPropertiesPage(page) {
       p._fetchedImages = false;
     });
 
-    propertiesData = items;
-    filteredData = null;
-    renderIndex = 0;
-    propertyContainer.innerHTML = "";
-    renderChunk(items);
+    // Cache this page
+    pageCache[page] = items;
+
+    renderPageFromCache(page);
 
     currentPage = page;
     totalItems = data.total || totalItems;
     renderPagination();
+
   } catch (err) {
+    console.error(err);
+    propertyContainer.innerHTML = "<p>Грешка при зареждане на имотите.</p>";
+  } finally {
+    isLoading = false;
+  }
+}
+
+function renderPageFromCache(page) {
+  const items = pageCache[page] || [];
+  propertyContainer.innerHTML = "";
+  renderIndex = 0;
+  renderChunk(items);
+}
+catch (err) {
     console.error(err);
     propertyContainer.innerHTML = "<p>Грешка при зареждане на имотите.</p>";
   } finally {
