@@ -426,13 +426,13 @@ function renderPagination() {
 
   // Activate click listeners
   document.querySelectorAll(".page-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const page = parseInt(btn.dataset.page);
-      if (page && page !== currentPage) {
-        loadPropertiesPage(page);
-      }
-    });
+  btn.addEventListener("click", () => {
+    const page = parseInt(btn.dataset.page);
+    if (!page || page === currentPage) return; // <-- prevent reload on current page
+    loadPropertiesPage(page);
   });
+});
+
 }
 
 
