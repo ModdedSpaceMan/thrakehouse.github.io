@@ -493,11 +493,9 @@ function renderPageFromCache(page) {
   renderIndex = 0;
   renderChunk(items);
 }
-catch (err) {
-    console.error(err);
-    propertyContainer.innerHTML = "<p>Грешка при зареждане на имотите.</p>";
-  } finally {
-    isLoading = false;
-  }
+try {
+  document.addEventListener("DOMContentLoaded", () => { initProperties(); });
+} catch (err) {
+  console.error(err);
+  if (propertyContainer) propertyContainer.innerHTML = "<p>Грешка при зареждане на имотите.</p>";
 }
-document.addEventListener("DOMContentLoaded", () => { initProperties(); });
