@@ -9,8 +9,6 @@ let wishlistIds = [];
 
 // --------------------
 // Fetch and MAP properties (MATCHES properties.js format)
-// --------------------
-// Fetch and MAP properties (MATCHES properties.js format)
 async function fetchProperties() {
   try {
     const res = await fetch('https://my-backend.martinmiskata.workers.dev/properties');
@@ -19,16 +17,16 @@ async function fetchProperties() {
     // Parse the response
     const data = await res.json();
 
-    // Check if 'data' is an array before trying to map
-    if (!Array.isArray(data)) {
+    // Check if 'data.items' is an array before trying to map
+    if (!Array.isArray(data.items)) {
       throw new Error('Expected an array of properties but received something else');
     }
 
     // FIX: Transform raw backend data into same structure used in properties.js
-    return data.map(p => ({
-      ...p,
-      firstImage: typeof p.firstImage === "string" ? p.firstImage.trim() : "",
-      restImages: [],
+    return data.items.map(p => ({
+      id: p,  // Assuming the backend just returns IDs in 'items'
+      firstImage: '',  // Set a default empty string for image
+      restImages: [],  // Default empty array for additional images
       _fetchedImages: false
     }));
 
@@ -37,6 +35,7 @@ async function fetchProperties() {
     return []; // Return an empty array in case of error
   }
 }
+
 
 
 // --------------------
