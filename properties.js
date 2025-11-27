@@ -7,8 +7,7 @@ let propertiesData = [];
 let filteredData = null;
 let renderIndex = 0;
 const CHUNK = 20;
-let pageCache = {}; // Caches pages once loaded
-
+let pageCache = {};
 
 const propertyContainer = document.getElementById("properties");
 const propertyModal = document.getElementById("propertyDetailsModal");
@@ -18,18 +17,8 @@ const username = localStorage.getItem("username");
 const token = localStorage.getItem("token");
 const role = localStorage.getItem("role");
 
-const CATEGORY_LABELS_BG = { 
-  rent: "Наем", 
-  sale: "Продажба" 
-};
-const TYPE_LABELS_BG = {
-  apartment: "Апартамент",
-  house: "Къща",
-  villa: "Вила",
-  farm: "Земеделски имот",
-  plot: "Парцел"
-};
-
+const CATEGORY_LABELS_BG = { rent: "Наем", sale: "Продажба" };
+const TYPE_LABELS_BG = { apartment: "Апартамент", house: "Къща", villa: "Вила", farm: "Земеделски имот", plot: "Парцел" };
 
 let lazyObserver;
 let currentPage = 1;
@@ -37,6 +26,8 @@ let totalItems = 0;
 let currentFilters = { minPrice: "", maxPrice: "", type: "", category: "" };
 let isLoading = false;
 let isSearchActive = false;
+
+const loader = document.getElementById("globalLoader");
 
 export async function initProperties() {
   await loadWishlist();
@@ -49,32 +40,34 @@ export async function initProperties() {
   window.openPropertyDetails = openPropertyDetails;
 }
 
+export function clearCache() {
+  propertiesData = [];
+  filteredData = null;
+  pageCache = {};
+  renderIndex = 0;
+}
+
 export async function loadProperties(reset = false) {
   if (!propertyContainer || isLoading) return;
   isLoading = true;
+  if (loader) loader.style.display = "flex";
 
   if (reset) {
-    currentPage = 1; // reset to page 1
-    propertiesData = [];
-    renderIndex = 0;
+    currentPage = 1;
+    clearCache();
     propertyContainer.innerHTML = "";
   }
 
   try {
     const headers = token ? { Authorization: "Bearer " + token } : {};
-    const params = new URLSearchParams({
-      page: currentPage,
-      limit: CHUNK,
-      ...currentFilters,
-    });
-
+    const params = new URLSearchParams({ page: currentPage, limit: CHUNK, ...currentFilters });
     const res = await fetch(`${API_URL}/properties?${params.toString()}`, { headers });
     if (!res.ok) throw new Error("HTTP " + res.status);
 
     const data = await res.json();
     const items = Array.isArray(data.items) ? data.items : [];
 
-    // Render each property immediately
+    // Render immediately
     items.forEach((p) => {
       p.firstImage = typeof p.firstImage === "string" ? p.firstImage.trim() : "";
       p.restImages = [];
@@ -90,16 +83,15 @@ export async function loadProperties(reset = false) {
     totalItems = data.total || totalItems;
 
     renderPagination();
-    observeLazyImages(); // lazy-load images for newly added cards
-
+    observeLazyImages();
   } catch (err) {
     console.error("Error loading properties:", err);
     if (reset) propertyContainer.innerHTML = "<p>Грешка при зареждане на имотите.</p>";
   } finally {
     isLoading = false;
+    if (loader) loader.style.display = "none";
   }
 }
-
 
 function renderChunk(list = filteredData ?? propertiesData) {
   if (!list || renderIndex >= list.length) return;
@@ -173,45 +165,26 @@ function renderPropertyCard(p) {
   </div>`;
 }
 
-function setupDelegatedListeners() {
-  if (!propertyContainer) return;
-  propertyContainer.addEventListener("click", async (e) => {
-    const wishlistBtn = e.target.closest(".wishlist-btn");
-    if (wishlistBtn) { e.preventDefault(); e.stopPropagation(); return toggleWishlist(wishlistBtn.dataset.id); }
-
-    const deleteBtn = e.target.closest(".delete-btn");
-    if (deleteBtn && role === "admin") {
-      e.preventDefault(); e.stopPropagation();
-      if (confirm("Изтриване на имота?")) return deleteProperty(deleteBtn.dataset.id);
-      return;
-    }
-
-    const toggleBtn = e.target.closest(".toggle-status-btn");
-    if (toggleBtn && role === "admin") {
-      e.preventDefault(); e.stopPropagation();
-      return toggleRentalStatus(toggleBtn.dataset.id);
-    }
-
-    const propEl = e.target.closest(".property");
-    if (propEl) {
-      e.preventDefault();
-      const id = propEl.dataset.id;
-      const property = propertiesData.find((p) => p.id == id) || (filteredData || []).find((p) => p.id == id);
-      if (!property) return showToast("Имотът не е намерен!");
-      return openPropertyDetails(property);
-    }
+// --- FILTER LISTENERS ---
+function setupFilterListeners() {
+  const btn = document.getElementById("applyFilters");
+  const resetBtn = document.getElementById("resetFilters");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    isSearchActive = false;
+    currentFilters = {
+      minPrice: document.getElementById("filterMinPrice").value,
+      maxPrice: document.getElementById("filterMaxPrice").value,
+      type: document.getElementById("filterType").value,
+      category: document.getElementById("filterCategory").value,
+    };
+    clearCache(); // reset cache on filter change
+    loadProperties(true); // reload page 1 with new filters
   });
+  resetBtn?.addEventListener("click", resetSearch);
 }
 
-function setupScrollLoader() {
-  window.addEventListener("scroll", () => {
-    if ((window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) && !isLoading) {
-      if (isSearchActive) return; // do not load more when searching by ID
-      if (propertiesData.length < totalItems) loadProperties();
-    }
-  });
-}
-
+// --- SEARCH ---
 function setupSearchListener() {
   const searchBtn = document.getElementById("searchByIdBtn");
   const searchInput = document.getElementById("searchByIdInput");
@@ -220,8 +193,9 @@ function setupSearchListener() {
   searchBtn.addEventListener("click", async () => {
     const id = searchInput.value.trim();
     if (!id) return showToast("Въведете ID на имота!");
-
     isSearchActive = true;
+
+    loader.style.display = "flex";
     try {
       const headers = token ? { Authorization: "Bearer " + token } : {};
       const res = await fetch(`${API_URL}/properties/${id}`, { headers });
@@ -234,6 +208,8 @@ function setupSearchListener() {
     } catch (err) {
       console.error(err);
       showToast("Грешка при зареждане на имота");
+    } finally {
+      loader.style.display = "none";
     }
   });
 }
@@ -246,262 +222,71 @@ function resetSearch() {
   loadProperties(true);
 }
 
-async function openPropertyDetails(property) {
-  const loader = document.getElementById("globalLoader");
-  loader.style.display = "flex";
-  
-  const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value ?? "-"; };
-  const category = CATEGORY_LABELS_BG[property.category] || property.category || "-";
-  const type = TYPE_LABELS_BG[property.type] || property.type || "-";
-
-  set("propTitle", property.title || "-");
-  set("propPrice", property.price != null ? property.price + "€" : "-");
-  set("propType", type);
-  set("propBedrooms", property.bedrooms ?? "-");
-  set("propBathrooms", property.bathrooms ?? "-");
-  set("propArea", property.size != null ? property.size + " м²" : "-");
-  set("propDescription", property.description || "-");
-  set("propCategory", category);
-  set("propStatus", property.status || "-");
-  set("propYear", property.year ?? "-");
-
-  let currentPropertyImages = [];
-if (property.firstImage) currentPropertyImages.push(property.firstImage);
-
-if (!property._fetchedImages) {
-  try {
-    const res = await fetch(`${API_URL}/properties/${property.id}/images`);
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data.images)) { 
-        property.restImages = data.images; 
-        currentPropertyImages.push(...data.images); 
-      }
-    }
-  } catch (err) { console.error("Failed to load extra images:", err); }
-  property._fetchedImages = true;
-} else if (property.restImages?.length) currentPropertyImages.push(...property.restImages);
-
-// **Wait for all images to load**
-await Promise.all(currentPropertyImages.map(src => new Promise(res => {
-  const img = new Image();
-  img.onload = res;
-  img.onerror = res;
-  img.src = src;
-})));
-
-loader.style.display = "none"; // hide loader after images loaded
-
-
-  let currentImageIndex = 0;
-  const img = document.getElementById("propImage");
-  const dots = document.getElementById("propImageDots");
-
-  function updateModalImage() {
-    if (!img) return;
-    if (!currentPropertyImages.length) { img.style.display = "none"; if (dots) dots.innerHTML = ""; return; }
-    img.style.display = "block";
-    img.src = currentPropertyImages[currentImageIndex];
-    if (dots) {
-      dots.innerHTML = "";
-      currentPropertyImages.forEach((_, i) => {
-        const dot = document.createElement("span");
-        dot.className = "slider-dot";
-        dot.style.opacity = i === currentImageIndex ? "1" : "0.5";
-        dot.addEventListener("click", (e) => { e.stopPropagation(); currentImageIndex = i; updateModalImage(); });
-        dots.appendChild(dot);
-      });
-    }
-  }
-
-  const prevBtn = propertyModal.querySelector("#prevImageBtn");
-  const nextBtn = propertyModal.querySelector("#nextImageBtn");
-
-  prevBtn?.addEventListener("click", (e) => { e.stopPropagation(); if (!currentPropertyImages.length) return; currentImageIndex = (currentImageIndex - 1 + currentPropertyImages.length) % currentPropertyImages.length; updateModalImage(); });
-  nextBtn?.addEventListener("click", (e) => { e.stopPropagation(); if (!currentPropertyImages.length) return; currentImageIndex = (currentImageIndex + 1) % currentPropertyImages.length; updateModalImage(); });
-
-  updateModalImage();
-  propertyModal.style.display = "flex";
-}
-
-function setupModalStaticListeners() {
-  if (!propertyModal) return;
-  const closeBtn = propertyModal.querySelector(".close");
-  closeBtn?.addEventListener("click", () => (propertyModal.style.display = "none"));
-  propertyModal.addEventListener("click", (e) => { if (e.target === propertyModal) propertyModal.style.display = "none"; });
-}
-
-export async function loadWishlist() {
-  if (!username || !token) return (wishlistIds = []);
-  try {
-    const res = await fetch(`${API_URL}/wishlists/${username}`, { headers: { Authorization: "Bearer " + token } });
-    const data = await res.json();
-    wishlistIds = data.items || [];
-  } catch {
-    wishlistIds = [];
-  }
-}
-
-export async function toggleWishlist(id) {
-  if (!username || !token) return showToast("Трябва да сте влезли!");
-  const action = wishlistIds.includes(String(id)) ? "remove" : "add";
-  try {
-    const res = await fetch(`${API_URL}/wishlists/${username}/${action}`, {
-      method: "POST",
-      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-      body: JSON.stringify({ propertyId: id }),
-    });
-    const data = await res.json();
-    if (!data.success) return showToast("Грешка при актуализиране на списъка с любими");
-
-    if (action === "add") wishlistIds.push(String(id)); else wishlistIds = wishlistIds.filter((x) => x !== String(id));
-    const btn = document.querySelector(`.wishlist-btn[data-id="${id}"]`);
-    if (btn) btn.textContent = wishlistIds.includes(String(id)) ? "❤️" : "🤍";
-  } catch (err) { console.error(err); showToast("Грешка при актуализиране на списъка с любими"); }
-}
-
-async function deleteProperty(id) {
-  try {
-    await fetch(`${API_URL}/properties/${id}`, { method: "DELETE", headers: { Authorization: "Bearer " + token } });
-    showToast("Имотът беше изтрит!");
-    await loadProperties(true);
-  } catch (err) { console.error(err); showToast("Грешка при изтриване на имота"); }
-}
-
-async function toggleRentalStatus(id) {
-  try {
-    await fetch(`${API_URL}/properties/${id}/status`, { method: "POST", headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }, body: JSON.stringify({ status: "toggle" }) });
-    showToast("Статусът беше актуализиран!");
-    await loadProperties(true);
-  } catch (err) { console.error(err); showToast("Грешка при актуализиране на статуса"); }
-}
-
-function setupFilterListeners() {
-  const btn = document.getElementById("applyFilters");
-  const resetBtn = document.getElementById("resetFilters");
-  if (!btn) return;
-  btn.addEventListener("click", () => {
-    isSearchActive = false;
-    const minPrice = document.getElementById("filterMinPrice").value;
-    const maxPrice = document.getElementById("filterMaxPrice").value;
-    const type = document.getElementById("filterType").value;
-    const category = document.getElementById("filterCategory").value;
-
-    currentFilters = { minPrice, maxPrice, type, category };
-    loadProperties(true);
-  });
-
-  resetBtn?.addEventListener("click", () => {
-    resetSearch();
-  });
-}
+// --- PAGINATION ---
 function renderPagination() {
   if (!paginationTop || !paginationBottom) return;
-
   const totalPages = Math.ceil(totalItems / CHUNK);
-  if (totalPages <= 1) {
-    paginationTop.innerHTML = "";
-    paginationBottom.innerHTML = "";
-    return;
-  }
+  if (totalPages <= 1) { paginationTop.innerHTML = ""; paginationBottom.innerHTML = ""; return; }
 
-  function createButton(page) {
-    return `<button class="page-btn${page === currentPage ? " active-page" : ""}" data-page="${page}">${page}</button>`;
-  }
+  function createButton(page) { return `<button class="page-btn${page === currentPage ? " active-page" : ""}" data-page="${page}">${page}</button>`; }
 
-  let pagesHTML = "";
-
-  // Always show first page
-  pagesHTML += createButton(1);
-
-  // Show left dots
+  let pagesHTML = createButton(1);
   if (currentPage > 3) pagesHTML += `<span class="dots">...</span>`;
-
-  // Middle window: currentPage -1 / currentPage / currentPage +1
   const start = Math.max(2, currentPage - 1);
   const end = Math.min(totalPages - 1, currentPage + 1);
-
-  for (let i = start; i <= end; i++) {
-    pagesHTML += createButton(i);
-  }
-
-  // Show right dots
+  for (let i = start; i <= end; i++) pagesHTML += createButton(i);
   if (currentPage < totalPages - 2) pagesHTML += `<span class="dots">...</span>`;
-
-  // Always show last page
   if (totalPages > 1) pagesHTML += createButton(totalPages);
 
-  // Apply pagination to both areas
   paginationTop.innerHTML = pagesHTML;
   paginationBottom.innerHTML = pagesHTML;
 
-  // Activate click listeners
   document.querySelectorAll(".page-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const page = parseInt(btn.dataset.page);
-    if (!page || page === currentPage) return; // <-- prevent reload on current page
-    loadPropertiesPage(page);
+    btn.addEventListener("click", () => {
+      const page = parseInt(btn.dataset.page);
+      if (!page || page === currentPage) return;
+      loadPropertiesPage(page);
+    });
   });
-});
-
 }
-
 
 async function loadPropertiesPage(page) {
   if (!propertyContainer || isLoading) return;
-  if (page === currentPage) return; // prevent reloading the current page
+  if (page === currentPage) return;
   isLoading = true;
+  loader.style.display = "flex";
 
-  // Serve instantly from cache
+  // Serve from cache
   if (pageCache[page]) {
     renderPageFromCache(page);
     currentPage = page;
-    renderPagination(); // update active page highlight
+    renderPagination();
     isLoading = false;
+    loader.style.display = "none";
     return;
   }
 
   try {
-    // Show loader only if not cached
-    propertyContainer.innerHTML = `<p class="loading-msg">Зареждане...</p>`;
-
     const headers = token ? { Authorization: "Bearer " + token } : {};
-    const params = new URLSearchParams({
-      page,
-      limit: CHUNK,
-      ...currentFilters,
-    });
-
+    const params = new URLSearchParams({ page, limit: CHUNK, ...currentFilters });
     const res = await fetch(`${API_URL}/properties?${params.toString()}`, { headers });
     if (!res.ok) throw new Error("HTTP " + res.status);
-
     const data = await res.json();
     const items = Array.isArray(data.items) ? data.items : [];
-
-    items.forEach((p) => {
-      p.firstImage = typeof p.firstImage === "string" ? p.firstImage.trim() : "";
-      p.restImages = [];
-      p._fetchedImages = false;
-    });
-
-    // Cache this page
+    items.forEach((p) => { p.firstImage = p.firstImage?.trim() ?? ""; p.restImages = []; p._fetchedImages = false; });
     pageCache[page] = items;
-
-    // Render page
     renderPageFromCache(page);
-
     currentPage = page;
     totalItems = data.total || totalItems;
-    renderPagination(); // update active page highlight
-
+    renderPagination();
   } catch (err) {
     console.error(err);
     propertyContainer.innerHTML = "<p>Грешка при зареждане на имотите.</p>";
   } finally {
     isLoading = false;
+    loader.style.display = "none";
   }
 }
-
 
 function renderPageFromCache(page) {
   const items = pageCache[page] || [];
@@ -509,9 +294,15 @@ function renderPageFromCache(page) {
   renderIndex = 0;
   renderChunk(items);
 }
-try {
-  document.addEventListener("DOMContentLoaded", () => { initProperties(); });
-} catch (err) {
-  console.error(err);
-  if (propertyContainer) propertyContainer.innerHTML = "<p>Грешка при зареждане на имотите.</p>";
+
+// --- SCROLL LOADER ---
+function setupScrollLoader() {
+  window.addEventListener("scroll", () => {
+    if ((window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) && !isLoading) {
+      if (isSearchActive) return;
+      if (propertiesData.length < totalItems) loadProperties();
+    }
+  });
 }
+
+try { document.addEventListener("DOMContentLoaded", initProperties); } catch (err) { console.error(err); }
