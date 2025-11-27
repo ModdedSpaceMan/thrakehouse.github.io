@@ -114,8 +114,8 @@ adminFound.innerHTML = `
     <div class="property-content">
       <h3 style="color: #0f1c2b;">${prop.title || 'Без име'}</h3>
       <p><strong>Цена:</strong> ${prop.price + "€" ?? '-'}</p>
-      <p><strong>Тип:</strong> ${TYPE_LABELS_BG[p.type] || prop.type || '-'}</p>
-      <p><strong>Категория:</strong> ${CATEGORY_LABELS_BG[p.category] || prop.category || '-'}</p>
+      <p><strong>Тип:</strong> ${TYPE_LABELS_BG[prop.type] || prop.type || '-'}</p>
+      <p><strong>Категория:</strong> ${CATEGORY_LABELS_BG[prop.category] || prop.category || '-'}</p>
       <p><strong>Статус:</strong> ${prop.status || '-'}</p>
       <p><strong>Спални:</strong> ${prop.bedrooms ?? '-'}</p>
       <p><strong>Бани:</strong> ${prop.bathrooms ?? '-'}</p>
