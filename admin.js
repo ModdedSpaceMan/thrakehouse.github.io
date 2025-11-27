@@ -63,16 +63,11 @@ adminSearchBtn?.addEventListener('click', async () => {
   if (!searchId) return;
 
   try {
-    const res = await fetch(`${API_URL}/property/search?id=${searchId}`, {
+    const res = await fetch(`${API_URL}/properties/${searchId}`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
+    if (!data.success) { ... }
 
-    const data = await res.json();
-
-    if (!data.success || !data.property) {
-      adminFound.textContent = 'Няма намерен имот с това ID';
-      return;
-    }
 
     const prop = data.property;
 
