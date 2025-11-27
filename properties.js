@@ -45,7 +45,7 @@ export async function loadProperties(reset = false) {
   isLoading = true;
 
   if (reset) {
-    currentPage = 1;
+    currentPage = 1; // reset to page 1
     propertiesData = [];
     renderIndex = 0;
     propertyContainer.innerHTML = "";
@@ -58,6 +58,7 @@ export async function loadProperties(reset = false) {
       limit: CHUNK,
       ...currentFilters,
     });
+
     const res = await fetch(`${API_URL}/properties?${params.toString()}`, { headers });
     if (!res.ok) throw new Error("HTTP " + res.status);
 
@@ -78,10 +79,10 @@ export async function loadProperties(reset = false) {
     propertiesData = reset ? items : propertiesData.concat(items);
     filteredData = null;
     totalItems = data.total || totalItems;
-    currentPage++;
-    
+
     renderPagination();
     observeLazyImages(); // lazy-load images for newly added cards
+
   } catch (err) {
     console.error("Error loading properties:", err);
     if (reset) propertyContainer.innerHTML = "<p>Грешка при зареждане на имотите.</p>";
@@ -89,6 +90,7 @@ export async function loadProperties(reset = false) {
     isLoading = false;
   }
 }
+
 
 function renderChunk(list = filteredData ?? propertiesData) {
   if (!list || renderIndex >= list.length) return;
