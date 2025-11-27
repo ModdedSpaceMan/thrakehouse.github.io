@@ -8,38 +8,40 @@ let propertiesData = [];
 let wishlistIds = [];
 
 // --------------------
-// Fetch and MAP properties (MATCHES properties.js format)
+// Fetch all properties with full details
 async function fetchProperties() {
   try {
     const res = await fetch('https://my-backend.martinmiskata.workers.dev/properties');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    
-    // Parse the response
+
     const data = await res.json();
 
-    // Check if 'data.items' is an array before trying to map
-    if (!Array.isArray(data.items)) {
-      throw new Error('Expected an array of properties but received something else');
-    }
+    if (!Array.isArray(data.items)) throw new Error('Expected an array of properties');
 
-    // FIX: Transform raw backend data into same structure used in properties.js
+    // Map backend objects to our internal structure
     return data.items.map(p => ({
-      id: p,  // Assuming the backend just returns IDs in 'items'
-      firstImage: '',  // Set a default empty string for image
-      restImages: [],  // Default empty array for additional images
-      _fetchedImages: false
+      id: p.id,
+      title: p.title ?? 'Без име',
+      price: p.price ?? null,
+      category: p.category ?? '-',
+      status: p.status ?? '-',
+      bedrooms: p.bedrooms ?? '-',
+      bathrooms: p.bathrooms ?? '-',
+      size: p.size ?? null,
+      year: p.year ?? '-',
+      firstImage: p.images?.[0] || '',
+      restImages: p.images?.slice(1) || [],
+      _fetchedImages: true
     }));
 
   } catch (err) {
     console.error('Failed to fetch properties:', err);
-    return []; // Return an empty array in case of error
+    return [];
   }
 }
 
-
-
 // --------------------
-// Load wishlist from backend
+// Load wishlist for the logged-in user
 export async function loadWishlist() {
   if (!username) {
     wishlistContainer.innerHTML = '<p>Трябва да сте влезли, за да видите wishlist.</p>';
@@ -47,10 +49,10 @@ export async function loadWishlist() {
   }
 
   try {
-    // Fetch properties (with FIXED mapping)
+    // Fetch all properties
     propertiesData = await fetchProperties();
 
-    // Fetch wishlist for the user
+    // Fetch wishlist IDs for the user
     const res = await fetch(`https://my-backend.martinmiskata.workers.dev/wishlists/${username}`, {
       headers: { Authorization: 'Bearer ' + localStorage.getItem('token') }
     });
@@ -58,11 +60,7 @@ export async function loadWishlist() {
 
     const data = await res.json();
     const validIds = propertiesData.map(p => String(p.id));
-
     wishlistIds = (data.items || []).filter(id => validIds.includes(String(id)));
-
-    console.log('Wishlist backend IDs:', wishlistIds);
-    console.log('All properties IDs:', validIds);
 
     renderWishlist();
   } catch (err) {
@@ -72,13 +70,11 @@ export async function loadWishlist() {
 }
 
 // --------------------
-// Render wishlist
+// Render wishlist properties
 export function renderWishlist() {
   if (!wishlistContainer) return;
 
   const savedProps = propertiesData.filter(p => wishlistIds.includes(String(p.id)));
-
-  console.log("Saved properties:", savedProps);
 
   if (!savedProps.length) {
     wishlistContainer.innerHTML = '<p>Вашият списък е празен.</p>';
@@ -96,18 +92,13 @@ export function renderWishlist() {
       const bathrooms = p.bathrooms ?? '-';
       const size = p.size != null ? p.size + ' м²' : '-';
       const year = p.year ?? '-';
-
-      // FIXED: wishlist images now work
       const image = p.firstImage || p.restImages?.[0] || '';
-
       const inWishlist = wishlistIds.includes(String(id)) ? '❤️' : '🤍';
 
       return `
         <div class="property" data-id="${id}">
           ${image ? `<img src="${image}" alt="${title}" loading="lazy">` : ''}
-
           <div class="property-id-box">ID: ${id}</div>
-
           <div class="property-content">
             <h3>${title}</h3>
             <p><strong>Цена:</strong> ${price}</p>
@@ -118,7 +109,6 @@ export function renderWishlist() {
             <p><strong>Площ:</strong> ${size}</p>
             <p><strong>Година:</strong> ${year}</p>
           </div>
-
           <div class="property-actions">
             <button class="wishlist-btn" data-id="${id}">${inWishlist}</button>
           </div>
@@ -131,29 +121,27 @@ export function renderWishlist() {
 }
 
 // --------------------
-// Click listeners
+// Attach click listeners
 function attachListeners() {
-  // Open modal on card click
   wishlistContainer.querySelectorAll('.property').forEach(card => {
     card.addEventListener('click', e => {
       if (e.target.tagName === 'BUTTON') return;
       const id = card.dataset.id;
       const property = propertiesData.find(p => p.id == id);
       if (!property) return showToast('Не може да се зареди имотът');
-      window.openPropertyDetails(property); // open modal from main script
+      window.openPropertyDetails(property);
     });
   });
 
-  // Wishlist toggle
   wishlistContainer.querySelectorAll('.wishlist-btn').forEach(btn => {
     btn.addEventListener('click', async e => {
       e.stopPropagation();
       await mainToggleWishlist(btn.dataset.id);
-      loadWishlist(); // reload after toggle
+      loadWishlist();
     });
   });
 }
 
 // --------------------
-// Init
+// Initialize
 document.addEventListener('DOMContentLoaded', loadWishlist);
