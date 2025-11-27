@@ -91,6 +91,11 @@ export async function loadProperties(reset = false) {
       return true;
     });
 
+    if (items.length === 0) {
+      propertyContainer.innerHTML = "<p>Няма намерени имоти.</p>";
+      return;
+    }
+
     items.forEach((p) => {
       p.firstImage = typeof p.firstImage === "string" ? p.firstImage.trim() : "";
       p.restImages = [];
@@ -114,6 +119,32 @@ export async function loadProperties(reset = false) {
     isLoading = false;
   }
 }
+
+
+
+function renderChunk(list = filteredData ?? propertiesData) {
+  if (!list || list.length === 0) {
+    // No properties found, show message
+    propertyContainer.innerHTML = "<p>Няма намерени имоти.</p>";
+    return;
+  }
+
+  if (renderIndex >= list.length) return;
+
+  const frag = document.createDocumentFragment();
+  const slice = list.slice(renderIndex, renderIndex + CHUNK);
+
+  slice.forEach((p) => {
+    const temp = document.createElement("div");
+    temp.innerHTML = renderPropertyCard(p);
+    while (temp.firstChild) frag.appendChild(temp.firstChild);
+  });
+
+  propertyContainer.appendChild(frag);
+  observeLazyImages();
+  renderIndex += CHUNK;
+}
+
 
 
 // ------------------------ Render Functions ------------------------
