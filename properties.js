@@ -438,19 +438,22 @@ function renderPagination() {
 
 async function loadPropertiesPage(page) {
   if (!propertyContainer || isLoading) return;
+  if (page === currentPage) return; // prevent reloading the current page
   isLoading = true;
-  
-  // Show Bulgarian loading message
-  propertyContainer.innerHTML = `<p class="loading-msg">Зареждане...</p>`;
 
   // Serve instantly from cache
   if (pageCache[page]) {
     renderPageFromCache(page);
+    currentPage = page;
+    renderPagination(); // update active page highlight
     isLoading = false;
     return;
   }
 
   try {
+    // Show loader only if not cached
+    propertyContainer.innerHTML = `<p class="loading-msg">Зареждане...</p>`;
+
     const headers = token ? { Authorization: "Bearer " + token } : {};
     const params = new URLSearchParams({
       page,
@@ -458,7 +461,7 @@ async function loadPropertiesPage(page) {
       ...currentFilters,
     });
 
-    const res = await fetch(`${API_URL}/properties?${params}`, { headers });
+    const res = await fetch(`${API_URL}/properties?${params.toString()}`, { headers });
     if (!res.ok) throw new Error("HTTP " + res.status);
 
     const data = await res.json();
@@ -473,11 +476,12 @@ async function loadPropertiesPage(page) {
     // Cache this page
     pageCache[page] = items;
 
+    // Render page
     renderPageFromCache(page);
 
     currentPage = page;
     totalItems = data.total || totalItems;
-    renderPagination();
+    renderPagination(); // update active page highlight
 
   } catch (err) {
     console.error(err);
@@ -486,6 +490,7 @@ async function loadPropertiesPage(page) {
     isLoading = false;
   }
 }
+
 
 function renderPageFromCache(page) {
   const items = pageCache[page] || [];
