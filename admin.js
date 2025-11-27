@@ -102,7 +102,7 @@ adminFound.innerHTML = `
   <div class="property" data-id="${prop.id}">
     ${firstImage ? `<img src="${firstImage}" alt="${prop.title}" style="max-width:100%;margin-top:10px;border-radius:8px;">` : ''}
     <div class="property-content">
-      <h3>${prop.title || 'Без име'}</h3>
+      <h3 style="color: #0f1c2b;">${prop.title || 'Без име'}</h3>
       <p><strong>Цена:</strong> ${prop.price ?? '-'}</p>
       <p><strong>Тип:</strong> ${prop.type || '-'}</p>
       <p><strong>Категория:</strong> ${prop.category || '-'}</p>
