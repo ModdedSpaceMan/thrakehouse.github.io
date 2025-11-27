@@ -3,7 +3,17 @@ import { openModal, closeModal, showToast } from './ui.js';
 import { loadProperties } from './properties.js';
 
 const API_URL = 'https://my-backend.martinmiskata.workers.dev';
-
+const CATEGORY_LABELS_BG = { 
+  rent: "Наем", 
+  sale: "Продажба" 
+};
+const TYPE_LABELS_BG = {
+  apartment: "Апартамент",
+  house: "Къща",
+  villa: "Вила",
+  farm: "Земеделски имот",
+  plot: "Парцел"
+};
 document.addEventListener('DOMContentLoaded', () => {
   const sidebarToggle = document.getElementById('sidebarToggle');
   const adminSidebar = document.getElementById('adminSidebar');
@@ -104,8 +114,8 @@ adminFound.innerHTML = `
     <div class="property-content">
       <h3 style="color: #0f1c2b;">${prop.title || 'Без име'}</h3>
       <p><strong>Цена:</strong> ${prop.price ?? '-'}</p>
-      <p><strong>Тип:</strong> ${prop.type || '-'}</p>
-      <p><strong>Категория:</strong> ${prop.category || '-'}</p>
+      <p><strong>Тип:</strong> ${TYPE_LABELS_BG[p.type] || prop.type || '-'}</p>
+      <p><strong>Категория:</strong> ${CATEGORY_LABELS_BG[p.category] || prop.category || '-'}</p>
       <p><strong>Статус:</strong> ${prop.status || '-'}</p>
       <p><strong>Спални:</strong> ${prop.bedrooms ?? '-'}</p>
       <p><strong>Бани:</strong> ${prop.bathrooms ?? '-'}</p>
