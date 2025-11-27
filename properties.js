@@ -184,7 +184,7 @@ function renderChunk(list = filteredData ?? propertiesData) {
   renderIndex += CHUNK;
 }
 
-function renderPropertyCard(p) {
+export function renderPropertyCard(p) {
   const id = p.id ?? "-";
   const firstImage = p.firstImage || "";
   const category = CATEGORY_LABELS_BG[p.category] || p.category || "-";
