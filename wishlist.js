@@ -8,7 +8,7 @@ let propertiesData = [];
 let wishlistIds = [];
 
 // --------------------
-// Fetch all properties with full details
+// Fetch all properties with full details, including extra images
 async function fetchProperties() {
   try {
     const res = await fetch('https://my-backend.martinmiskata.workers.dev/properties');
@@ -25,18 +25,24 @@ async function fetchProperties() {
           const r = await fetch(`https://my-backend.martinmiskata.workers.dev/properties/${id}`);
           if (!r.ok) throw new Error(`Failed to fetch property ${id}`);
           const p = await r.json();
+
+          // Fetch extra images if needed
+          const extraImagesRes = await fetch(`https://my-backend.martinmiskata.workers.dev/properties/${id}/images`);
+          const extraImagesData = extraImagesRes.ok ? await extraImagesRes.json() : [];
+
           return {
             id: p.id,
             title: p.title ?? 'Без име',
             price: p.price ?? null,
+            type: p.type ?? p.category ?? '-',
             category: p.category ?? '-',
             status: p.status ?? '-',
             bedrooms: p.bedrooms ?? '-',
             bathrooms: p.bathrooms ?? '-',
             size: p.size ?? null,
             year: p.year ?? '-',
-            firstImage: p.firstImage || '',
-            restImages: p.restImages || [],
+            firstImage: p.firstImage || extraImagesData[0] || '',
+            restImages: p.restImages || extraImagesData.slice(1) || [],
             _fetchedImages: true
           };
         })
@@ -49,6 +55,7 @@ async function fetchProperties() {
       id: p.id,
       title: p.title ?? 'Без име',
       price: p.price ?? null,
+      type: p.type ?? p.category ?? '-',
       category: p.category ?? '-',
       status: p.status ?? '-',
       bedrooms: p.bedrooms ?? '-',
@@ -115,6 +122,7 @@ export function renderWishlist() {
       const title = p.title ?? 'Без име';
       const price = p.price != null ? p.price + ' лева' : '-';
       const category = p.category ?? '-';
+      const type = p.type ?? '-';
       const status = p.status ?? '-';
       const bedrooms = p.bedrooms ?? '-';
       const bathrooms = p.bathrooms ?? '-';
@@ -131,6 +139,7 @@ export function renderWishlist() {
             <h3>${title}</h3>
             <p><strong>Цена:</strong> ${price}</p>
             <p><strong>Категория:</strong> ${category}</p>
+            <p><strong>Тип:</strong> ${type}</p>
             <p><strong>Статус:</strong> ${status}</p>
             <p><strong>Спални:</strong> ${bedrooms}</p>
             <p><strong>Бани:</strong> ${bathrooms}</p>
@@ -157,7 +166,7 @@ function attachListeners() {
       const id = card.dataset.id;
       const property = propertiesData.find(p => p.id == id);
       if (!property) return showToast('Не може да се зареди имотът');
-      window.openPropertyDetails(property); // modal gets full images
+      window.openPropertyDetails(property); // full images available in modal
     });
   });
 
