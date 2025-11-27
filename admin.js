@@ -66,14 +66,24 @@ adminSearchBtn?.addEventListener('click', async () => {
     const res = await fetch(`${API_URL}/properties/${searchId}`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
-    if (!data.success) { ... }
 
+    // Handle 404
+    if (!res.ok) {
+      adminFound.textContent = 'Няма намерен имот с това ID';
+      return;
+    }
 
-    const prop = data.property;
+    const prop = await res.json(); // property comes directly
 
+    if (!prop || !prop.id) {
+      adminFound.textContent = 'Няма намерен имот с това ID';
+      return;
+    }
+
+    // Render property
     adminFound.innerHTML = `
       <div class="property" data-id="${prop.id}">
-        ${prop.images && prop.images.length > 0 ? `<img src="${prop.images[0]}" alt="${prop.title}" style="max-width:100%;margin-top:10px;border-radius:8px;">` : ''}
+        ${prop.images?.[0] ? `<img src="${prop.images[0]}" alt="${prop.title}" style="max-width:100%;margin-top:10px;border-radius:8px;">` : ''}
         <div class="property-content">
           <h3>${prop.title || 'Без име'}</h3>
           <p><strong>Локация:</strong> ${prop.location || '-'}</p>
@@ -91,9 +101,8 @@ adminSearchBtn?.addEventListener('click', async () => {
       </div>
     `;
 
-    // Delete property button
-    const deleteBtn = document.getElementById('adminDeleteBtn');
-    deleteBtn?.addEventListener('click', async () => {
+    // Delete property
+    document.getElementById('adminDeleteBtn')?.addEventListener('click', async () => {
       if (!confirm('Наистина ли искате да изтриете този имот?')) return;
 
       try {
