@@ -80,25 +80,43 @@ adminSearchBtn?.addEventListener('click', async () => {
       return;
     }
 
-    // Render property
-    adminFound.innerHTML = `
-      <div class="property" data-id="${prop.id}">
-        ${prop.images?.[0] ? `<img src="${prop.images[0]}" alt="${prop.title}" style="max-width:100%;margin-top:10px;border-radius:8px;">` : ''}
-        <div class="property-content">
-          <h3>${prop.title || 'Без име'}</h3>
-          <p><strong>Цена:</strong> ${prop.price ?? '-'}</p>
-          <p><strong>Тип:</strong> ${prop.type || '-'}</p>
-          <p><strong>Категория:</strong> ${prop.category || '-'}</p>
-          <p><strong>Статус:</strong> ${prop.status || '-'}</p>
-          <p><strong>Спални:</strong> ${prop.bedrooms ?? '-'}</p>
-          <p><strong>Бани:</strong> ${prop.bathrooms ?? '-'}</p>
-          <p><strong>Площ:</strong> ${prop.size ?? '-'} m²</p>
-          <p><strong>Година:</strong> ${prop.year ?? '-'}</p>
-          <p><strong>Описание:</strong> ${prop.description || '-'}</p>
-          <button id="adminDeleteBtn">Изтрий имота</button>
-        </div>
-      </div>
-    `;
+    // inside your adminSearchBtn click handler, after fetching `prop`
+let firstImage = (prop.images && prop.images[0]) || '';
+
+// if no image in prop.images, try fetching extra images
+if (!firstImage) {
+  try {
+    const imgRes = await fetch(`${API_URL}/properties/${prop.id}/images`);
+    if (imgRes.ok) {
+      const imgData = await imgRes.json();
+      if (Array.isArray(imgData.images) && imgData.images.length > 0) {
+        firstImage = imgData.images[0];
+      }
+    }
+  } catch (e) {
+    console.warn('Could not fetch extra images', e);
+  }
+}
+
+adminFound.innerHTML = `
+  <div class="property" data-id="${prop.id}">
+    ${firstImage ? `<img src="${firstImage}" alt="${prop.title}" style="max-width:100%;margin-top:10px;border-radius:8px;">` : ''}
+    <div class="property-content">
+      <h3>${prop.title || 'Без име'}</h3>
+      <p><strong>Цена:</strong> ${prop.price ?? '-'}</p>
+      <p><strong>Тип:</strong> ${prop.type || '-'}</p>
+      <p><strong>Категория:</strong> ${prop.category || '-'}</p>
+      <p><strong>Статус:</strong> ${prop.status || '-'}</p>
+      <p><strong>Спални:</strong> ${prop.bedrooms ?? '-'}</p>
+      <p><strong>Бани:</strong> ${prop.bathrooms ?? '-'}</p>
+      <p><strong>Площ:</strong> ${prop.size ?? '-'} m²</p>
+      <p><strong>Година:</strong> ${prop.year ?? '-'}</p>
+      <p><strong>Описание:</strong> ${prop.description || '-'}</p>
+      <button id="adminDeleteBtn">Изтрий имота</button>
+    </div>
+  </div>
+`;
+
 
     // Delete property
     document.getElementById('adminDeleteBtn')?.addEventListener('click', async () => {
