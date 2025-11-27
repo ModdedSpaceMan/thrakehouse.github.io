@@ -43,7 +43,6 @@ export async function initProperties() {
   setupModalStaticListeners();
   setupSearchListener();
   setupDelegatedListeners();
-  setupScrollLoader();
 
   window.addEventListener("propertiesUpdated", () => loadProperties(true));
   window.openPropertyDetails = openPropertyDetails;
@@ -74,7 +73,23 @@ export async function loadProperties(reset = false) {
     if (!res.ok) throw new Error("HTTP " + res.status);
 
     const data = await res.json();
-    const items = Array.isArray(data.items) ? data.items : [];
+    let items = Array.isArray(data.items) ? data.items : [];
+
+    // ------------------------ FILTER FIX ------------------------
+    // Only keep items matching currentFilters
+    items = items.filter((p) => {
+      const min = currentFilters.minPrice ? parseFloat(currentFilters.minPrice) : null;
+      const max = currentFilters.maxPrice ? parseFloat(currentFilters.maxPrice) : null;
+      const type = currentFilters.type || null;
+      const category = currentFilters.category || null;
+
+      if (min !== null && p.price < min) return false;
+      if (max !== null && p.price > max) return false;
+      if (type && p.type !== type) return false;
+      if (category && p.category !== category) return false;
+
+      return true;
+    });
 
     items.forEach((p) => {
       p.firstImage = typeof p.firstImage === "string" ? p.firstImage.trim() : "";
@@ -88,7 +103,7 @@ export async function loadProperties(reset = false) {
 
     propertiesData = reset ? items : propertiesData.concat(items);
     filteredData = null;
-    totalItems = data.total || totalItems;
+    totalItems = items.length;
 
     renderPagination();
     observeLazyImages();
@@ -99,6 +114,7 @@ export async function loadProperties(reset = false) {
     isLoading = false;
   }
 }
+
 
 // ------------------------ Render Functions ------------------------
 
