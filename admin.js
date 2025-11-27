@@ -56,39 +56,25 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Admin search property by ID
- adminSearchBtn?.addEventListener('click', async () => {
+adminSearchBtn?.addEventListener('click', async () => {
   if (!adminSearchInput || !adminFound) return;
 
   const searchId = adminSearchInput.value.trim();
   if (!searchId) return;
 
   try {
-    const res = await fetch(`${API_URL}/properties/${searchId}`, {
+    const res = await fetch(`${API_URL}/property/search?id=${searchId}`, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
 
-    // Handle 404 explicitly
-    if (!res.ok) {
+    const data = await res.json();
+
+    if (!data.success || !data.property) {
       adminFound.textContent = 'Няма намерен имот с това ID';
       return;
     }
 
-    // Safe JSON parse
-    let data;
-    try {
-      data = await res.json();
-    } catch {
-      adminFound.textContent = 'Няма намерен имот с това ID';
-      return;
-    }
-
-    if (!data || !data.id) {
-      adminFound.textContent = 'Няма намерен имот с това ID';
-      return;
-    }
-
-    const prop = data;
-
+    const prop = data.property;
 
     adminFound.innerHTML = `
       <div class="property" data-id="${prop.id}">
@@ -110,19 +96,23 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    // Delete property
+    // Delete property button
     const deleteBtn = document.getElementById('adminDeleteBtn');
     deleteBtn?.addEventListener('click', async () => {
       if (!confirm('Наистина ли искате да изтриете този имот?')) return;
+
       try {
         const delRes = await fetch(`${API_URL}/properties/${prop.id}`, {
           method: 'DELETE',
           headers: { 'Authorization': 'Bearer ' + token }
         });
+
         if (!delRes.ok) throw new Error(`HTTP ${delRes.status}`);
+
         showToast('Имотът беше изтрит!');
         adminFound.innerHTML = '';
         await loadProperties();
+
       } catch (err) {
         console.error(err);
         showToast('Грешка при изтриване на имота');
@@ -134,5 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
     adminFound.textContent = 'Грешка при търсене на имота';
   }
 });
+
 });
 
