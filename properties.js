@@ -484,17 +484,43 @@ function setupFilterListeners() {
 
   btn.addEventListener("click", () => {
     isSearchActive = false;
+
+    // Grab all filters from the DOM
     const minPrice = document.getElementById("filterMinPrice").value;
     const maxPrice = document.getElementById("filterMaxPrice").value;
     const type = document.getElementById("filterType").value;
     const category = document.getElementById("filterCategory").value;
 
-    currentFilters = { minPrice, maxPrice, type, category };
+    const minBedrooms = document.getElementById("filterMinBedrooms").value;
+    const minBathrooms = document.getElementById("filterMinBathrooms").value;
+
+    const minSize = document.getElementById("filterMinSize").value;
+    const maxSize = document.getElementById("filterMaxSize").value;
+
+    const minYear = document.getElementById("filterMinYear").value;
+    const maxYear = document.getElementById("filterMaxYear").value;
+
+    // Update currentFilters object with all filter values
+    currentFilters = {
+      minPrice,
+      maxPrice,
+      type,
+      category,
+      minBedrooms,
+      minBathrooms,
+      minSize,
+      maxSize,
+      minYear,
+      maxYear
+    };
+
+    // Reload properties with updated filters
     loadProperties(true);
   });
 
   resetBtn?.addEventListener("click", () => resetSearch());
 }
+
 
 // ------------------------ Pagination ------------------------
 
