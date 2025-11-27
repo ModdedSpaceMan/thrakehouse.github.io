@@ -86,7 +86,6 @@ adminSearchBtn?.addEventListener('click', async () => {
         ${prop.images?.[0] ? `<img src="${prop.images[0]}" alt="${prop.title}" style="max-width:100%;margin-top:10px;border-radius:8px;">` : ''}
         <div class="property-content">
           <h3>${prop.title || 'Без име'}</h3>
-          <p><strong>Локация:</strong> ${prop.location || '-'}</p>
           <p><strong>Цена:</strong> ${prop.price ?? '-'}</p>
           <p><strong>Тип:</strong> ${prop.type || '-'}</p>
           <p><strong>Категория:</strong> ${prop.category || '-'}</p>
