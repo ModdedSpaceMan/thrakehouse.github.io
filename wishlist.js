@@ -1,7 +1,5 @@
-// wishlist.js
 import { showToast } from "./ui.js";
 import { renderPropertyCard, toggleWishlist as mainToggleWishlist } from "./properties.js";
-import { openPropertyDetails } from "./propertyDetails.js";  // Import the function
 
 const wishlistContainer = document.getElementById("wishlistProperties");
 const username = localStorage.getItem("username");
@@ -9,56 +7,82 @@ const username = localStorage.getItem("username");
 let propertiesData = [];
 let wishlistIds = [];
 
+// Lazy-load images (same as in properties.js)
+function initLazyLoading() {
+  const lazyImages = document.querySelectorAll(".lazy-img");
+
+  if (lazyImages.length === 0) return;
+
+  // Check if IntersectionObserver is supported
+  if ('IntersectionObserver' in window) {
+    const lazyObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        const img = entry.target;
+
+        if (entry.isIntersecting) {
+          if (img.dataset.src) {
+            img.src = img.dataset.src;  // Set actual image source
+            img.removeAttribute("data-src");  // Remove lazy loading marker
+          }
+          observer.unobserve(img);
+        }
+      });
+    }, {
+      rootMargin: "200px",
+    });
+
+    lazyImages.forEach(img => {
+      lazyObserver.observe(img);
+    });
+  } else {
+    // Fallback for browsers that don't support IntersectionObserver
+    lazyImages.forEach(img => {
+      if (img.dataset.src) {
+        img.src = img.dataset.src;
+        img.removeAttribute("data-src");
+      }
+    });
+  }
+}
+
 // Fetch properties and images
 async function fetchProperties() {
-  console.log("Fetching properties...");
-
   try {
+    console.log("Fetching properties...");
     const res = await fetch("https://my-backend.martinmiskata.workers.dev/properties");
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    
+
     const data = await res.json();
     if (!Array.isArray(data.items)) throw new Error("Expected array");
 
+    console.log("Backend returned full property objects with images");
+
     // Backend only returned IDs
     if (typeof data.items[0] === "string" || typeof data.items[0] === "number") {
-      console.log("Backend returned only property IDs, fetching details...");
-      
       const props = await Promise.all(
         data.items.map(async (id) => {
           const r = await fetch(`https://my-backend.martinmiskata.workers.dev/properties/${id}`);
           if (!r.ok) throw new Error(`Failed to fetch property ${id}`);
           const p = await r.json();
-          
-          // Initialize property images if not already fetched
-          if (!p._fetchedImages) {
-            console.log(`Fetching extra images for property ${id}`);
-            try {
-              const extraImgsRes = await fetch(
-                `https://my-backend.martinmiskata.workers.dev/properties/${id}/images`
-              );
-              if (extraImgsRes.ok) {
-                const extraImgs = await extraImgsRes.json();
-                if (Array.isArray(extraImgs.images)) {
-                  p.restImages = extraImgs.images;
-                  p.firstImage = p.firstImage || extraImgs.images[0] || "";
-                }
-              }
-            } catch (err) {
-              console.error("Failed to load extra images:", err);
-            }
-            p._fetchedImages = true;  // Mark images as fetched
-          }
 
-          return p;
+          // Fetch extra images from the backend
+          const extraImgsRes = await fetch(
+            `https://my-backend.martinmiskata.workers.dev/properties/${id}/images`
+          );
+          const extraImgs = extraImgsRes.ok ? await extraImgsRes.json() : [];
+
+          return {
+            ...p,
+            firstImage: p.firstImage || extraImgs.images[0] || "",
+            restImages: p.restImages || extraImgs.images.slice(1) || [],
+            _fetchedImages: true,
+          };
         })
       );
-      console.log("Fetched all properties with images.");
       return props;
     }
 
     // Backend already returned full objects with images
-    console.log("Backend returned full property objects with images");
     return data.items.map((p) => ({
       ...p,
       firstImage: p.firstImage || p.images?.[0] || "",
@@ -73,15 +97,13 @@ async function fetchProperties() {
 
 // Load wishlist and fetch properties
 export async function loadWishlist() {
-  console.log("Loading wishlist...");
-
   if (!username) {
     wishlistContainer.innerHTML = "<p>Трябва да сте влезли, за да видите wishlist.</p>";
     return;
   }
 
   try {
-    // Fetch the full properties with images
+    console.log("Loading wishlist...");
     propertiesData = await fetchProperties();
     console.log("Fetched properties data:", propertiesData);
 
@@ -92,12 +114,11 @@ export async function loadWishlist() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();
-    console.log('Wishlist data:', data);  // Log the data for wishlist
-    
     const validIds = propertiesData.map((p) => String(p.id));
+
     wishlistIds = (data.items || []).filter((id) => validIds.includes(String(id)));
-    
-    console.log("Wishlist IDs:", wishlistIds);  // Log the wishlist IDs
+
+    console.log("Wishlist IDs:", wishlistIds);
 
     renderWishlist();
   } catch (err) {
@@ -108,10 +129,9 @@ export async function loadWishlist() {
 
 // Render wishlist using renderPropertyCard()
 export function renderWishlist() {
-  console.log("Rendering wishlist...");
-
   if (!wishlistContainer) return;
 
+  console.log("Rendering wishlist...");
   const savedProps = propertiesData.filter((p) =>
     wishlistIds.includes(String(p.id))
   );
@@ -121,8 +141,9 @@ export function renderWishlist() {
     return;
   }
 
-  console.log('Rendering the properties:', savedProps);
   wishlistContainer.innerHTML = savedProps.map((p) => renderPropertyCard(p)).join("");
+
+  console.log("Rendered wishlist:", savedProps);
 
   attachListeners();
   initLazyLoading(); // Ensure lazy loading works after rendering
@@ -139,7 +160,7 @@ function attachListeners() {
 
       if (!property) return showToast("Не може да се зареди имотът");
 
-      openPropertyDetails(property);  // Use openPropertyDetails here
+      window.openPropertyDetails(property);
     });
   });
 
