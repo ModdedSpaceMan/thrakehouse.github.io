@@ -8,6 +8,11 @@ const TYPE_LABELS_BG = {
   farm: "Земеделски имот",
   plot: "Парцел",
 };
+const STATUS_BG = {
+  taken = "Зает",
+  free = "Свободен",
+};
+
 
 // Function to open and display property details
 export async function openPropertyDetails(property) {
@@ -27,7 +32,8 @@ export async function openPropertyDetails(property) {
   // Set property details like title, price, type, etc.
   const category = CATEGORY_LABELS_BG[property.category] || property.category || "-";
   const type = TYPE_LABELS_BG[property.type] || property.type || "-";
-
+  const status = STATUS_BG[property.status] || property.status || "-";
+  
   set("propTitle", property.title || "-");
   set("propPrice", property.price != null ? property.price + "€" : "-");
   set("propType", type);
@@ -36,7 +42,7 @@ export async function openPropertyDetails(property) {
   set("propArea", property.size != null ? property.size + " м²" : "-");
   set("propDescription", property.description || "-");
   set("propCategory", category);
-  set("propStatus", property.status || "-");
+  set("propStatus", status);
   set("propYear", property.year ?? "-");
 
   // Initialize the array of images to display
