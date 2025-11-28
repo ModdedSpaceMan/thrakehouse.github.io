@@ -32,21 +32,32 @@ async function fetchProperties() {
           // Initialize property images if not already fetched
           if (!p._fetchedImages) {
             console.log(`Fetching extra images for property ${id}`);
+
             try {
               const extraImgsRes = await fetch(
                 `https://my-backend.martinmiskata.workers.dev/properties/${id}/images`
               );
+
               if (extraImgsRes.ok) {
                 const extraImgs = await extraImgsRes.json();
+                console.log(`Response for extra images for property ${id}:`, extraImgs);
+
                 if (Array.isArray(extraImgs.images)) {
+                  console.log(`Extra images fetched for property ${id}:`, extraImgs.images);
                   p.restImages = extraImgs.images;
                   p.firstImage = p.firstImage || extraImgs.images[0] || "";
+                } else {
+                  console.log(`No extra images found for property ${id}`);
                 }
+              } else {
+                console.error(`Failed to fetch extra images for property ${id}:`, extraImgsRes.statusText);
               }
             } catch (err) {
               console.error("Failed to load extra images:", err);
             }
             p._fetchedImages = true;  // Mark images as fetched
+          } else {
+            console.log(`Extra images already fetched for property ${id}`);
           }
 
           return p;
