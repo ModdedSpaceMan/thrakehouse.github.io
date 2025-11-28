@@ -7,7 +7,7 @@ const username = localStorage.getItem("username");
 let propertiesData = [];
 let wishlistIds = [];
 
-// Fetch properties and images (first time fetch, no extra images yet)
+// Fetch properties and images (no extra images yet)
 async function fetchProperties() {
   try {
     const res = await fetch("https://my-backend.martinmiskata.workers.dev/properties");
@@ -16,7 +16,7 @@ async function fetchProperties() {
     const data = await res.json();
     if (!Array.isArray(data.items)) throw new Error("Expected array");
 
-    // Backend only returned IDs
+    // If backend only returns IDs, fetch full property data
     if (typeof data.items[0] === "string" || typeof data.items[0] === "number") {
       const props = await Promise.all(
         data.items.map(async (id) => {
@@ -35,12 +35,12 @@ async function fetchProperties() {
       return props;
     }
 
-    // Backend already returned full objects with images
+    // If backend already returns full objects with images
     return data.items.map((p) => ({
       ...p,
       firstImage: p.firstImage || p.images?.[0] || "",
       restImages: p.restImages || p.images?.slice(1) || [],
-      _fetchedImages: true,
+      _fetchedImages: true, // Images already fetched
     }));
   } catch (err) {
     console.error("Failed to fetch properties:", err);
@@ -56,7 +56,7 @@ export async function loadWishlist() {
   }
 
   try {
-    // Fetch the full properties with images
+    // Fetch properties including first images
     propertiesData = await fetchProperties();
     console.log("Fetched properties:", propertiesData);
 
@@ -96,7 +96,7 @@ export function renderWishlist() {
   wishlistContainer.innerHTML = savedProps.map((p) => renderPropertyCard(p)).join("");
 
   attachListeners();
-  initLazyLoading(); // <-- Ensure lazy loading works after rendering
+  initLazyLoading();
 }
 
 // Lazy-load images (same as in properties.js)
@@ -105,7 +105,6 @@ function initLazyLoading() {
 
   if (lazyImages.length === 0) return;
 
-  // Check if IntersectionObserver is supported
   if ('IntersectionObserver' in window) {
     const lazyObserver = new IntersectionObserver((entries, observer) => {
       entries.forEach(entry => {
@@ -114,20 +113,17 @@ function initLazyLoading() {
         if (entry.isIntersecting) {
           if (img.dataset.src) {
             img.src = img.dataset.src;  // Set actual image source
-            img.removeAttribute("data-src");  // Remove lazy loading marker
+            img.removeAttribute("data-src");
           }
           observer.unobserve(img);
         }
       });
-    }, {
-      rootMargin: "200px",
-    });
+    }, { rootMargin: "200px" });
 
     lazyImages.forEach(img => {
       lazyObserver.observe(img);
     });
   } else {
-    // Fallback for browsers that don't support IntersectionObserver
     lazyImages.forEach(img => {
       if (img.dataset.src) {
         img.src = img.dataset.src;
@@ -146,21 +142,31 @@ function attachListeners() {
       const id = card.dataset.id;
       const property = propertiesData.find((p) => p.id == id);
 
-      if (!property) return showToast("Не може да се зареди имотът");
-
-      // If extra images haven't been fetched yet, load them
-      if (!property._fetchedImages) {
-        const extraImgsRes = await fetch(
-          `https://my-backend.martinmiskata.workers.dev/properties/${id}/images`
-        );
-        const extraImgs = extraImgsRes.ok ? await extraImgsRes.json() : [];
-
-        // Update the property with extra images
-        property.restImages = extraImgs;
-        property._fetchedImages = true;
+      if (!property) {
+        return showToast("Не може да се зареди имотът");
       }
 
-      // Open property details (with extra images now available)
+      console.log("Property clicked:", property);
+
+      // Fetch extra images if not already fetched
+      if (!property._fetchedImages) {
+        try {
+          const extraImgsRes = await fetch(
+            `https://my-backend.martinmiskata.workers.dev/properties/${id}/images`
+          );
+          const extraImgs = extraImgsRes.ok ? await extraImgsRes.json() : [];
+          
+          console.log("Fetched extra images:", extraImgs);
+
+          // Add extra images to the property object
+          property.restImages = extraImgs;
+          property._fetchedImages = true; // Mark images as fetched
+        } catch (err) {
+          console.error("Error fetching extra images:", err);
+        }
+      }
+
+      // Open the property details modal
       window.openPropertyDetails(property);
     });
   });
