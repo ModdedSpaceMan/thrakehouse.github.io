@@ -1,4 +1,5 @@
 // Labels for category and type in Bulgarian
+const API_URL = "https://my-backend.martinmiskata.workers.dev"
 const CATEGORY_LABELS_BG = { rent: "Наем", sale: "Продажба" };
 const TYPE_LABELS_BG = {
   apartment: "Апартамент",
