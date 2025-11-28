@@ -108,7 +108,6 @@ export function renderWishlist() {
 
   attachListeners();
   initLazyLoading(); // <-- Lazy loading ENABLED
-  attachCarouselListeners(); // <-- Attach carousel listeners
 }
 
 // -----------------------------------------------------------
@@ -146,44 +145,7 @@ function initLazyLoading() {
 }
 
 // -----------------------------------------------------------
-// Attach image carousel listeners (for next and prev buttons)
-// -----------------------------------------------------------
-function attachCarouselListeners() {
-  const cards = document.querySelectorAll('.property');
-
-  cards.forEach(card => {
-    const prevBtn = card.querySelector('.prev');
-    const nextBtn = card.querySelector('.next');
-    const mainImage = card.querySelector('.main-image');
-    const carouselImages = card.querySelectorAll('.carousel-image');
-    let currentIndex = 0;
-
-    if (carouselImages.length > 0) {
-      carouselImages[0].style.display = 'block'; // Show first image
-    }
-
-    // Prev Button Click Handler
-    prevBtn.addEventListener('click', () => {
-      if (currentIndex > 0) {
-        carouselImages[currentIndex].style.display = 'none';
-        currentIndex--;
-        carouselImages[currentIndex].style.display = 'block';
-      }
-    });
-
-    // Next Button Click Handler
-    nextBtn.addEventListener('click', () => {
-      if (currentIndex < carouselImages.length - 1) {
-        carouselImages[currentIndex].style.display = 'none';
-        currentIndex++;
-        carouselImages[currentIndex].style.display = 'block';
-      }
-    });
-  });
-}
-
-// -----------------------------------------------------------
-// Attach click listeners for property cards and wishlist buttons
+// Attach click listeners
 // -----------------------------------------------------------
 function attachListeners() {
   wishlistContainer.querySelectorAll(".property").forEach((card) => {
