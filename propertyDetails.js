@@ -1,25 +1,29 @@
+// Labels for category and type in Bulgarian
+const CATEGORY_LABELS_BG = { rent: "Наем", sale: "Продажба" };
+const TYPE_LABELS_BG = {
+  apartment: "Апартамент",
+  house: "Къща",
+  villa: "Вила",
+  farm: "Земеделски имот",
+  plot: "Парцел",
+};
 
-
-
-// propertyDetails.js
+// Function to open and display property details
 export async function openPropertyDetails(property) {
-  const CATEGORY_LABELS_BG = { rent: "Наем", sale: "Продажба" };
-  const TYPE_LABELS_BG = {
-    apartment: "Апартамент",
-    house: "Къща",
-    villa: "Вила",
-    farm: "Земеделски имот",
-    plot: "Парцел",
-  };
-
+  // Get the property modal element (make sure it's defined in HTML)
+  const propertyModal = document.getElementById("propertyModal");
   const loader = document.getElementById("globalLoader");
+
+  // Show loader while fetching data
   loader.style.display = "flex";
 
+  // Helper function to set text content of elements by ID
   const set = (id, value) => {
     const el = document.getElementById(id);
     if (el) el.textContent = value ?? "-";
   };
 
+  // Set property details like title, price, type, etc.
   const category = CATEGORY_LABELS_BG[property.category] || property.category || "-";
   const type = TYPE_LABELS_BG[property.type] || property.type || "-";
 
@@ -34,9 +38,11 @@ export async function openPropertyDetails(property) {
   set("propStatus", property.status || "-");
   set("propYear", property.year ?? "-");
 
+  // Initialize the array of images to display
   let currentPropertyImages = [];
   if (property.firstImage) currentPropertyImages.push(property.firstImage);
 
+  // Fetch extra images if not already fetched
   if (!property._fetchedImages) {
     try {
       const res = await fetch(`${API_URL}/properties/${property.id}/images`);
@@ -55,6 +61,7 @@ export async function openPropertyDetails(property) {
     currentPropertyImages.push(...property.restImages);
   }
 
+  // Preload all images to ensure smooth modal experience
   await Promise.all(
     currentPropertyImages.map(
       (src) =>
@@ -67,12 +74,15 @@ export async function openPropertyDetails(property) {
     )
   );
 
+  // Hide the loader after the images are loaded
   loader.style.display = "none";
 
+  // Image navigation logic
   let currentImageIndex = 0;
   const img = document.getElementById("propImage");
   const dots = document.getElementById("propImageDots");
 
+  // Function to update the modal image and dots
   function updateModalImage() {
     if (!img) return;
     if (!currentPropertyImages.length) {
@@ -100,6 +110,7 @@ export async function openPropertyDetails(property) {
     }
   }
 
+  // Event listeners for image navigation (previous and next)
   const prevBtn = propertyModal.querySelector("#prevImageBtn");
   const nextBtn = propertyModal.querySelector("#nextImageBtn");
 
@@ -117,6 +128,9 @@ export async function openPropertyDetails(property) {
     updateModalImage();
   });
 
+  // Initial image update
   updateModalImage();
+
+  // Show the modal
   propertyModal.style.display = "flex";
 }
