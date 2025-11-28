@@ -9,8 +9,8 @@ const TYPE_LABELS_BG = {
   plot: "Парцел",
 };
 const STATUS_BG = {
-  taken = "Зает",
-  free = "Свободен",
+  taken: "Зает",
+  free: "Свободен",
 };
 
 
