@@ -11,31 +11,36 @@ let wishlistIds = [];
 async function fetchProperties() {
   try {
     console.log("Fetching properties...");
+
     const res = await fetch("https://my-backend.martinmiskata.workers.dev/properties");
+    console.log('Properties response:', res);  // Log response for properties
+    
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    console.log("Properties fetched:", res);
 
     const data = await res.json();
+    console.log('Fetched property data:', data); // Log the fetched data
+    
     if (!Array.isArray(data.items)) throw new Error("Expected array");
-    console.log("Fetched property data:", data.items);
 
     // Backend only returned IDs
     if (typeof data.items[0] === "string" || typeof data.items[0] === "number") {
-      console.log("Fetching details for each property...");
+      console.log("Backend returned only property IDs, fetching details...");
+
       const props = await Promise.all(
         data.items.map(async (id) => {
-          console.log(`Fetching property details for ID: ${id}`);
+          console.log(`Fetching details for property ID: ${id}`); // Log each property ID
           const r = await fetch(`https://my-backend.martinmiskata.workers.dev/properties/${id}`);
           if (!r.ok) throw new Error(`Failed to fetch property ${id}`);
           const p = await r.json();
-          console.log(`Property fetched:`, p);
 
           // Fetch extra images from the backend
+          console.log(`Fetching extra images for property ${id}`); // Log the fetch request
           const extraImgsRes = await fetch(
             `https://my-backend.martinmiskata.workers.dev/properties/${id}/images`
           );
+          console.log(`Extra images response for property ${id}:`, extraImgsRes);  // Log the response
           const extraImgs = extraImgsRes.ok ? await extraImgsRes.json() : [];
-          console.log(`Extra images for ${id}:`, extraImgs);
+          console.log(`Extra images for property ${id}:`, extraImgs);  // Log the fetched images
 
           return {
             ...p,
@@ -45,7 +50,7 @@ async function fetchProperties() {
           };
         })
       );
-      console.log("Fetched all properties:", props);
+      console.log("Fetched all properties with images.");
       return props;
     }
 
@@ -66,9 +71,9 @@ async function fetchProperties() {
 // Load wishlist and fetch properties
 export async function loadWishlist() {
   console.log("Loading wishlist...");
+
   if (!username) {
     wishlistContainer.innerHTML = "<p>Трябва да сте влезли, за да видите wishlist.</p>";
-    console.log("No username, cannot load wishlist");
     return;
   }
 
@@ -81,20 +86,21 @@ export async function loadWishlist() {
       `https://my-backend.martinmiskata.workers.dev/wishlists/${username}`,
       { headers: { Authorization: "Bearer " + localStorage.getItem("token") } }
     );
+    console.log('Wishlist response:', res);  // Log the response for the wishlist
+    
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    console.log("Wishlist fetched:", res);
 
     const data = await res.json();
-    console.log("Wishlist data:", data);
-
+    console.log('Wishlist data:', data);  // Log the data for wishlist
+    
     const validIds = propertiesData.map((p) => String(p.id));
     wishlistIds = (data.items || []).filter((id) => validIds.includes(String(id)));
-
-    console.log("Wishlist IDs:", wishlistIds);
+    
+    console.log("Wishlist IDs:", wishlistIds);  // Log the wishlist IDs
 
     renderWishlist();
   } catch (err) {
-    console.error("Error loading wishlist:", err);
+    console.error(err);
     wishlistContainer.innerHTML = "<p>Грешка при зареждане на wishlist.</p>";
   }
 }
@@ -102,6 +108,7 @@ export async function loadWishlist() {
 // Render wishlist using renderPropertyCard()
 export function renderWishlist() {
   console.log("Rendering wishlist...");
+
   if (!wishlistContainer) return;
 
   const savedProps = propertiesData.filter((p) =>
@@ -110,12 +117,11 @@ export function renderWishlist() {
 
   if (!savedProps.length) {
     wishlistContainer.innerHTML = "<p>Вашият списък е празен.</p>";
-    console.log("No properties in wishlist");
     return;
   }
 
+  console.log('Rendering the properties:', savedProps);
   wishlistContainer.innerHTML = savedProps.map((p) => renderPropertyCard(p)).join("");
-  console.log("Rendered wishlist:", savedProps);
 
   attachListeners();
   initLazyLoading(); // Ensure lazy loading works after rendering
@@ -124,9 +130,10 @@ export function renderWishlist() {
 // Lazy-load images (same as in properties.js)
 function initLazyLoading() {
   const lazyImages = document.querySelectorAll(".lazy-img");
-  console.log("Lazy loading images:", lazyImages);
 
   if (lazyImages.length === 0) return;
+
+  console.log(`Lazy loading images:`, lazyImages);
 
   // Check if IntersectionObserver is supported
   if ('IntersectionObserver' in window) {
@@ -165,7 +172,6 @@ function attachListeners() {
   console.log("Attaching listeners to wishlist items...");
   wishlistContainer.querySelectorAll(".property").forEach((card) => {
     card.addEventListener("click", (e) => {
-      console.log("Property card clicked:", e.target);
       if (e.target.tagName === "BUTTON") return;
 
       const id = card.dataset.id;
@@ -173,13 +179,13 @@ function attachListeners() {
 
       if (!property) return showToast("Не може да се зареди имотът");
 
+      console.log(`Property card clicked:`, card);
       window.openPropertyDetails(property);
     });
   });
 
   wishlistContainer.querySelectorAll(".wishlist-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
-      console.log("Wishlist button clicked:", e.target);
       e.stopPropagation();
       await mainToggleWishlist(btn.dataset.id);
       loadWishlist(); // Refresh wishlist after toggle
