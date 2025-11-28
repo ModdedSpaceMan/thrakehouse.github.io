@@ -32,32 +32,21 @@ async function fetchProperties() {
           // Initialize property images if not already fetched
           if (!p._fetchedImages) {
             console.log(`Fetching extra images for property ${id}`);
-
             try {
               const extraImgsRes = await fetch(
                 `https://my-backend.martinmiskata.workers.dev/properties/${id}/images`
               );
-
               if (extraImgsRes.ok) {
                 const extraImgs = await extraImgsRes.json();
-                console.log(`Response for extra images for property ${id}:`, extraImgs);
-
                 if (Array.isArray(extraImgs.images)) {
-                  console.log(`Extra images fetched for property ${id}:`, extraImgs.images);
                   p.restImages = extraImgs.images;
                   p.firstImage = p.firstImage || extraImgs.images[0] || "";
-                } else {
-                  console.log(`No extra images found for property ${id}`);
                 }
-              } else {
-                console.error(`Failed to fetch extra images for property ${id}:`, extraImgsRes.statusText);
               }
             } catch (err) {
               console.error("Failed to load extra images:", err);
             }
             p._fetchedImages = true;  // Mark images as fetched
-          } else {
-            console.log(`Extra images already fetched for property ${id}`);
           }
 
           return p;
@@ -138,6 +127,44 @@ export function renderWishlist() {
   initLazyLoading(); // Ensure lazy loading works after rendering
 }
 
+// Lazy-load images
+function initLazyLoading() {
+  const lazyImages = document.querySelectorAll("img.lazy-img");
+
+  if (lazyImages.length === 0) return;
+
+  // Check if IntersectionObserver is supported (modern browsers)
+  if ('IntersectionObserver' in window) {
+    const lazyObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        const img = entry.target;
+
+        if (entry.isIntersecting) {
+          if (img.dataset.src) {
+            img.src = img.dataset.src;  // Set actual image source
+            img.removeAttribute("data-src");  // Remove lazy loading marker
+          }
+          observer.unobserve(img);  // Stop observing after loading
+        }
+      });
+    }, {
+      rootMargin: "200px",  // Trigger loading before the image comes into view
+    });
+
+    lazyImages.forEach(img => {
+      lazyObserver.observe(img);  // Observe each lazy image
+    });
+  } else {
+    // Fallback for browsers that don't support IntersectionObserver
+    lazyImages.forEach(img => {
+      if (img.dataset.src) {
+        img.src = img.dataset.src;
+        img.removeAttribute("data-src");
+      }
+    });
+  }
+}
+
 // Attach listeners to wishlist items
 function attachListeners() {
   wishlistContainer.querySelectorAll(".property").forEach((card) => {
@@ -147,8 +174,6 @@ function attachListeners() {
       const id = card.dataset.id;
       const property = propertiesData.find((p) => p.id == id);
 
-      console.log("Property clicked:", property); // Debugging the property data
-
       if (!property) return showToast("Не може да се зареди имотът");
 
       openPropertyDetails(property);  // Use openPropertyDetails here
@@ -157,10 +182,7 @@ function attachListeners() {
 
   wishlistContainer.querySelectorAll(".wishlist-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
-      e.stopPropagation();  // Prevent the card click event
-
-      console.log("Wishlist button clicked:", btn.dataset.id); // Debugging
-
+      e.stopPropagation();
       await mainToggleWishlist(btn.dataset.id);
       loadWishlist(); // Refresh wishlist after toggle
     });
