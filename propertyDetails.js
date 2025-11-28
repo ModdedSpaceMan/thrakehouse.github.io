@@ -1,5 +1,17 @@
+
+
+
 // propertyDetails.js
 export async function openPropertyDetails(property) {
+  const CATEGORY_LABELS_BG = { rent: "Наем", sale: "Продажба" };
+  const TYPE_LABELS_BG = {
+    apartment: "Апартамент",
+    house: "Къща",
+    villa: "Вила",
+    farm: "Земеделски имот",
+    plot: "Парцел",
+  };
+
   const loader = document.getElementById("globalLoader");
   loader.style.display = "flex";
 
