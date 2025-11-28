@@ -7,9 +7,7 @@ const username = localStorage.getItem("username");
 let propertiesData = [];
 let wishlistIds = [];
 
-// -----------------------------------------------------------
-// Fetch ALL properties and include image arrays properly
-// -----------------------------------------------------------
+// Fetch properties and images
 async function fetchProperties() {
   try {
     const res = await fetch("https://my-backend.martinmiskata.workers.dev/properties");
@@ -56,9 +54,7 @@ async function fetchProperties() {
   }
 }
 
-// -----------------------------------------------------------
 // Load wishlist
-// -----------------------------------------------------------
 export async function loadWishlist() {
   if (!username) {
     wishlistContainer.innerHTML = "<p>Трябва да сте влезли, за да видите wishlist.</p>";
@@ -89,9 +85,7 @@ export async function loadWishlist() {
   }
 }
 
-// -----------------------------------------------------------
-// Render wishlist using SHARED renderPropertyCard()
-// -----------------------------------------------------------
+// Render wishlist using renderPropertyCard()
 export function renderWishlist() {
   if (!wishlistContainer) return;
 
@@ -107,46 +101,48 @@ export function renderWishlist() {
   wishlistContainer.innerHTML = savedProps.map((p) => renderPropertyCard(p)).join("");
 
   attachListeners();
-  initLazyLoading(); // <-- Lazy loading ENABLED
+  initLazyLoading(); // <-- Ensure lazy loading works after rendering
 }
 
-// -----------------------------------------------------------
-// Lazy-load Base64 images
-// -----------------------------------------------------------
+// Lazy-load images
 function initLazyLoading() {
   const lazyImages = document.querySelectorAll(".lazy-img");
 
-  const lazyObserver = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      const img = entry.target;
+  if (lazyImages.length === 0) return;
 
+  // Check if IntersectionObserver is supported
+  if ('IntersectionObserver' in window) {
+    const lazyObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        const img = entry.target;
+
+        if (entry.isIntersecting) {
+          if (img.dataset.src) {
+            img.src = img.dataset.src;  // Set actual image source
+            img.removeAttribute("data-src");  // Remove lazy loading marker
+          }
+          observer.unobserve(img);
+        }
+      });
+    }, {
+      rootMargin: "200px",
+    });
+
+    lazyImages.forEach(img => {
+      lazyObserver.observe(img);
+    });
+  } else {
+    // Fallback for browsers that don't support IntersectionObserver
+    lazyImages.forEach(img => {
       if (img.dataset.src) {
-        // If Base64 or normal image, move to src
         img.src = img.dataset.src;
         img.removeAttribute("data-src");
       }
-
-      img.classList.remove("lazy-img");
-      lazyObserver.unobserve(img);
     });
-  });
-
-  lazyImages.forEach(img => {
-    // If the image is already visible or Base64 above the fold
-    if (!img.dataset.src.startsWith("http")) {
-      img.src = img.dataset.src;
-      img.removeAttribute("data-src");
-      img.classList.remove("lazy-img");
-      return;
-    }
-
-    lazyObserver.observe(img);
-  });
+  }
 }
 
-// -----------------------------------------------------------
-// Attach click listeners
-// -----------------------------------------------------------
+// Attach listeners to wishlist items
 function attachListeners() {
   wishlistContainer.querySelectorAll(".property").forEach((card) => {
     card.addEventListener("click", (e) => {
@@ -165,12 +161,10 @@ function attachListeners() {
     btn.addEventListener("click", async (e) => {
       e.stopPropagation();
       await mainToggleWishlist(btn.dataset.id);
-      loadWishlist();
+      loadWishlist(); // Refresh wishlist after toggle
     });
   });
 }
 
-// -----------------------------------------------------------
-// Init
-// -----------------------------------------------------------
+// Initialize wishlist on page load
 document.addEventListener("DOMContentLoaded", loadWishlist);
