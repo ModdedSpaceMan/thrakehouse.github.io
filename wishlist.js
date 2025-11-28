@@ -4,6 +4,14 @@ import { openPropertyDetails } from "./propertyDetails.js";  // Import the funct
 
 const wishlistContainer = document.getElementById("wishlistProperties");
 const username = localStorage.getItem("username");
+const CATEGORY_LABELS_BG = { rent: "Наем", sale: "Продажба" };
+const TYPE_LABELS_BG = {
+  apartment: "Апартамент",
+  house: "Къща",
+  villa: "Вила",
+  farm: "Земеделски имот",
+  plot: "Парцел",
+};
 
 let propertiesData = [];
 let wishlistIds = [];
