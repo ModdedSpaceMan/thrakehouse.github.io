@@ -5,7 +5,6 @@ import { openPropertyDetails } from "./propertyDetails.js";  // Import the funct
 const wishlistContainer = document.getElementById("wishlistProperties");
 const username = localStorage.getItem("username");
 
-
 let propertiesData = [];
 let wishlistIds = [];
 
@@ -60,11 +59,13 @@ async function fetchProperties() {
 
     // Backend already returned full objects with images
     console.log("Backend returned full property objects with images");
+    
+    // Ensure _fetchedImages is false to force image fetching
     return data.items.map((p) => ({
       ...p,
       firstImage: p.firstImage || p.images?.[0] || "",
       restImages: p.restImages || p.images?.slice(1) || [],
-      _fetchedImages: true,
+      _fetchedImages: false, // Ensure we always fetch extra images
     }));
   } catch (err) {
     console.error("Failed to fetch properties:", err);
