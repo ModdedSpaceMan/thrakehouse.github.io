@@ -7,7 +7,7 @@ const username = localStorage.getItem("username");
 let propertiesData = [];
 let wishlistIds = [];
 
-// Fetch properties and images, just like in properties.js
+// Fetch properties and images
 async function fetchProperties() {
   try {
     const res = await fetch("https://my-backend.martinmiskata.workers.dev/properties");
@@ -24,7 +24,7 @@ async function fetchProperties() {
           if (!r.ok) throw new Error(`Failed to fetch property ${id}`);
           const p = await r.json();
 
-          // Load full images (same as properties.js)
+          // Fetch extra images from the backend
           const extraImgsRes = await fetch(
             `https://my-backend.martinmiskata.workers.dev/properties/${id}/images`
           );
@@ -32,8 +32,8 @@ async function fetchProperties() {
 
           return {
             ...p,
-            firstImage: p.firstImage || extraImgs[0] || "",
-            restImages: p.restImages || extraImgs.slice(1) || [],
+            firstImage: p.firstImage || extraImgs.images[0] || "",
+            restImages: p.restImages || extraImgs.images.slice(1) || [],
             _fetchedImages: true,
           };
         })
@@ -102,7 +102,7 @@ export function renderWishlist() {
   wishlistContainer.innerHTML = savedProps.map((p) => renderPropertyCard(p)).join("");
 
   attachListeners();
-  initLazyLoading(); // <-- Ensure lazy loading works after rendering
+  initLazyLoading(); // Ensure lazy loading works after rendering
 }
 
 // Lazy-load images (same as in properties.js)
@@ -146,41 +146,14 @@ function initLazyLoading() {
 // Attach listeners to wishlist items
 function attachListeners() {
   wishlistContainer.querySelectorAll(".property").forEach((card) => {
-    card.addEventListener("click", async (e) => {
+    card.addEventListener("click", (e) => {
       if (e.target.tagName === "BUTTON") return;
 
       const id = card.dataset.id;
       const property = propertiesData.find((p) => p.id == id);
 
-      if (!property) {
-        return showToast("Не може да се зареди имотът");
-      }
+      if (!property) return showToast("Не може да се зареди имотът");
 
-      console.log("Property clicked:", property);
-
-      // Fetch extra images if not already fetched
-      if (!property._fetchedImages) {
-        try {
-          const extraImgsRes = await fetch(
-            `https://my-backend.martinmiskata.workers.dev/properties/${id}/images`
-          );
-          const extraImgs = extraImgsRes.ok ? await extraImgsRes.json() : [];
-          
-          console.log("Fetched extra images:", extraImgs);  // Log the fetched images
-
-          if (extraImgs.length > 0) {
-            // Add extra images to the property object
-            property.restImages = extraImgs;
-            property._fetchedImages = true; // Mark images as fetched
-          } else {
-            console.log(`No extra images found for property ID: ${id}`);
-          }
-        } catch (err) {
-          console.error("Error fetching extra images:", err);
-        }
-      }
-
-      // Open the property details modal
       window.openPropertyDetails(property);
     });
   });
