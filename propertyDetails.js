@@ -11,7 +11,7 @@ const TYPE_LABELS_BG = {
 // Function to open and display property details
 export async function openPropertyDetails(property) {
   // Get the property modal element (make sure it's defined in HTML)
-  const propertyModal = document.getElementById("propertyModal");
+  const propertyModal = document.getElementById("propertyDetailsModal");
   const loader = document.getElementById("globalLoader");
 
   // Show loader while fetching data
