@@ -8,7 +8,7 @@ const username = localStorage.getItem("username");
 let propertiesData = [];
 let wishlistIds = [];
 
-// Fetch properties and images
+// Fetch properties
 async function fetchProperties() {
   console.log("Fetching properties...");
 
@@ -29,43 +29,20 @@ async function fetchProperties() {
           if (!r.ok) throw new Error(`Failed to fetch property ${id}`);
           const p = await r.json();
           
-          // Initialize property images if not already fetched
-          console.log(p._fetchedImages);  // Log the flag to see its value
-          if (!p._fetchedImages) {
-            console.log(`Fetching extra images for property ${id}`);
-            try {
-              const extraImgsRes = await fetch(
-                `https://my-backend.martinmiskata.workers.dev/properties/${id}/images`
-              );
-              if (extraImgsRes.ok) {
-                const extraImgs = await extraImgsRes.json();
-                if (Array.isArray(extraImgs.images)) {
-                  p.restImages = extraImgs.images;
-                  p.firstImage = p.firstImage || extraImgs.images[0] || "";
-                }
-              }
-            } catch (err) {
-              console.error("Failed to load extra images:", err);
-            }
-            p._fetchedImages = true;  // Mark images as fetched
-          }
-
+          // Return the property object
           return p;
         })
       );
-      console.log("Fetched all properties with images.");
+      console.log("Fetched all properties.");
       return props;
     }
 
     // Backend already returned full objects with images
     console.log("Backend returned full property objects with images");
-    
-    // Ensure _fetchedImages is false to force image fetching
     return data.items.map((p) => ({
       ...p,
       firstImage: p.firstImage || p.images?.[0] || "",
       restImages: p.restImages || p.images?.slice(1) || [],
-      _fetchedImages: false, // Ensure we always fetch extra images
     }));
   } catch (err) {
     console.error("Failed to fetch properties:", err);
