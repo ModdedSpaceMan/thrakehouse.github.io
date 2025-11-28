@@ -31,6 +31,7 @@ async function fetchProperties() {
           const p = await r.json();
           
           // Initialize property images if not already fetched
+          console.log(p._fetchedImages);  // Log the flag to see its value
           if (!p._fetchedImages) {
             console.log(`Fetching extra images for property ${id}`);
             try {
