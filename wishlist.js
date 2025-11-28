@@ -7,7 +7,7 @@ const username = localStorage.getItem("username");
 let propertiesData = [];
 let wishlistIds = [];
 
-// Fetch properties and images
+// Fetch properties and images (first time fetch, no extra images yet)
 async function fetchProperties() {
   try {
     const res = await fetch("https://my-backend.martinmiskata.workers.dev/properties");
@@ -24,24 +24,18 @@ async function fetchProperties() {
           if (!r.ok) throw new Error(`Failed to fetch property ${id}`);
           const p = await r.json();
 
-          // Load full images
-          const extraImgsRes = await fetch(
-            `https://my-backend.martinmiskata.workers.dev/properties/${id}/images`
-          );
-          const extraImgs = extraImgsRes.ok ? await extraImgsRes.json() : [];
-
           return {
             ...p,
-            firstImage: p.firstImage || extraImgs[0] || "",
-            restImages: p.restImages || extraImgs.slice(1) || [],
-            _fetchedImages: true,
+            firstImage: p.firstImage || "",
+            restImages: p.restImages || [],
+            _fetchedImages: false, // No extra images yet
           };
         })
       );
       return props;
     }
 
-    // Backend already returned full objects
+    // Backend already returned full objects with images
     return data.items.map((p) => ({
       ...p,
       firstImage: p.firstImage || p.images?.[0] || "",
@@ -54,7 +48,7 @@ async function fetchProperties() {
   }
 }
 
-// Load wishlist
+// Load wishlist and fetch properties
 export async function loadWishlist() {
   if (!username) {
     wishlistContainer.innerHTML = "<p>Трябва да сте влезли, за да видите wishlist.</p>";
@@ -62,6 +56,7 @@ export async function loadWishlist() {
   }
 
   try {
+    // Fetch the full properties with images
     propertiesData = await fetchProperties();
     console.log("Fetched properties:", propertiesData);
 
@@ -104,7 +99,7 @@ export function renderWishlist() {
   initLazyLoading(); // <-- Ensure lazy loading works after rendering
 }
 
-// Lazy-load images
+// Lazy-load images (same as in properties.js)
 function initLazyLoading() {
   const lazyImages = document.querySelectorAll(".lazy-img");
 
@@ -145,7 +140,7 @@ function initLazyLoading() {
 // Attach listeners to wishlist items
 function attachListeners() {
   wishlistContainer.querySelectorAll(".property").forEach((card) => {
-    card.addEventListener("click", (e) => {
+    card.addEventListener("click", async (e) => {
       if (e.target.tagName === "BUTTON") return;
 
       const id = card.dataset.id;
@@ -153,6 +148,19 @@ function attachListeners() {
 
       if (!property) return showToast("Не може да се зареди имотът");
 
+      // If extra images haven't been fetched yet, load them
+      if (!property._fetchedImages) {
+        const extraImgsRes = await fetch(
+          `https://my-backend.martinmiskata.workers.dev/properties/${id}/images`
+        );
+        const extraImgs = extraImgsRes.ok ? await extraImgsRes.json() : [];
+
+        // Update the property with extra images
+        property.restImages = extraImgs;
+        property._fetchedImages = true;
+      }
+
+      // Open property details (with extra images now available)
       window.openPropertyDetails(property);
     });
   });
