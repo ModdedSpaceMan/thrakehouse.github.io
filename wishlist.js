@@ -7,7 +7,7 @@ const username = localStorage.getItem("username");
 let propertiesData = [];
 let wishlistIds = [];
 
-// Fetch properties and images (no extra images yet)
+// Fetch properties and images, just like in properties.js
 async function fetchProperties() {
   try {
     const res = await fetch("https://my-backend.martinmiskata.workers.dev/properties");
@@ -16,7 +16,7 @@ async function fetchProperties() {
     const data = await res.json();
     if (!Array.isArray(data.items)) throw new Error("Expected array");
 
-    // If backend only returns IDs, fetch full property data
+    // Backend only returned IDs
     if (typeof data.items[0] === "string" || typeof data.items[0] === "number") {
       const props = await Promise.all(
         data.items.map(async (id) => {
@@ -24,23 +24,29 @@ async function fetchProperties() {
           if (!r.ok) throw new Error(`Failed to fetch property ${id}`);
           const p = await r.json();
 
+          // Load full images (same as properties.js)
+          const extraImgsRes = await fetch(
+            `https://my-backend.martinmiskata.workers.dev/properties/${id}/images`
+          );
+          const extraImgs = extraImgsRes.ok ? await extraImgsRes.json() : [];
+
           return {
             ...p,
-            firstImage: p.firstImage || "",
-            restImages: p.restImages || [],
-            _fetchedImages: false, // No extra images yet
+            firstImage: p.firstImage || extraImgs[0] || "",
+            restImages: p.restImages || extraImgs.slice(1) || [],
+            _fetchedImages: true,
           };
         })
       );
       return props;
     }
 
-    // If backend already returns full objects with images
+    // Backend already returned full objects with images
     return data.items.map((p) => ({
       ...p,
       firstImage: p.firstImage || p.images?.[0] || "",
       restImages: p.restImages || p.images?.slice(1) || [],
-      _fetchedImages: true, // Images already fetched
+      _fetchedImages: true,
     }));
   } catch (err) {
     console.error("Failed to fetch properties:", err);
@@ -56,7 +62,7 @@ export async function loadWishlist() {
   }
 
   try {
-    // Fetch properties including first images
+    // Fetch the full properties with images
     propertiesData = await fetchProperties();
     console.log("Fetched properties:", propertiesData);
 
@@ -96,7 +102,7 @@ export function renderWishlist() {
   wishlistContainer.innerHTML = savedProps.map((p) => renderPropertyCard(p)).join("");
 
   attachListeners();
-  initLazyLoading();
+  initLazyLoading(); // <-- Ensure lazy loading works after rendering
 }
 
 // Lazy-load images (same as in properties.js)
@@ -105,6 +111,7 @@ function initLazyLoading() {
 
   if (lazyImages.length === 0) return;
 
+  // Check if IntersectionObserver is supported
   if ('IntersectionObserver' in window) {
     const lazyObserver = new IntersectionObserver((entries, observer) => {
       entries.forEach(entry => {
@@ -113,17 +120,20 @@ function initLazyLoading() {
         if (entry.isIntersecting) {
           if (img.dataset.src) {
             img.src = img.dataset.src;  // Set actual image source
-            img.removeAttribute("data-src");
+            img.removeAttribute("data-src");  // Remove lazy loading marker
           }
           observer.unobserve(img);
         }
       });
-    }, { rootMargin: "200px" });
+    }, {
+      rootMargin: "200px",
+    });
 
     lazyImages.forEach(img => {
       lazyObserver.observe(img);
     });
   } else {
+    // Fallback for browsers that don't support IntersectionObserver
     lazyImages.forEach(img => {
       if (img.dataset.src) {
         img.src = img.dataset.src;
@@ -156,11 +166,15 @@ function attachListeners() {
           );
           const extraImgs = extraImgsRes.ok ? await extraImgsRes.json() : [];
           
-          console.log("Fetched extra images:", extraImgs);
+          console.log("Fetched extra images:", extraImgs);  // Log the fetched images
 
-          // Add extra images to the property object
-          property.restImages = extraImgs;
-          property._fetchedImages = true; // Mark images as fetched
+          if (extraImgs.length > 0) {
+            // Add extra images to the property object
+            property.restImages = extraImgs;
+            property._fetchedImages = true; // Mark images as fetched
+          } else {
+            console.log(`No extra images found for property ID: ${id}`);
+          }
         } catch (err) {
           console.error("Error fetching extra images:", err);
         }
